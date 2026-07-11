@@ -1,15 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
 import { listSessions, deleteSession, dayKey } from '../../lib/history.js';
+import { pullReports, deleteReport } from '../../lib/cloudSync.js';
+import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function History({ onOpenReport, onRecord }) {
+export default function History({ onOpenReport, onRecord, user }) {
   const [sessions, setSessions] = useState(null); // null = loading
   const [view, setView] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
   const [selected, setSelected] = useState(() => dayKey(Date.now()));
 
-  useEffect(() => { listSessions().then(setSessions); }, []);
+  // Local sessions first (instant, playable). Signed in: merge in the account's
+  // cloud reports — locals win on id collisions since they carry the blob.
+  // A cloud fetch failure quietly leaves the local view; never blocks.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const local = await listSessions();
+      if (cancelled) return;
+      setSessions(local);
+      if (!user) return;
+      try {
+        const cloud = await pullReports();
+        if (cancelled) return;
+        const seen = new Set(local.map((s) => s.id));
+        const merged = [...local, ...cloud.filter((s) => !seen.has(s.id))].sort(
+          (a, b) => b.createdAt - a.createdAt
+        );
+        setSessions(merged);
+      } catch {
+        /* offline or cloud down — local view stands */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const byDay = useMemo(() => {
     const map = {};
@@ -26,6 +51,7 @@ export default function History({ onOpenReport, onRecord }) {
 
   async function handleDelete(id) {
     await deleteSession(id);
+    if (user) deleteReport(id); // fire-and-forget; failures queue in the outbox
     setSessions((prev) => prev.filter((s) => s.id !== id));
   }
 
@@ -36,7 +62,7 @@ export default function History({ onOpenReport, onRecord }) {
       <div className="animate-rise flex min-h-[60vh] flex-col items-center justify-center text-center">
         <h2 className="font-display text-3xl text-ink">No practices yet</h2>
         <p className="mt-3 max-w-sm text-ink/55">Record your first talk and it’ll show up here — one square per day you practice.</p>
-        <button onClick={onRecord} className="btn-primary mt-7 px-7 py-3">Record now</button>
+        <InteractiveHoverButton onClick={onRecord} text="Record now" className="mt-7 px-7 py-3" />
       </div>
     );
   }
@@ -59,7 +85,7 @@ export default function History({ onOpenReport, onRecord }) {
           <h2 className="font-display text-3xl text-ink tracking-tight">Your practice</h2>
           <p className="text-sm text-ink/45 mt-0.5">Every day you practice counts.</p>
         </div>
-        <button onClick={onRecord} className="btn-primary px-5 py-2.5 text-sm">New recording</button>
+        <InteractiveHoverButton onClick={onRecord} text="New recording" className="px-5 py-2.5 text-sm" />
       </div>
 
       {/* Summary */}

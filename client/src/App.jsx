@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Home from './components/Home/index.jsx';
 import Recorder from './components/Recorder/index.jsx';
 import Dashboard from './components/Dashboard/index.jsx';
 import History from './components/History/index.jsx';
+import Account from './components/Account/index.jsx';
+import EmailGate from './components/EmailGate/index.jsx';
 import SegmentedNav from './components/ui/SegmentedNav.jsx';
-import { detectFillerWords } from './utils/fillerWords.js';
+import { useAuth } from './hooks/useAuth.js';
+import { pushReport, mergeUpLocal, flushOutbox } from './lib/cloudSync.js';
+import { detectFillerWords, mergeFillerCounts, fillerLabel } from './utils/fillerWords.js';
 import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
@@ -12,14 +16,39 @@ import { transcribeLocally } from './lib/transcribe.js';
 import { saveSession, toSession } from './lib/history.js';
 
 // App states: home → idle (recorder) → recording → processing → results
-// Keep a single Recorder mounted across idle/recording so the stream never drops.
+// (plus history and account). Keep a single Recorder mounted across
+// idle/recording so the stream never drops.
 export default function App() {
   const [appState, setAppState] = useState('home');
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState('');
+  // Lightweight identity tag from the pre-recording email gate. Kept in state +
+  // localStorage so a future backend/CRM push has it; Supabase sign-in remains
+  // the real account system and always outranks this.
+  const [leadEmail, setLeadEmail] = useState(() => localStorage.getItem('speakable-email') || '');
+  const auth = useAuth();
 
-  async function handleRecordingComplete({ blob, words, volumeLevels, source, mediaType }) {
+  // First "Start recording" routes through the email gate — unless we already
+  // know who this is (signed in, gave an email before, or chose guest).
+  function startRecordingFlow() {
+    const known = auth.user || leadEmail || localStorage.getItem('speakable-guest');
+    setError(null);
+    setAppState(known ? 'idle' : 'email-gate');
+  }
+
+  // On login (and app start while logged in): this device's reports join the
+  // account, then any queued failed syncs retry. Also retry when back online.
+  useEffect(() => {
+    const userId = auth.user?.id;
+    if (!userId) return;
+    mergeUpLocal(userId).then(() => flushOutbox(userId)).catch(() => {});
+    const onOnline = () => flushOutbox(userId).catch(() => {});
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [auth.user?.id]);
+
+  async function handleRecordingComplete({ blob, words, hesitations, volumeLevels, eyeContact, source, mediaType }) {
     setAppState('processing');
     setError(null);
     setProgress('Transcribing your speech…');
@@ -68,7 +97,15 @@ export default function App() {
       }
 
       const duration = audioDuration > 0 ? audioDuration : (wordList.at(-1)?.end ?? 0);
-      const fillerWordCounts = detectFillerWords(wordList);
+      // Whisper text + interim-captured hesitations (max per label, never summed) —
+      // Whisper drops/mangles "um"/"uh", the live recognizer's interims keep them.
+      const fillerWordCounts = mergeFillerCounts(detectFillerWords(wordList), hesitations?.counts);
+      // Timestamped filler moments for coaching ("your cluster was around 0:45"):
+      // whisper-caught fillers have exact times; interim events have rough ones.
+      const fillerEvents = [
+        ...wordList.filter((w) => fillerLabel(w.word)).map((w) => ({ label: fillerLabel(w.word), at: w.start })),
+        ...(hesitations?.events || []),
+      ].sort((a, b) => a.at - b.at);
       const { avgWpm, wpmData } = computePacing(wordList, duration);
       const pauses = detectPauses(wordList);
       const volumeStdDev = computeVolumeStdDev(volumeLevels);
@@ -77,12 +114,14 @@ export default function App() {
       const feedback = generateLocalFeedback({
         transcript,
         fillerWordCounts,
+        fillerEvents,
         avgWpm,
         wpmData,
         pauses,
         volumeStdDev,
         duration,
         words: wordList,
+        eyeContact: eyeContact ?? null,
       });
 
       const fullResults = {
@@ -96,6 +135,8 @@ export default function App() {
         volumeStdDev,
         duration,
         feedback,
+        // On-device eye-contact stats from camera takes (null for audio/uploads).
+        eyeContact: eyeContact ?? null,
         // Same blob URL feeds both the muted-video and audio-only review players.
         mediaUrl: blob ? URL.createObjectURL(blob) : null,
         mediaType: mediaType ?? 'audio',
@@ -104,9 +145,10 @@ export default function App() {
       setAppState('results');
 
       // Persist to the on-device practice history (calendar). Fire-and-forget.
-      saveSession(toSession({ results: fullResults, blob, mediaType: mediaType ?? 'audio' })).catch((e) =>
-        console.error('Could not save to history:', e)
-      );
+      // Signed in: the report (never the blob) also syncs to the account.
+      const session = toSession({ results: fullResults, blob, mediaType: mediaType ?? 'audio' });
+      saveSession(session).catch((e) => console.error('Could not save to history:', e));
+      if (auth.user) pushReport(session, auth.user.id);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -122,12 +164,14 @@ export default function App() {
   }
 
   // Re-open a saved session's full report (recreate the playable blob URL).
+  // Cloud-only sessions (recorded on another device) have no blob to play.
   function openHistoryReport(session) {
     if (results?.mediaUrl) URL.revokeObjectURL(results.mediaUrl);
     setResults({
       ...session.results,
       mediaType: session.mediaType,
       mediaUrl: session.blob ? URL.createObjectURL(session.blob) : null,
+      cloudOnly: !session.blob,
     });
     setError(null);
     setAppState('results');
@@ -171,20 +215,47 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream">
       <header className="border-b border-sand bg-cream/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <button onClick={goHome} className="flex items-center gap-2.5" aria-label="SpeakCoach home">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <button onClick={goHome} className="flex items-center gap-2.5" aria-label="Speakable home">
             <div className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft">
               <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1a4 4 0 014 4v7a4 4 0 01-8 0V5a4 4 0 014-4zm-2 15.93A7 7 0 0019 12h2a9 9 0 01-18 0h2a7 7 0 006 6.93V21H9v2h6v-2h-2v-2.07z" />
               </svg>
             </div>
-            <span className="font-display font-semibold text-ink text-[16px] tracking-tight">SpeakCoach</span>
+            {/* Wordmark yields to the nav + account chip on narrow phones; the mic mark stays as the home button */}
+            <span className="hidden min-[480px]:inline font-display font-semibold text-ink text-[16px] tracking-tight">Speakable</span>
           </button>
-          {showNav && <SegmentedNav items={NAV_ITEMS} active={navActive} onChange={navTo} />}
+          {showNav && (
+            <div className="flex items-center gap-2.5">
+              <SegmentedNav items={NAV_ITEMS} active={navActive} onChange={navTo} />
+              {auth.configured && (
+                <button
+                  onClick={() => setAppState('account')}
+                  aria-label={auth.user ? `Account: ${auth.user.email}` : 'Sign in'}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors duration-250 ${
+                    auth.user
+                      ? 'bg-brand-500 text-white shadow-soft hover:bg-brand-600'
+                      : 'border border-sand bg-white text-ink/45 hover:text-ink/70'
+                  }`}
+                >
+                  {auth.user ? (
+                    <span className="text-[13px] font-semibold leading-none">
+                      {(auth.user.email?.[0] || '?').toUpperCase()}
+                    </span>
+                  ) : (
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0" />
+                    </svg>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      {/* Home is a full-bleed hero; every other state keeps the contained column. */}
+      <main className={appState === 'home' ? '' : 'max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10'}>
         {error && (
           <div className="mb-6 p-4 bg-brand-50 border border-brand-100 rounded-2xl text-brand-700 text-sm leading-relaxed">
             {error}
@@ -192,12 +263,30 @@ export default function App() {
         )}
 
         {appState === 'home' && (
-          <Home onStart={() => setAppState('idle')} onHistory={() => setAppState('history')} />
+          <Home onStart={startRecordingFlow} onHistory={() => setAppState('history')} />
+        )}
+
+        {appState === 'email-gate' && (
+          <EmailGate
+            onContinue={(email) => {
+              localStorage.setItem('speakable-email', email);
+              setLeadEmail(email);
+              setAppState('idle');
+            }}
+            onGuest={() => {
+              localStorage.setItem('speakable-guest', '1');
+              setAppState('idle');
+            }}
+            onSignIn={() => setAppState('account')}
+            canSignIn={auth.configured}
+          />
         )}
 
         {appState === 'history' && (
-          <History onOpenReport={openHistoryReport} onRecord={() => setAppState('idle')} />
+          <History onOpenReport={openHistoryReport} onRecord={() => setAppState('idle')} user={auth.user} />
         )}
+
+        {appState === 'account' && <Account auth={auth} />}
 
         {/* Single Recorder instance for both idle and recording — prevents unmount mid-stream */}
         {(appState === 'idle' || appState === 'recording') && (

@@ -1,37 +1,24 @@
-// Deliberately spare: one headline, one action, one visual anchor.
-// Everything else (badge, subhead, steps strip, second CTA) was cut — the
-// preview card shows what the product does better than copy can.
+import { HeroGeometric } from '../ui/shape-landing-hero.jsx';
+import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
+
+// Deliberately spare: one headline, one action, one visual anchor — now staged
+// on the HeroGeometric backdrop (floating warm-glass shapes, framer-motion
+// entrance). The preview card still shows what the product does better than
+// copy can; the CTA/tagline/preview ride the hero's third entrance beat.
 export default function Home({ onStart }) {
   return (
-    <div className="flex min-h-[78vh] flex-col items-center justify-center text-center">
-      <h1
-        className="animate-rise font-display text-[3.5rem] font-semibold leading-[1.04] tracking-tight text-ink sm:text-[4.25rem]"
-      >
-        See how you
-        <br />
-        <span className="text-brand-500">actually</span> speak.
-      </h1>
+    <HeroGeometric badge="Private · on-device coaching" title1="See how you" title2="actually speak.">
+      <div className="flex flex-col items-center text-center">
+        <InteractiveHoverButton onClick={onStart} text="Start recording" className="mt-9 px-8 py-3.5 text-base" />
 
-      <button
-        onClick={onStart}
-        className="btn-primary animate-rise mt-9 px-8 py-3.5 text-base"
-        style={{ animationDelay: '80ms' }}
-      >
-        Start recording
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </button>
+        <p className="mt-4 text-xs text-ink/40">Three minutes. Recordings never leave your device.</p>
 
-      <p className="animate-rise mt-4 text-xs text-ink/40" style={{ animationDelay: '140ms' }}>
-        Three minutes. Nothing leaves your device.
-      </p>
-
-      <div className="animate-rise relative mt-14 w-full max-w-md" style={{ animationDelay: '220ms' }}>
-        <div className="absolute -inset-10 -z-10 rounded-full bg-brand-200/25 blur-3xl" />
-        <ReportPreview />
+        <div className="relative mt-12 w-full max-w-md">
+          <div className="absolute -inset-10 -z-10 rounded-full bg-brand-200/25 blur-3xl" />
+          <ReportPreview />
+        </div>
       </div>
-    </div>
+    </HeroGeometric>
   );
 }
 

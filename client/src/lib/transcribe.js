@@ -8,7 +8,13 @@
 
 // whisper-base.en captures filler words ("um", "uh", repeats) noticeably better than
 // tiny — at the cost of a larger one-time download and slightly slower processing.
-const MODEL_ID = 'Xenova/whisper-base.en';
+// On phones/tablets base.en is too heavy (~145 MB download + slow WASM inference,
+// risk of iOS Safari memory kills), so they get tiny.en (~40 MB) instead.
+// (iPadOS reports itself as "Mac" — the maxTouchPoints check catches it.)
+const IS_MOBILE =
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+const MODEL_ID = IS_MOBILE ? 'Xenova/whisper-tiny.en' : 'Xenova/whisper-base.en';
 
 let transcriberPromise = null;
 

@@ -101,3 +101,39 @@ export function detectFillerWords(words) {
 export function isFillerWord(word) {
   return fillerLabel(word) !== null;
 }
+
+// --- Interim-capture support -------------------------------------------------
+// Whisper's training data mostly omits disfluencies, so it drops or mangles
+// "um"/"uh" (tiny.en almost always; base.en often — verified: "um" came back as
+// "am"/"un", "uh" as "awe"). The live recognizer's INTERIM hypotheses still
+// contain them before the final transcript scrubs them, so we count hesitations
+// there and take the per-label MAX of (whisper, interim) — max, not sum, so a
+// filler both engines caught isn't counted twice. Only unambiguous vocal
+// hesitations merge this way; crutch words repeat across interim updates and
+// would over-count.
+
+const HESITATION_CANON = new Set(['um', 'uh', 'er', 'ah', 'hmm', 'mm', 'eh', 'huh', 'ugh']);
+
+export function isHesitation(label) {
+  return HESITATION_CANON.has(label);
+}
+
+// Count vocal hesitations in one interim hypothesis string → { um: 2, uh: 1 }.
+export function countHesitations(text) {
+  const counts = {};
+  for (const token of (text || '').split(/\s+/)) {
+    const label = fillerLabel(token);
+    if (label && HESITATION_CANON.has(label)) counts[label] = (counts[label] || 0) + 1;
+  }
+  return counts;
+}
+
+// Merge whisper-derived counts with interim-derived hesitation counts.
+export function mergeFillerCounts(whisperCounts, interimCounts) {
+  const merged = { ...whisperCounts };
+  for (const [label, n] of Object.entries(interimCounts || {})) {
+    if (!HESITATION_CANON.has(label)) continue;
+    merged[label] = Math.max(merged[label] || 0, n);
+  }
+  return merged;
+}

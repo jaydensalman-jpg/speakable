@@ -1,8 +1,9 @@
 export default function FillerWordsTab({ results }) {
-  const { fillerWordCounts, words } = results;
+  const { fillerWordCounts, words, duration } = results;
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
   const totalWords = words.length;
   const percentage = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : '0.0';
+  const perMinute = duration > 0 ? (totalFillers / (duration / 60)).toFixed(1) : '0.0';
   const isGood = parseFloat(percentage) < 5;
 
   const sorted = Object.entries(fillerWordCounts)
@@ -12,7 +13,7 @@ export default function FillerWordsTab({ results }) {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="stat-card">
           <span className="text-2xl font-bold text-ink tabular-nums">{totalFillers}</span>
           <span className="text-xs text-ink/45 font-medium">Total fillers</span>
@@ -22,6 +23,10 @@ export default function FillerWordsTab({ results }) {
             {percentage}%
           </span>
           <span className="text-xs text-ink/45 font-medium">Of total words</span>
+        </div>
+        <div className="stat-card">
+          <span className="text-2xl font-bold text-ink tabular-nums">{perMinute}</span>
+          <span className="text-xs text-ink/45 font-medium">Per minute</span>
         </div>
         <div className="stat-card">
           <span className="text-xl font-bold text-ink truncate font-mono">

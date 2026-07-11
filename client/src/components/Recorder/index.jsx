@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useMediaRecorder } from '../../hooks/useMediaRecorder.js';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition.js';
 import { useAudioAnalyzer } from '../../hooks/useAudioAnalyzer.js';
+import { useEyeContact } from '../../hooks/useEyeContact.js';
 import { isFillerWord } from '../../utils/fillerWords.js';
 import AudioVisualizer from './AudioVisualizer.jsx';
 import UploadZone from './UploadZone.jsx';
+import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
 
 const MAX_SECONDS = 180; // 3 minutes — a focused, repeatable practice length.
 
@@ -19,6 +21,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
   const { start: startRecorder, stop: stopRecorder, pause: pauseRecorder, resume: resumeRecorder } = useMediaRecorder();
   const { start: startSpeech, stop: stopSpeech, setPaused: setSpeechPaused, liveWords, interim } = useSpeechRecognition();
   const { connect: connectAnalyzer, disconnect: disconnectAnalyzer, getAnalyser } = useAudioAnalyzer();
+  const { start: startEyeContact, stop: stopEyeContact, setPaused: setEyePaused, live: eyeLive } = useEyeContact();
 
   const isRecording = recState === 'recording';
   const isActive = recState !== 'idle';
@@ -78,6 +81,9 @@ export default function Recorder({ onComplete, onRecordingStart }) {
       const stream = await startRecorder(withVideo);
       if (withVideo && videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Analyzes the preview frames on-device; fire-and-forget so a slow
+        // model load never delays the recording itself.
+        startEyeContact(videoRef.current);
       }
       startSpeech();
       connectAnalyzer(stream);
@@ -96,27 +102,32 @@ export default function Recorder({ onComplete, onRecordingStart }) {
   function handlePause() {
     pauseRecorder();
     setSpeechPaused(true); // paused time is excluded from the blob; live captions freeze
+    setEyePaused(true); // eye-contact clock freezes too, so percentages stay honest
     setRecState('paused');
   }
 
   function handleResume() {
     resumeRecorder();
     setSpeechPaused(false);
+    setEyePaused(false);
     setRecState('recording');
   }
 
   async function handleStop() {
     setRecState('idle');
+    const eyeContact = stopEyeContact(); // null unless a camera take tracked enough
     if (videoRef.current) videoRef.current.srcObject = null;
-    const [blob, words, volumeLevels] = await Promise.all([
+    const [blob, speech, volumeLevels] = await Promise.all([
       stopRecorder(),
       stopSpeech(),
       Promise.resolve(disconnectAnalyzer()),
     ]);
     onComplete({
       blob,
-      words,
+      words: speech.words,
+      hesitations: speech.hesitations, // interim-captured "um"/"uh" Whisper drops
       volumeLevels,
+      eyeContact,
       source: 'record',
       mediaType: captureMode === 'camera' ? 'video' : 'audio',
     });
@@ -130,6 +141,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
     onComplete({
       blob,
       words: [],
+      hesitations: null, // uploads have no live capture; Whisper counts stand alone
       volumeLevels: [],
       source: 'upload',
       mediaType: uploadedFile.type.startsWith('video/') ? 'video' : 'audio',
@@ -220,6 +232,9 @@ export default function Recorder({ onComplete, onRecordingStart }) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
                     </svg>
                     <p className="text-xs">Camera turns on when you press record</p>
+                    <p className="text-[11px] text-white/35 px-6 text-center">
+                      Eye contact is tracked on your device while you speak — video is analyzed in your browser, never uploaded.
+                    </p>
                   </div>
                 )}
                 {recState === 'paused' && (
@@ -237,7 +252,10 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           <div className="px-5 pt-4">
             <div className="flex items-end justify-between gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/35">Live transcript</p>
-              <PaceHint liveWords={liveWords} elapsed={elapsed} active={isRecording} />
+              <div className="flex items-center gap-4">
+                <EyeHint state={eyeLive} active={isRecording && captureMode === 'camera'} />
+                <PaceHint liveWords={liveWords} elapsed={elapsed} active={isRecording} />
+              </div>
             </div>
             <div
               role="log"
@@ -369,7 +387,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           )}
 
           <p className="border-t border-sand px-5 py-4 text-center text-xs text-ink/35">
-            Stays on your device. Works best in Chrome.
+            Recordings stay on this device — only reports sync if you sign in. Works best in Chrome.
           </p>
         </div>
       ) : (
@@ -399,12 +417,37 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               </button>
             </div>
           )}
-          <button onClick={handleUploadSubmit} disabled={!uploadedFile} className="btn-primary w-full">
-            Analyze recording
-          </button>
+          <InteractiveHoverButton
+            onClick={handleUploadSubmit}
+            disabled={!uploadedFile}
+            text="Analyze recording"
+            className="w-full px-6 py-3"
+          />
         </div>
       )}
     </div>
+  );
+}
+
+// Ambient eye-contact readout, sibling to PaceHint: a dot that settles on green
+// while you hold the camera's gaze and amber when you drift. Color-only changes
+// (no motion), so prefers-reduced-motion needs nothing special here.
+function EyeHint({ state, active }) {
+  if (!active || state === null) return null;
+  const contact = state === 'contact';
+  return (
+    <span
+      className={`flex items-center gap-1.5 text-xs transition-colors duration-400 ${
+        contact ? 'text-ink/50' : 'text-ink/30'
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full transition-colors duration-400 ${
+          contact ? 'bg-emerald-500' : 'bg-amber-500'
+        }`}
+      />
+      {contact ? 'eye contact' : 'eyes away'}
+    </span>
   );
 }
 

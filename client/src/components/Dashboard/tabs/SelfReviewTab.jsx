@@ -5,7 +5,9 @@ export default function SelfReviewTab({ results }) {
   if (!mediaUrl) {
     return (
       <div className="card text-center text-ink/50 text-sm py-10">
-        This recording isn’t available to play back. Try recording again to use the self-review.
+        {results.cloudOnly
+          ? 'The recording stays on the device where it was made — only this report synced to your account.'
+          : 'This recording isn’t available to play back. Try recording again to use the self-review.'}
       </div>
     );
   }
