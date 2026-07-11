@@ -139,6 +139,85 @@ async function blobToMono16k(blob, onStatus) {
   }
 }
 
+// --- Acoustic hesitation detection ------------------------------------------
+// Neither Whisper nor the live recognizer reliably reports "um"/"uh" (both are
+// trained on cleaned transcripts), so text alone under-counts badly. But the
+// sound is right there in the PCM we already decoded: a hesitation is a
+// sustained voiced hum, either in a GAP between transcribed words or smeared
+// into a stretched junk word ("ummm" → "am" lasting 0.7s). This detector finds
+// both. It can't tell "um" from "uh", so callers label these events 'um/uh'.
+
+const FRAME = 400; // 25ms @ 16kHz
+const MIN_GAP_S = 0.3; // word gap worth inspecting
+const MIN_VOICED_RUN_S = 0.22; // sustained hum needed inside the gap
+const MAX_ZCR = 0.12; // vowels/nasals cross zero rarely; hiss and noise don't
+// Stretched junk words whisper writes when it half-hears a hesitation.
+const JUNK_HUM = new Set(['a', 'am', 'an', 'ah', 'oh', 'eh', 'um', 'uh', 'mm', 'hm', 'hmm', 'm', 'em', 'un', 'huh', 'hum', 'awe']);
+const JUNK_MIN_S = 0.55;
+
+function frameStats(audio, from, to) {
+  // RMS + zero-crossing rate per 25ms frame within [from, to) sample range.
+  const frames = [];
+  for (let s = from; s + FRAME <= to; s += FRAME) {
+    let sum = 0;
+    let crossings = 0;
+    for (let i = s; i < s + FRAME; i++) {
+      sum += audio[i] * audio[i];
+      if (i > s && audio[i] >= 0 !== audio[i - 1] >= 0) crossings++;
+    }
+    frames.push({ rms: Math.sqrt(sum / FRAME), zcr: crossings / FRAME });
+  }
+  return frames;
+}
+
+function detectVoicedGaps(audio, words) {
+  if (!words.length) return [];
+  // Speech reference level from the whole clip: 70th percentile frame RMS.
+  const all = frameStats(audio, 0, audio.length).map((f) => f.rms).sort((a, b) => a - b);
+  if (!all.length) return [];
+  const speechLevel = all[Math.floor(all.length * 0.7)];
+  const noiseFloor = all[Math.floor(all.length * 0.2)];
+  const voicedThreshold = Math.max(noiseFloor * 3, speechLevel * 0.25, 0.004);
+
+  const events = [];
+  // Inspect the stretch before the first word plus every inter-word gap.
+  const spans = [];
+  if (words[0].start >= MIN_GAP_S) spans.push([Math.max(0, words[0].start - 3), words[0].start]);
+  for (let i = 1; i < words.length; i++) {
+    const gap = words[i].start - words[i - 1].end;
+    if (gap >= MIN_GAP_S) spans.push([words[i - 1].end, words[i].start]);
+  }
+  for (const [t0, t1] of spans) {
+    const frames = frameStats(audio, Math.floor(t0 * 16000), Math.min(Math.floor(t1 * 16000), audio.length));
+    let run = 0;
+    let best = 0;
+    let runStart = 0;
+    let bestStart = 0;
+    frames.forEach((f, i) => {
+      if (f.rms > voicedThreshold && f.zcr < MAX_ZCR) {
+        if (run === 0) runStart = i;
+        run++;
+        if (run > best) {
+          best = run;
+          bestStart = runStart;
+        }
+      } else {
+        run = 0;
+      }
+    });
+    if (best * (FRAME / 16000) >= MIN_VOICED_RUN_S) {
+      events.push({ at: t0 + bestStart * (FRAME / 16000), duration: best * (FRAME / 16000), source: 'gap' });
+    }
+  }
+  // Stretched junk words: "am"/"a"/"un"… lasting far longer than the word could.
+  for (const w of words) {
+    if (JUNK_HUM.has(w.word) && w.end - w.start >= JUNK_MIN_S) {
+      events.push({ at: w.start, duration: w.end - w.start, source: 'word' });
+    }
+  }
+  return events.sort((a, b) => a.at - b.at);
+}
+
 // Transcribe a recorded/uploaded blob → { transcript, words:[{word,start,end}] }.
 export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
   const transcriber = await getTranscriber(onProgress);
@@ -168,5 +247,7 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
     .filter(Boolean);
 
   const transcript = words.map((w) => w.word).join(' ');
-  return { transcript, words, audioDuration };
+  // Hesitations the text pipelines can't see — heard directly in the audio.
+  const voicedGaps = detectVoicedGaps(audio, words);
+  return { transcript, words, audioDuration, voicedGaps };
 }

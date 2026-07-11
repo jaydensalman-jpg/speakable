@@ -22,7 +22,7 @@ export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) 
         Before you record
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-ink/55">
-        Leave an email to tag your practice sessions — or skip straight to recording. Either way,
+        Leave an email to tag your practice sessions, or skip straight to recording. Either way,
         recordings never leave your device.
       </p>
 

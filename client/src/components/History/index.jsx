@@ -10,6 +10,7 @@ export default function History({ onOpenReport, onRecord, user }) {
   const [sessions, setSessions] = useState(null); // null = loading
   const [view, setView] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
   const [selected, setSelected] = useState(() => dayKey(Date.now()));
+  const [viewMode, setViewMode] = useState('calendar'); // calendar | all
 
   // Local sessions first (instant, playable). Signed in: merge in the account's
   // cloud reports — locals win on id collisions since they carry the blob.
@@ -61,7 +62,7 @@ export default function History({ onOpenReport, onRecord, user }) {
     return (
       <div className="animate-rise flex min-h-[60vh] flex-col items-center justify-center text-center">
         <h2 className="font-display text-3xl text-ink">No practices yet</h2>
-        <p className="mt-3 max-w-sm text-ink/55">Record your first talk and it’ll show up here — one square per day you practice.</p>
+        <p className="mt-3 max-w-sm text-ink/55">Record your first talk and it’ll show up here, one square for each day you practice.</p>
         <InteractiveHoverButton onClick={onRecord} text="Record now" className="mt-7 px-7 py-3" />
       </div>
     );
@@ -95,6 +96,38 @@ export default function History({ onOpenReport, onRecord, user }) {
         <Stat i={2} label="Avg score" value={stats.avg ? `${stats.avg}/10` : '—'} />
       </div>
 
+      {/* View switch: the practice calendar, or every recording in one list */}
+      <div className="flex bg-sand p-1 rounded-full max-w-[300px]">
+        {[
+          { id: 'calendar', label: 'Calendar' },
+          { id: 'all', label: 'All recordings' },
+        ].map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setViewMode(id)}
+            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all duration-250 ease-organic ${
+              viewMode === id ? 'bg-white text-ink shadow-soft' : 'text-ink/50 hover:text-ink/80'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {viewMode === 'all' ? (
+        <div className="space-y-3">
+          {sessions.map((s, i) => (
+            <SessionRow
+              key={s.id}
+              index={Math.min(i, 8)}
+              session={s}
+              showDate
+              onOpen={() => onOpenReport(s)}
+              onDelete={() => handleDelete(s.id)}
+            />
+          ))}
+        </div>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Calendar */}
         <div className="card">
@@ -151,6 +184,7 @@ export default function History({ onOpenReport, onRecord, user }) {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -164,11 +198,16 @@ function Stat({ label, value, i = 0 }) {
   );
 }
 
-function SessionRow({ session, onOpen, onDelete, index = 0 }) {
+function SessionRow({ session, onOpen, onDelete, index = 0, showDate = false }) {
   const r = session.results || {};
   const score = r.feedback?.overallScore ?? '—';
   const fillers = Object.values(r.fillerWordCounts || {}).reduce((a, b) => a + b, 0);
-  const time = new Date(session.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const stamp = new Date(session.createdAt);
+  const time = showDate
+    ? stamp.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      ', ' +
+      stamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : stamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
     <div className="card lift animate-rise flex items-center gap-4 py-4" style={{ animationDelay: `${index * 60}ms` }}>
       <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">

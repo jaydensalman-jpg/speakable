@@ -8,7 +8,7 @@ import EmailGate from './components/EmailGate/index.jsx';
 import SegmentedNav from './components/ui/SegmentedNav.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { pushReport, mergeUpLocal, flushOutbox } from './lib/cloudSync.js';
-import { detectFillerWords, mergeFillerCounts, fillerLabel } from './utils/fillerWords.js';
+import { detectFillerWords, mergeFillerCounts, fillerLabel, isHesitation } from './utils/fillerWords.js';
 import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
@@ -60,6 +60,7 @@ export default function App() {
       let transcript = '';
       let wordList = [];
       let audioDuration = 0;
+      let voicedGaps = [];
       try {
         const result = await transcribeLocally(blob, {
           onProgress: (e) => {
@@ -75,6 +76,7 @@ export default function App() {
         transcript = result.transcript;
         wordList = result.words;
         audioDuration = result.audioDuration || 0;
+        voicedGaps = result.voicedGaps || [];
       } catch (err) {
         console.error('Whisper failed, falling back to live transcript:', err);
         if (words && words.length) {
@@ -97,14 +99,30 @@ export default function App() {
       }
 
       const duration = audioDuration > 0 ? audioDuration : (wordList.at(-1)?.end ?? 0);
-      // Whisper text + interim-captured hesitations (max per label, never summed) —
-      // Whisper drops/mangles "um"/"uh", the live recognizer's interims keep them.
+      // Hesitations come from three detectors, most reliable last: Whisper text
+      // (usually scrubbed), live-recognizer interims (also often scrubbed), and
+      // the ACOUSTIC detector, which hears the hum directly in the audio and
+      // can't be scrubbed. Text sources merge per-label max; then, if the audio
+      // heard more hesitations than the text sources named, the surplus is
+      // reported as "um/uh" (we heard them, we just can't tell which form).
       const fillerWordCounts = mergeFillerCounts(detectFillerWords(wordList), hesitations?.counts);
-      // Timestamped filler moments for coaching ("your cluster was around 0:45"):
-      // whisper-caught fillers have exact times; interim events have rough ones.
-      const fillerEvents = [
+      const labeledHesitations = Object.entries(fillerWordCounts)
+        .filter(([label]) => isHesitation(label))
+        .reduce((a, [, n]) => a + n, 0);
+      if (voicedGaps.length > labeledHesitations) {
+        fillerWordCounts['um/uh'] = voicedGaps.length - labeledHesitations;
+      }
+      // Timestamped filler moments for coaching ("your cluster was around 0:45").
+      // Acoustic events only join when no text event already marks that moment.
+      const textEvents = [
         ...wordList.filter((w) => fillerLabel(w.word)).map((w) => ({ label: fillerLabel(w.word), at: w.start })),
         ...(hesitations?.events || []),
+      ];
+      const fillerEvents = [
+        ...textEvents,
+        ...voicedGaps
+          .filter((g) => !textEvents.some((e) => isHesitation(e.label) && Math.abs(e.at - g.at) < 1.5))
+          .map((g) => ({ label: 'um/uh', at: g.at })),
       ].sort((a, b) => a.at - b.at);
       const { avgWpm, wpmData } = computePacing(wordList, duration);
       const pauses = detectPauses(wordList);

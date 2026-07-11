@@ -233,7 +233,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
                     </svg>
                     <p className="text-xs">Camera turns on when you press record</p>
                     <p className="text-[11px] text-white/35 px-6 text-center">
-                      Eye contact is tracked on your device while you speak — video is analyzed in your browser, never uploaded.
+                      Eye contact is tracked on your device while you speak. Video is analyzed in your browser, never uploaded.
                     </p>
                   </div>
                 )}
@@ -387,7 +387,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           )}
 
           <p className="border-t border-sand px-5 py-4 text-center text-xs text-ink/35">
-            Recordings stay on this device — only reports sync if you sign in. Works best in Chrome.
+            Recordings stay on this device. Only reports sync if you sign in. Works best in Chrome.
           </p>
         </div>
       ) : (

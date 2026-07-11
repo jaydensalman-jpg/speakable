@@ -140,10 +140,10 @@ export function generateLocalFeedback({
       inRange: dist === 0,
       sentence:
         dist === 0
-          ? `Listeners follow spoken ideas best at 120–160 words per minute — your ${Math.round(avgWpm)} WPM sits right in that range.`
+          ? `You averaged ${Math.round(avgWpm)} words per minute, right in the range listeners follow best.`
           : avgWpm > 160
-            ? `Listeners need 120–160 words per minute to absorb ideas; at ${Math.round(avgWpm)} WPM your points crowd each other.`
-            : `120–160 words per minute keeps energy up; at ${Math.round(avgWpm)} WPM the talk drags between ideas.`,
+            ? `You averaged ${Math.round(avgWpm)} words per minute. That is quicker than most listeners can absorb, so big points get less room to land.`
+            : `You averaged ${Math.round(avgWpm)} words per minute, slower than the pace that keeps a talk feeling alive.`,
     });
   }
 
@@ -160,8 +160,8 @@ export function generateLocalFeedback({
       inRange: p <= 3,
       sentence:
         fillerTotal === 0
-          ? `No fillers detected — every word carried content.`
-          : `Fillers pull attention off the message. ${fillerTotal} of your ${wordCount} words were fillers${topFiller ? ` ("${topFiller}" most often)` : ''} — ${p <= 3 ? 'within' : 'above'} the 3% line where listeners start noticing.`,
+          ? `No fillers detected. Every word carried content.`
+          : `${fillerTotal} of your words were fillers${topFiller ? `, mostly "${topFiller}"` : ''}. Listeners start noticing once fillers pass 3% of a talk, and yours were ${p <= 3 ? 'under that line' : 'past it'}.`,
     });
   }
 
@@ -178,8 +178,8 @@ export function generateLocalFeedback({
       inRange: pauseRate <= 2,
       sentence:
         pauses.length === 0
-          ? `No stalls of 2+ seconds — the thread never dropped.`
-          : `A pause over 2 seconds reads as a lost thread unless it's deliberate. You had ${pauses.length}${longestPause ? `, the longest ${longestPause.duration.toFixed(1)}s around ${fmtTime(longestPause.at)}` : ''}.`,
+          ? `No stalls longer than 2 seconds. The thread never dropped.`
+          : `You stalled ${pauses.length} time${pauses.length === 1 ? '' : 's'}${longestPause ? `, the longest for ${longestPause.duration.toFixed(1)} seconds around ${fmtTime(longestPause.at)}` : ''}. A silence that long reads as a lost thread unless you meant it.`,
     });
   }
 
@@ -196,8 +196,8 @@ export function generateLocalFeedback({
       inRange: ttr >= 0.5,
       sentence:
         ttr >= 0.5
-          ? `Varied wording keeps listeners engaged — ${Math.round(ttr * 100)}% of your words were unique.`
-          : `Repeated wording dulls a talk. Only ${Math.round(ttr * 100)}% of your words were unique — the same few carried most sentences.`,
+          ? `${Math.round(ttr * 100)}% of your words were unique. Varied wording keeps people listening.`
+          : `Only ${Math.round(ttr * 100)}% of your words were unique, so a few words did most of the work.`,
     });
   }
 
@@ -212,8 +212,8 @@ export function generateLocalFeedback({
       inRange: avgConf >= 0.85,
       sentence:
         lowConfCount > 0
-          ? `If speech software struggles, back-row listeners do too: ${lowConfCount} word${lowConfCount === 1 ? '' : 's'} were hard to make out.`
-          : `Clean articulation — the recognizer caught ${Math.round(avgConf * 100)}% of words confidently.`,
+          ? `${lowConfCount} word${lowConfCount === 1 ? ' was' : 's were'} hard to make out. If speech software struggles with a word, people in the back row do too.`
+          : `Clean articulation. The recognizer caught ${Math.round(avgConf * 100)}% of your words confidently.`,
     });
   }
 
@@ -230,8 +230,8 @@ export function generateLocalFeedback({
       inRange: p >= 60,
       sentence:
         p >= 60
-          ? `Audiences trust speakers who look at them — you faced the camera ${p}% of the talk.`
-          : `Audiences trust speakers who look at them; at ${p}% of the talk, your eyes were elsewhere more than on them.`,
+          ? `You faced the camera ${p}% of the talk. That steady gaze is what builds trust with an audience.`
+          : `You faced the camera ${p}% of the talk, so your eyes were away from your audience more than on them.`,
     });
   }
 
@@ -249,44 +249,44 @@ export function generateLocalFeedback({
   const cluster = fillerCluster(fillerEvents);
   const drills = {
     fillers: {
-      title: `Cut the fillers — ${fillerTotal} in ${fmtTime(duration)}`,
-      body: `${fillerPct.toFixed(1)}% of your words were fillers${topFiller ? `, led by "${topFiller}"` : ''}${cluster ? `. Your densest cluster was around ${fmtTime(cluster.at)} — that's usually where you're deciding what to say next while talking` : ''}. The fix isn't speed, it's silence: a pause does the same job and sounds deliberate.`,
-      drill: `Do one 30-second take where the ONLY goal is zero fillers — when you feel one coming, stop, breathe once, continue. Score doesn't matter; the pause reflex does.`,
+      title: `Cut the fillers`,
+      body: `You used ${fillerTotal} fillers in ${fmtTime(duration)}${topFiller ? `, mostly "${topFiller}"` : ''}${cluster ? `. The thickest cluster came around ${fmtTime(cluster.at)}, which is usually the spot where you were deciding what to say next while still talking` : ''}. The fix is not speed. A silent pause does the same job and sounds deliberate.`,
+      drill: `Do one 30 second take where the only goal is zero fillers. When you feel one coming, stop, breathe once, and continue. The score does not matter. The pause reflex does.`,
     },
     pace: avgWpm > 160
       ? {
-          title: `Slow down — ${Math.round(avgWpm)} WPM`,
-          body: `You're ${Math.round(avgWpm - 160)} WPM over the comfortable ceiling. At this speed your emphasis flattens — every sentence gets the same weight, so nothing lands as important.`,
-          drill: `Re-record the same talk with a hard rule: a full one-second stop after each key point. It will feel slow; it won't sound slow.`,
+          title: `Slow down`,
+          body: `You averaged ${Math.round(avgWpm)} words per minute, ${Math.round(avgWpm - 160)} over the comfortable ceiling. At that speed every sentence gets the same weight, so nothing lands as important.`,
+          drill: `Record the same talk again with one hard rule: a full one second stop after each key point. It will feel slow to you. It will not sound slow.`,
         }
       : {
-          title: `Add pace — ${Math.round(avgWpm)} WPM`,
-          body: `You're ${Math.round(120 - avgWpm)} WPM under the range where a talk feels energetic. Slow overall pace usually means the words aren't decided yet, not that you're deliberate.`,
-          drill: `Outline three bullet points, then record 30 seconds aiming to land all three — momentum comes from knowing what's next.`,
+          title: `Add pace`,
+          body: `You averaged ${Math.round(avgWpm)} words per minute, ${Math.round(120 - avgWpm)} under the range where a talk feels energetic. A slow pace usually means the words are not decided yet.`,
+          drill: `Outline three bullet points, then record 30 seconds aiming to land all three. Momentum comes from knowing what is next.`,
         },
     flow: {
-      title: `Tighten the flow — ${pauses.length} long pause${pauses.length === 1 ? '' : 's'}`,
+      title: `Tighten the flow`,
       body: longestPause
-        ? `Your longest stall was ${longestPause.duration.toFixed(1)}s around ${fmtTime(longestPause.at)}, right after "${longestPause.before}". Stalls cluster where the next idea isn't loaded yet.`
-        : `Pauses came ${pauseRate.toFixed(1)} times per minute — more than listeners read as intentional.`,
-      drill: `Rehearse only your transitions: say the last line of one point and the first line of the next, five times, until the handoff is automatic.`,
+        ? `Your longest stall was ${longestPause.duration.toFixed(1)} seconds around ${fmtTime(longestPause.at)}, right after "${longestPause.before}". Stalls happen where the next idea is not loaded yet.`
+        : `You paused ${pauseRate.toFixed(1)} times per minute, more than listeners read as intentional.`,
+      drill: `Rehearse only your transitions. Say the last line of one point and the first line of the next, five times, until the handoff is automatic.`,
     },
     vocabulary: {
-      title: `Vary the wording — ${Math.round(ttr * 100)}% unique`,
-      body: `A few words are carrying most of your sentences. Listeners tune out phrasing they've already heard, even when the idea is new.`,
-      drill: `Find your two most-repeated content words in the transcript tab and write three alternatives for each, then re-record using them.`,
+      title: `Vary the wording`,
+      body: `Only ${Math.round(ttr * 100)}% of your words were unique, so a few words carried most sentences. Listeners tune out phrasing they have already heard, even when the idea is new.`,
+      drill: `Find your two most repeated content words in the transcript tab and write three alternatives for each. Then record again using them.`,
     },
     articulation: {
-      title: `Sharpen articulation — ${lowConfCount} unclear word${lowConfCount === 1 ? '' : 's'}`,
-      body: `Words are blurring at the edges — if recognition software misses them, people in the back do too.`,
-      drill: `Read one paragraph aloud hitting every word-ending consonant harder than feels natural. Record it; it will sound normal, not exaggerated.`,
+      title: `Sharpen articulation`,
+      body: `${lowConfCount} word${lowConfCount === 1 ? ' was' : 's were'} blurring at the edges. If recognition software misses them, people in the back row do too.`,
+      drill: `Read one paragraph aloud and hit every word ending consonant harder than feels natural. Record it. It will sound normal, not exaggerated.`,
     },
     eyeContact: {
-      title: `Hold the camera's gaze — ${hasEye ? eyeContact.contactPct : 0}%`,
+      title: `Hold the camera's gaze`,
       body: hasEye
-        ? `Your longest hold was ${Math.round(eyeContact.longestStreakSeconds)}s. Looking away while thinking is natural — but to an audience it reads as uncertainty about your own point.`
+        ? `You looked at the camera ${eyeContact.contactPct}% of the talk, and your longest hold was ${Math.round(eyeContact.longestStreakSeconds)} seconds. Looking away while thinking is natural, but to an audience it reads as doubt about your own point.`
         : '',
-      drill: `Record 30 seconds where the only goal is staying on the lens — tape a dot next to the camera if it helps. Content doesn't matter for this rep.`,
+      drill: `Record 30 seconds where the only goal is staying on the lens. Tape a dot next to the camera if it helps. The content does not matter for this rep.`,
     },
   };
 
@@ -299,9 +299,9 @@ export function generateLocalFeedback({
   if (coaching.length === 0) {
     coaching = [
       {
-        title: 'Strong take — raise the bar',
+        title: 'Strong take. Raise the bar',
         body: `Every measured area landed in range: ${metrics.map((m) => `${m.label.toLowerCase()} ${m.valueDisplay}`).join(', ')}. The next gain is consistency, not correction.`,
-        drill: `Record the same talk twice back-to-back and compare scores — a strong take you can repeat is worth more than a lucky one.`,
+        drill: `Record the same talk twice back to back and compare the scores. A strong take you can repeat is worth more than a lucky one.`,
       },
     ];
   }
@@ -309,7 +309,7 @@ export function generateLocalFeedback({
   // ---- Highlights — only genuine, earned strengths ---------------------
   const canPraise = sufficiency >= 0.5;
   const highlights = canPraise
-    ? metrics.filter((m) => m.inRange && m.score >= 8).slice(0, 2).map((m) => `${m.label}: ${m.valueDisplay} — on target.`)
+    ? metrics.filter((m) => m.inRange && m.score >= 8).slice(0, 2).map((m) => `${m.label}: ${m.valueDisplay}. On target.`)
     : [];
 
   // ---- Legacy fields so older saved reports keep rendering --------------

@@ -39,7 +39,7 @@ function SignInForm({ onSubmit }) {
         <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">Check your email</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink/55">
           We sent a sign-in link to <span className="font-semibold text-ink">{email}</span>. Open it on this
-          device and you'll be signed in — no password.
+          device and you'll be signed in. No password needed.
         </p>
         <button
           onClick={() => setState('idle')}
@@ -84,7 +84,7 @@ function SignInForm({ onSubmit }) {
           </p>
         )}
         <p className="text-xs leading-relaxed text-ink/40">
-          Signing in is optional — without an account, everything still works and stays in this browser.
+          Signing in is optional. Without an account, everything still works and stays in this browser.
         </p>
       </form>
     </div>
@@ -103,7 +103,7 @@ function SignedIn({ user, onSignOut }) {
       <div className="card mt-8 text-left">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-ink/45">What syncs</h2>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink/65">
-          <li>Reports — scores, pacing, fillers, transcript, eye contact — sync to your account.</li>
+          <li>Your reports (scores, pacing, fillers, transcript, eye contact) sync to your account.</li>
           <li>Recordings stay on the device where they were made. They are never uploaded.</li>
         </ul>
       </div>
@@ -124,7 +124,7 @@ function NotConfigured() {
     <div className="card text-center">
       <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">Accounts aren't set up yet</h1>
       <p className="mt-3 text-sm leading-relaxed text-ink/55">
-        This build has no cloud configured, so everything stays in this browser — recordings and reports both.
+        This build has no cloud configured, so everything stays in this browser, recordings and reports both.
         Once Supabase keys are added, signing in will sync your reports across devices.
       </p>
     </div>
