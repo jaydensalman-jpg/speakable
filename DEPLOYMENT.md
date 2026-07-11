@@ -19,32 +19,22 @@ npx vercel deploy --prod --yes
 That's it — Vercel builds with `npm run build` (see `client/vercel.json`) and swaps
 the live site. Use this until the GitHub flow below is set up.
 
-## B. Continuous deployment (recommended before distributing)
+## B. Continuous deployment — LIVE since July 2026 ✅
 
-Goal: `git push` → Vercel builds → live site updates for everyone, automatically.
+`git push` → Vercel builds → live site updates for everyone, automatically.
 
-### One-time setup
+- Repo: **https://github.com/jaydensalman-jpg/speakable** (public)
+- Connected to Vercel project `speakable`; builds use the root `vercel.json`
+  (install/build inside `client/`, output `client/dist`).
+- The one-time setup that made this work: GitHub repo created and pushed
+  (`gh repo create speakable --public --source . --push`), GitHub added as a
+  Login Connection on the Vercel account, the Vercel GitHub App installed with
+  access to the repo, then `npx vercel git connect <repo-url>`.
 
-1. **Create the GitHub repo** (this folder is already a git repo):
-   ```bash
-   # from speaking-coach/
-   gh repo create speakable --public --source . --push
-   # or: create an empty repo on github.com, then
-   # git remote add origin https://github.com/<you>/speakable.git && git push -u origin main
-   ```
-   Commit everything first (`git add -A && git commit -m "..."`). Secrets are safe:
-   `client/.gitignore` excludes `.env*` and `.vercel`.
-
-2. **Connect Vercel to the repo** — in the Vercel dashboard:
-   - Project `speakable` → **Settings → Git** → **Connect Git Repository** → pick the repo.
-   - **Settings → General → Root Directory**: set to `client` (the repo root is the
-     project folder; the app lives in `client/`).
-   - Build settings are auto-detected from `client/vercel.json` (Vite, `npm run build`, `dist`).
-
-3. **Environment variables** — already set on the project (`VITE_SUPABASE_URL`,
-   `VITE_SUPABASE_ANON_KEY` for Production). If you ever recreate the project, re-add
-   them under **Settings → Environment Variables**. They are baked in at build time,
-   so changing them requires a redeploy.
+**Environment variables** — already set on the project (`VITE_SUPABASE_URL`,
+`VITE_SUPABASE_ANON_KEY` for Production). If you ever recreate the project, re-add
+them under **Settings → Environment Variables**. They are baked in at build time,
+so changing them requires a redeploy.
 
 ### Day-to-day after setup
 
