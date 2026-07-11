@@ -1,40 +1,47 @@
-# SpeakCoach
+# Speakable
 
-AI-powered public speaking coach. Record or upload a 1–5 minute speech and get instant coaching feedback.
+**A public-speaking coach that runs entirely in your browser — your recordings never leave your device.**
 
-## Setup
+🎤 **Live app: [speakable-omega.vercel.app](https://speakable-omega.vercel.app)** — works on desktop and phones, installable as an app (Add to Home Screen).
 
-### 1. Install Node.js
-Download from https://nodejs.org (v18+ recommended).
+Record a short talk (or upload one), and Speakable transcribes it, measures how you actually spoke, and coaches you on the two or three things that will improve your next take — all on-device, free, no API keys.
 
-### 2. Install dependencies
+## What it measures
+
+| Metric | How |
+|---|---|
+| **Transcript** | OpenAI Whisper running *in the browser* via transformers.js (WASM) — word-level timestamps, no server |
+| **Filler words** | Whisper text + live capture of "um"/"uh" from speech-recognizer interim hypotheses (Whisper's training data scrubs disfluencies, so interims are the only reliable source — see `client/src/utils/fillerWords.js`) |
+| **Pacing** | Words per minute against true decoded audio duration, with over-time segments |
+| **Pauses** | Gaps ≥2s from word timestamps, with locations |
+| **Eye contact** | MediaPipe Face Landmarker at 10fps on the camera preview — head pose from the facial transformation matrix + gaze blendshapes, with hysteresis |
+| **Score** | Transparent by construction: the overall score is the plain average of the measured metrics, and the report shows each metric's raw value, target range, and points contributed. Unmeasurable metrics are hidden, never faked. |
+
+Coaching is generated on-device from the take's real numbers ("your densest filler cluster was around 0:45") with concrete drills — no LLM, no canned praise, and short samples are score-capped because there isn't enough evidence to grade them.
+
+## Privacy architecture
+
+- **Recordings (video/audio) never leave the device.** They live in IndexedDB, full stop. There is deliberately no code path that uploads media.
+- **Reports optionally sync.** With the (optional, never required) email magic-link account, the report JSON — scores, stats, transcript — syncs via Supabase with row-level security so each user can only touch their own rows (`supabase/schema.sql`). Without keys configured, the app is 100% local.
+
+## Stack
+
+React 18 + Vite + Tailwind · [@xenova/transformers](https://github.com/xenova/transformers.js) (Whisper) · [@mediapipe/tasks-vision](https://developers.google.com/mediapipe) (Face Landmarker) · Web Speech API (live captions + interim filler capture) · framer-motion · Supabase (auth + report sync) · PWA via vite-plugin-pwa · Vercel with continuous deployment from this repo.
+
+## Run it locally
+
 ```bash
-cd speaking-coach
-npm install          # root (installs concurrently)
-npm install --prefix server
-npm install --prefix client
+cd client
+npm install
+npm run dev        # http://localhost:5173 — use Chrome for the full experience
 ```
 
-### 3. Add API keys
-Edit `.env` in the project root:
-```
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...        # Only needed for the Upload path (Whisper)
-```
+No configuration needed. The first analysis downloads the Whisper model once (~145 MB desktop / ~40 MB mobile) and caches it in the browser. To enable accounts locally, copy `client/.env.example` to `client/.env.local` and add Supabase keys.
 
-### 4. Run
-```bash
-npm run dev
-```
-Opens on http://localhost:5173
+## Deploying
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) — pushes to `main` auto-deploy to production; branches get preview URLs.
 
 ---
 
-## How it works
-
-| Path | Transcription | Notes |
-|---|---|---|
-| Live record | Web Speech API (browser, free) | Chrome only |
-| Upload file | OpenAI Whisper (server) | Any browser, requires OpenAI key |
-
-The Claude API (`claude-sonnet-4-6`) provides the coaching feedback report.
+Built by [Jayden Salman](https://github.com/jaydensalman-jpg) (Informatics, University of Washington).
