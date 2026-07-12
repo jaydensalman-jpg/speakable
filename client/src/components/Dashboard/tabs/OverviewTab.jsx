@@ -1,19 +1,17 @@
 import ScoreRing from '../../ui/ScoreRing.jsx';
 
-// Overview = the transparent score page. New reports carry feedback.breakdown
-// (per metric: raw value, target, points contributed, one plain sentence) and
-// the overall is literally the average of those metric scores, so this tab just
-// renders the math. Metrics without real data aren't in the breakdown at all.
-// Eye contact gets its own featured section (pulled out of the list) with a
-// gauge + time bar. Sessions saved by older builds have no breakdown and fall
-// back to the legacy category view.
+// Overview = the transparent score page, laid out as a bento grid (adapted from
+// Kokonut UI "features-8": 6-col grid, three visual cards up top, wider cards
+// below — rebuilt on our .card/cream/coral tokens instead of shadcn's). Every
+// number is real: the overall is literally the average of the metric scores in
+// feedback.breakdown, each card is anchored by its own measurement (gauge,
+// sparkline, chips), and metrics without data simply aren't rendered.
+// Sessions saved by older builds have no breakdown → legacy category view.
 export default function OverviewTab({ results }) {
-  const { feedback, avgWpm, fillerWordCounts, pauses, duration, words, eyeContact } = results;
+  const { feedback, avgWpm, fillerWordCounts, wpmData, pauses, duration, words, eyeContact } = results;
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
   const wordCount = words.length;
   const breakdown = feedback.breakdown || null;
-  const eyeMetric = breakdown?.find((m) => m.id === 'eyeContact') || null;
-  const listMetrics = breakdown?.filter((m) => m.id !== 'eyeContact') || null;
 
   const stats = [
     { label: 'Words', value: wordCount.toLocaleString() },
@@ -23,12 +21,25 @@ export default function OverviewTab({ results }) {
     { label: 'Duration', value: formatDuration(duration) },
   ];
 
-  const getBarColor = (score) =>
-    score >= 8 ? '#10b981' : score >= 6 ? '#e0714f' : score >= 4 ? '#f59e0b' : '#ef4444';
+  // Display order puts the visual cards first (eye gauge, pace chart, fillers).
+  const ORDER = ['eyeContact', 'pace', 'fillers', 'flow', 'vocabulary', 'articulation'];
+  const cards = breakdown
+    ? ORDER.map((id) => breakdown.find((m) => m.id === id)).filter(Boolean)
+    : [];
+
+  // Bento spans: first three cards sit three-across on desktop, the rest two-
+  // across; a leftover card stretches the full row instead of dangling.
+  const spanFor = (i, n) => {
+    if (n <= 2) return 'col-span-full sm:col-span-3';
+    if (i < 3) return 'col-span-full sm:col-span-3 lg:col-span-2';
+    const rest = n - 3;
+    const isLastOdd = rest % 2 === 1 && i === n - 1;
+    return `col-span-full sm:col-span-3 ${isLastOdd ? 'lg:col-span-6' : 'lg:col-span-3'}`;
+  };
 
   return (
     <div className="space-y-5">
-      {/* Overall score + one line on how it works */}
+      {/* Overall score + verdict */}
       <div className="card flex flex-col sm:flex-row gap-8 items-center">
         <div className="shrink-0">
           <ScoreRing score={feedback.overallScore} size={140} label="Overall Score" />
@@ -36,7 +47,6 @@ export default function OverviewTab({ results }) {
         <div className="flex-1 w-full">
           {breakdown ? (
             <>
-              {/* The verdict: what this take did well and what to fix first. */}
               <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
                 {feedback.summary ||
                   `Your score is the average of the ${breakdown.length} areas measured in this take.`}
@@ -58,7 +68,7 @@ export default function OverviewTab({ results }) {
                   <div className="h-1.5 bg-sand rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${score * 10}%`, backgroundColor: getBarColor(score) }}
+                      style={{ width: `${score * 10}%`, backgroundColor: barColor(score) }}
                     />
                   </div>
                 </div>
@@ -68,38 +78,22 @@ export default function OverviewTab({ results }) {
         </div>
       </div>
 
-      {/* Eye contact, featured — it deserves its own stage */}
-      {eyeMetric && eyeContact && <EyeContactSection metric={eyeMetric} data={eyeContact} />}
-
-      {/* Remaining metrics, kept light: one bar, one fact line, one sentence */}
-      {listMetrics && listMetrics.length > 0 && (
-        <div className="space-y-3">
-          {listMetrics.map((m) => (
-            <div key={m.id} className="card py-5">
-              <div className="flex items-center gap-3">
-                <h4 className="font-semibold text-ink/80">{m.label}</h4>
-                <span
-                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                    m.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                  }`}
-                >
-                  {m.inRange ? 'on target' : 'needs work'}
-                </span>
-                <span className="ml-auto text-sm font-bold text-ink tabular-nums">{m.score}/10</span>
-              </div>
-              <div className="mt-2 h-1.5 bg-sand rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${m.score * 10}%`, backgroundColor: getBarColor(m.score) }}
-                />
-              </div>
-              <p className="mt-2 text-sm tabular-nums">
-                <span className="font-semibold text-ink">{m.valueDisplay}</span>
-                <span className="ml-2 text-xs text-ink/40">target {m.targetDisplay}</span>
-              </p>
-              {/* Explain only what needs attention; an on-target row speaks for itself. */}
-              {!m.inRange && <p className="mt-1.5 text-sm text-ink/60 leading-relaxed">{m.sentence}</p>}
-            </div>
+      {/* Metric bento grid */}
+      {cards.length > 0 && (
+        <div className="grid grid-cols-6 gap-3">
+          {cards.map((m, i) => (
+            <MetricCard key={m.id} metric={m} className={spanFor(i, cards.length)} tinted={m.id === 'eyeContact'}>
+              {m.id === 'eyeContact' && eyeContact && <EyeGauge data={eyeContact} />}
+              {m.id === 'pace' && <PaceChart avgWpm={avgWpm} wpmData={wpmData} />}
+              {m.id === 'fillers' && (
+                <FillerChips counts={fillerWordCounts} total={totalFillers} duration={duration} />
+              )}
+              {m.id === 'flow' && (
+                <BigStat value={pauses.length} unit={pauses.length === 1 ? 'long pause' : 'long pauses'} />
+              )}
+              {m.id === 'vocabulary' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="unique words" />}
+              {m.id === 'articulation' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="recognized clearly" />}
+            </MetricCard>
           ))}
         </div>
       )}
@@ -138,9 +132,7 @@ export default function OverviewTab({ results }) {
       {/* Highlights */}
       {feedback.highlights?.length > 0 && (
         <div className="card border-emerald-200 bg-emerald-50">
-          <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">
-            Strengths
-          </h3>
+          <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">Strengths</h3>
           <ul className="space-y-2">
             {feedback.highlights.map((h, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm text-emerald-800">
@@ -157,71 +149,119 @@ export default function OverviewTab({ results }) {
   );
 }
 
-// Featured eye-contact section: a gauge for the share of the talk spent on the
-// camera, a bar showing time on camera vs looking away, and the two key stats.
-function EyeContactSection({ metric, data }) {
-  const pct = data.contactPct;
-  const r = 34;
-  const c = 2 * Math.PI * r;
-
+// Shared bento card shell: header row, centered visual, target + note footer.
+function MetricCard({ metric, className, tinted, children }) {
   return (
-    <div className="card bg-gradient-to-br from-brand-50 to-sand border-brand-100">
-      <div className="flex items-center gap-2 mb-4">
-        <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <h3 className="text-xs font-semibold text-brand-700 uppercase tracking-wider">Eye contact</h3>
+    <div
+      className={`card flex flex-col py-5 ${className} ${
+        tinted ? 'bg-gradient-to-br from-brand-50 to-sand border-brand-100' : ''
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <h4 className="text-sm font-semibold text-ink/80">{metric.label}</h4>
+        <span
+          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            metric.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+          }`}
+        >
+          {metric.inRange ? 'on target' : 'needs work'}
+        </span>
         <span className="ml-auto text-sm font-bold text-ink tabular-nums">{metric.score}/10</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-6">
-        {/* Gauge: share of the talk spent facing the camera */}
-        <div className="relative h-[88px] w-[88px] shrink-0">
-          <svg width="88" height="88" className="-rotate-90">
-            <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(43,38,34,0.08)" strokeWidth="8" />
-            <circle
-              cx="44" cy="44" r={r} fill="none" stroke="#e0714f" strokeWidth="8" strokeLinecap="round"
-              strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
-              className="transition-all duration-700"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-2xl font-semibold leading-none text-ink">{pct}%</span>
-            <span className="text-[10px] text-ink/45 mt-0.5">on camera</span>
-          </div>
-        </div>
+      <div className="flex flex-1 flex-col justify-center py-5">{children}</div>
 
-        <div className="flex-1 w-full min-w-0">
-          {/* Where the time went */}
-          <div className="flex h-3 w-full overflow-hidden rounded-full">
-            <div className="bg-brand-500 transition-all duration-700" style={{ width: `${pct}%` }} />
-            <div className="flex-1 bg-ink/10" />
-          </div>
-          <div className="mt-1.5 flex justify-between text-[11px] text-ink/50">
-            <span>
-              <span className="inline-block w-2 h-2 rounded-full bg-brand-500 mr-1 align-middle" />
-              Looking at your audience ({formatDuration(data.contactSeconds)})
-            </span>
-            <span>Looking away</span>
-          </div>
-
-          <div className="mt-4 flex gap-3">
-            <div className="flex-1 rounded-2xl bg-white/70 px-4 py-2.5">
-              <p className="text-lg font-bold text-ink tabular-nums leading-tight">{Math.round(data.longestStreakSeconds)}s</p>
-              <p className="text-[11px] text-ink/50">longest hold</p>
-            </div>
-            <div className="flex-1 rounded-2xl bg-white/70 px-4 py-2.5">
-              <p className="text-lg font-bold text-ink tabular-nums leading-tight">{metric.inRange ? 'Yes' : 'Not yet'}</p>
-              <p className="text-[11px] text-ink/50">target: {metric.targetDisplay}</p>
-            </div>
-          </div>
-
-          <p className="mt-3 text-sm text-ink/65 leading-relaxed">{metric.sentence}</p>
-        </div>
-      </div>
+      <p className="text-[11px] text-ink/40">target {metric.targetDisplay}</p>
+      {!metric.inRange && <p className="mt-1.5 text-sm text-ink/60 leading-relaxed">{metric.sentence}</p>}
     </div>
   );
+}
+
+// Ring gauge with the template's halo treatment, showing time spent on camera.
+function EyeGauge({ data }) {
+  const pct = data.contactPct;
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="text-center">
+      <div className="relative mx-auto flex aspect-square w-[104px] items-center justify-center rounded-full before:absolute before:-inset-2 before:rounded-full before:border before:border-brand-200/50">
+        <svg width="104" height="104" className="-rotate-90 absolute inset-0">
+          <circle cx="52" cy="52" r={r} fill="none" stroke="rgba(43,38,34,0.08)" strokeWidth="8" />
+          <circle
+            cx="52" cy="52" r={r} fill="none" stroke="#e0714f" strokeWidth="8" strokeLinecap="round"
+            strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
+            className="transition-all duration-700"
+          />
+        </svg>
+        <span className="relative font-display text-2xl font-semibold leading-none text-ink">{pct}%</span>
+      </div>
+      <p className="mt-3 text-xs text-ink/55 tabular-nums">
+        of the talk on camera · longest hold {Math.round(data.longestStreakSeconds)}s
+      </p>
+    </div>
+  );
+}
+
+// Big WPM + a sparkline over the take, with the 120–160 comfort band shaded.
+function PaceChart({ avgWpm, wpmData }) {
+  const pts = (wpmData || []).map((d) => d.wpm).filter((n) => n > 0);
+  const w = 220;
+  const h = 56;
+  const lo = Math.min(80, ...pts);
+  const hi = Math.max(180, ...pts);
+  const x = (i) => (pts.length > 1 ? (i / (pts.length - 1)) * w : w / 2);
+  const y = (v) => h - ((v - lo) / (hi - lo || 1)) * h;
+  const path = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return (
+    <div className="text-center">
+      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">
+        {avgWpm}
+        <span className="ml-1.5 text-sm font-sans font-medium text-ink/45">WPM</span>
+      </p>
+      {pts.length > 1 && (
+        <svg viewBox={`0 0 ${w} ${h}`} className="mt-4 w-full h-12" preserveAspectRatio="none" aria-hidden>
+          <rect x="0" y={y(160)} width={w} height={Math.max(y(120) - y(160), 0)} fill="#e0714f" opacity="0.09" />
+          <path d={path} fill="none" stroke="#e0714f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+// Total up top, then the actual words as chips (the template's tag-chip motif).
+function FillerChips({ counts, total, duration }) {
+  const top = Object.entries(counts).filter(([, n]) => n > 0).sort(([, a], [, b]) => b - a).slice(0, 3);
+  const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : '0.0';
+  return (
+    <div className="text-center">
+      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">
+        {total}
+        <span className="ml-1.5 text-sm font-sans font-medium text-ink/45">{perMin}/min</span>
+      </p>
+      {top.length > 0 && (
+        <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+          {top.map(([word, n]) => (
+            <span key={word} className="rounded-full border border-sand bg-cream px-2.5 py-1 text-xs text-ink/70">
+              "{word}" ×{n}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BigStat({ value, unit }) {
+  return (
+    <div className="text-center">
+      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">{value}</p>
+      <p className="mt-2 text-xs text-ink/45">{unit}</p>
+    </div>
+  );
+}
+
+function barColor(score) {
+  return score >= 8 ? '#10b981' : score >= 6 ? '#e0714f' : score >= 4 ? '#f59e0b' : '#ef4444';
 }
 
 function formatDuration(s) {
