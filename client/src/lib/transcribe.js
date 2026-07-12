@@ -147,13 +147,19 @@ async function blobToMono16k(blob, onStatus) {
 // into a stretched junk word ("ummm" → "am" lasting 0.7s). This detector finds
 // both. It can't tell "um" from "uh", so callers label these events 'um/uh'.
 
+// Tuned for RECALL after real-voice testing under-counted: this is a coaching
+// tool, so hearing every hesitation matters more than the occasional throat
+// clear sneaking in.
 const FRAME = 400; // 25ms @ 16kHz
-const MIN_GAP_S = 0.3; // word gap worth inspecting
-const MIN_VOICED_RUN_S = 0.22; // sustained hum needed inside the gap
-const MAX_ZCR = 0.12; // vowels/nasals cross zero rarely; hiss and noise don't
+const MIN_GAP_S = 0.24; // word gap worth inspecting
+const MIN_VOICED_RUN_S = 0.12; // even a quick hum counts
+const LAST_WORD_CAP_S = 0.8; // whisper pads the final word's end to the clip end,
+// hiding trailing hums inside it; scan past a plausible word length
+const RUN_BREAK_FRAMES = 3; // ≥75ms of quiet splits two hums in the same gap
+const MAX_ZCR = 0.15; // vowels/nasals cross zero rarely; hiss and noise don't
 // Stretched junk words whisper writes when it half-hears a hesitation.
 const JUNK_HUM = new Set(['a', 'am', 'an', 'ah', 'oh', 'eh', 'um', 'uh', 'mm', 'hm', 'hmm', 'm', 'em', 'un', 'huh', 'hum', 'awe']);
-const JUNK_MIN_S = 0.55;
+const JUNK_MIN_S = 0.45;
 
 function frameStats(audio, from, to) {
   // RMS + zero-crossing rate per 25ms frame within [from, to) sample range.
@@ -177,37 +183,46 @@ function detectVoicedGaps(audio, words) {
   if (!all.length) return [];
   const speechLevel = all[Math.floor(all.length * 0.7)];
   const noiseFloor = all[Math.floor(all.length * 0.2)];
-  const voicedThreshold = Math.max(noiseFloor * 3, speechLevel * 0.25, 0.004);
+  // Softer than speech still counts: trailing "uh"s often fade to a murmur.
+  const voicedThreshold = Math.max(noiseFloor * 2.2, speechLevel * 0.15, 0.0025);
 
   const events = [];
-  // Inspect the stretch before the first word plus every inter-word gap.
+  // Inspect before the first word, every inter-word gap, and after the last word.
   const spans = [];
   if (words[0].start >= MIN_GAP_S) spans.push([Math.max(0, words[0].start - 3), words[0].start]);
   for (let i = 1; i < words.length; i++) {
     const gap = words[i].start - words[i - 1].end;
     if (gap >= MIN_GAP_S) spans.push([words[i - 1].end, words[i].start]);
   }
+  const last = words.at(-1);
+  const lastEnd = Math.min(last.end, last.start + LAST_WORD_CAP_S, audio.length / 16000);
+  const tail = audio.length / 16000 - lastEnd;
+  if (tail >= MIN_GAP_S) spans.push([lastEnd, Math.min(lastEnd + 4, audio.length / 16000)]);
+
   for (const [t0, t1] of spans) {
     const frames = frameStats(audio, Math.floor(t0 * 16000), Math.min(Math.floor(t1 * 16000), audio.length));
-    let run = 0;
-    let best = 0;
+    // EVERY distinct voiced run in the gap is its own hesitation ("um... um"
+    // in one pause counts twice). Runs split on ≥RUN_BREAK_FRAMES of quiet.
+    let run = 0; // voiced frames in the current hum
     let runStart = 0;
-    let bestStart = 0;
+    let quiet = 0; // consecutive quiet frames inside/after a hum
+    const flush = () => {
+      if (run * (FRAME / 16000) >= MIN_VOICED_RUN_S) {
+        events.push({ at: t0 + runStart * (FRAME / 16000), duration: run * (FRAME / 16000), source: 'gap' });
+      }
+      run = 0;
+      quiet = 0;
+    };
     frames.forEach((f, i) => {
       if (f.rms > voicedThreshold && f.zcr < MAX_ZCR) {
         if (run === 0) runStart = i;
         run++;
-        if (run > best) {
-          best = run;
-          bestStart = runStart;
-        }
-      } else {
-        run = 0;
+        quiet = 0; // a brief dip inside a hum doesn't split it
+      } else if (run > 0 && ++quiet >= RUN_BREAK_FRAMES) {
+        flush();
       }
     });
-    if (best * (FRAME / 16000) >= MIN_VOICED_RUN_S) {
-      events.push({ at: t0 + bestStart * (FRAME / 16000), duration: best * (FRAME / 16000), source: 'gap' });
-    }
+    flush();
   }
   // Stretched junk words: "am"/"a"/"un"… lasting far longer than the word could.
   for (const w of words) {
