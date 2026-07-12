@@ -36,16 +36,16 @@ export default function OverviewTab({ results }) {
         <div className="flex-1 w-full">
           {breakdown ? (
             <>
-              <p className="text-sm text-ink/65 leading-relaxed">
-                Your score is simply the average of the {breakdown.length} areas measured in this
-                take. Each one is scored out of 10 and counts equally.
+              {/* The verdict: what this take did well and what to fix first. */}
+              <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
+                {feedback.summary ||
+                  `Your score is the average of the ${breakdown.length} areas measured in this take.`}
               </p>
-              {feedback.meta?.cap < 10 && (
-                <p className="mt-2 text-xs text-ink/45 leading-relaxed">
-                  Short take: scores are capped at {feedback.meta.cap} until you record about 45
-                  seconds. More speech, more evidence, higher ceiling.
-                </p>
-              )}
+              <p className="mt-2 text-xs text-ink/40 leading-relaxed">
+                Score is the average of the {breakdown.length} areas below.
+                {feedback.meta?.cap < 10 &&
+                  ` Short take: capped at ${feedback.meta.cap} until you record about 45 seconds.`}
+              </p>
             </>
           ) : (
             <div className="grid grid-cols-2 gap-4 w-full">
@@ -93,14 +93,12 @@ export default function OverviewTab({ results }) {
                   style={{ width: `${m.score * 10}%`, backgroundColor: getBarColor(m.score) }}
                 />
               </div>
-              <p className="mt-2 text-xs text-ink/45 tabular-nums">
-                You: <span className="font-semibold text-ink/70">{m.valueDisplay}</span>
-                <span className="mx-1.5">·</span>
-                Target: <span className="font-semibold text-ink/70">{m.targetDisplay}</span>
-                <span className="mx-1.5">·</span>
-                Adds <span className="font-semibold text-ink/70">{m.points}</span> of {m.maxPoints} pts
+              <p className="mt-2 text-sm tabular-nums">
+                <span className="font-semibold text-ink">{m.valueDisplay}</span>
+                <span className="ml-2 text-xs text-ink/40">target {m.targetDisplay}</span>
               </p>
-              <p className="mt-1.5 text-sm text-ink/60 leading-relaxed">{m.sentence}</p>
+              {/* Explain only what needs attention; an on-target row speaks for itself. */}
+              {!m.inRange && <p className="mt-1.5 text-sm text-ink/60 leading-relaxed">{m.sentence}</p>}
             </div>
           ))}
         </div>

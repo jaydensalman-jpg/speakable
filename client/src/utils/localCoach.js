@@ -237,6 +237,31 @@ export function generateLocalFeedback({
 
   // ---- Overall = plain average of measured metrics, capped by sample ----
   const overallScore = clamp(Math.min(avg(metrics.map((m) => m.score)), cap));
+
+  // One honest verdict for the top of the report: what held up, what is
+  // costing points, where to start. Built from this take's numbers only.
+  const shortName = {
+    pace: `pace (${Math.round(avgWpm)} WPM)`,
+    fillers: `fillers (${Math.round(fillerPct)}% of your words)`,
+    flow: `long pauses (${pauses.length} of them)`,
+    vocabulary: `word variety (${Math.round(ttr * 100)}% unique)`,
+    articulation: `clarity (${lowConfCount} unclear word${lowConfCount === 1 ? '' : 's'})`,
+    eyeContact: hasEye ? `eye contact (${eyeContact.contactPct}% at the camera)` : '',
+  };
+  const listJoin = (arr) => (arr.length > 1 ? `${arr.slice(0, -1).join(', ')} and ${arr.at(-1)}` : arr[0]);
+  const offTarget = metrics.filter((m) => !m.inRange).sort((a, b) => a.score - b.score);
+  const onTarget = metrics.filter((m) => m.inRange);
+  let summary;
+  if (offTarget.length === 0) {
+    summary = 'Everything measured landed on target. The next win is doing it twice in a row.';
+  } else {
+    const fix = offTarget.slice(0, 2).map((m) => shortName[m.id]).filter(Boolean);
+    const held = onTarget.map((m) => m.label.toLowerCase());
+    const opener = held.length
+      ? `${listJoin(held).replace(/^./, (c) => c.toUpperCase())} held up well. `
+      : '';
+    summary = `${opener}What pulled the score down: ${listJoin(fix)}. Start there.`;
+  }
   const share = metrics.length ? 10 / metrics.length : 0;
   const breakdown = metrics.map((m) => ({
     ...m,
@@ -319,6 +344,7 @@ export function generateLocalFeedback({
 
   return {
     overallScore,
+    summary,
     breakdown,
     coaching,
     categoryScores,
