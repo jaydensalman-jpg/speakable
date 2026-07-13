@@ -138,6 +138,7 @@ export function generateLocalFeedback({
       valueDisplay: `${Math.round(avgWpm)} WPM`,
       targetDisplay: '120–160 WPM',
       inRange: dist === 0,
+      plain: dist === 0 ? 'Easy to follow' : avgWpm > 160 ? 'A bit too fast' : 'A bit too slow',
       sentence:
         dist === 0
           ? `You averaged ${Math.round(avgWpm)} words per minute, right in the range listeners follow best.`
@@ -158,6 +159,7 @@ export function generateLocalFeedback({
       valueDisplay: `${fillerTotal} (${fillerPct.toFixed(1)}% of words, ${fillersPerMin.toFixed(1)}/min)`,
       targetDisplay: 'under 3% of words',
       inRange: p <= 3,
+      plain: fillerTotal === 0 ? 'None — clean' : p <= 3 ? 'Well controlled' : 'Too many',
       sentence:
         fillerTotal === 0
           ? `No fillers detected. Every word carried content.`
@@ -176,6 +178,7 @@ export function generateLocalFeedback({
       valueDisplay: `${pauses.length} long pause${pauses.length === 1 ? '' : 's'} (${pauseRate.toFixed(1)}/min)`,
       targetDisplay: '≤2 per minute',
       inRange: pauseRate <= 2,
+      plain: pauses.length === 0 ? 'No stalls' : pauseRate <= 2 ? 'Good flow' : 'Too many stalls',
       sentence:
         pauses.length === 0
           ? `No stalls longer than 2 seconds. The thread never dropped.`
@@ -194,6 +197,7 @@ export function generateLocalFeedback({
       valueDisplay: `${Math.round(ttr * 100)}% unique words`,
       targetDisplay: '50%+ unique',
       inRange: ttr >= 0.5,
+      plain: ttr >= 0.5 ? 'Nicely varied' : 'Words repeat a lot',
       sentence:
         ttr >= 0.5
           ? `${Math.round(ttr * 100)}% of your words were unique. Varied wording keeps people listening.`
@@ -210,6 +214,7 @@ export function generateLocalFeedback({
       valueDisplay: `${Math.round(avgConf * 100)}% recognition confidence`,
       targetDisplay: '85%+',
       inRange: avgConf >= 0.85,
+      plain: lowConfCount === 0 ? 'Clear and crisp' : 'Some unclear words',
       sentence:
         lowConfCount > 0
           ? `${lowConfCount} word${lowConfCount === 1 ? ' was' : 's were'} hard to make out. If speech software struggles with a word, people in the back row do too.`
@@ -228,6 +233,7 @@ export function generateLocalFeedback({
       valueDisplay: `${p}% of the talk (longest hold ${Math.round(eyeContact.longestStreakSeconds)}s)`,
       targetDisplay: '60%+ at the camera',
       inRange: p >= 60,
+      plain: p >= 60 ? 'Strong connection' : 'Looked away a lot',
       sentence:
         p >= 60
           ? `You faced the camera ${p}% of the talk. That steady gaze is what builds trust with an audience.`

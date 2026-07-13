@@ -201,9 +201,15 @@ function MetricCard({ metric, className, tinted, children }) {
 
       <div className="flex flex-1 flex-col justify-center py-3">{children}</div>
 
-      {!metric.inRange && (
-        <p className="text-xs text-ink/55 leading-relaxed">
-          {metric.sentence} <span className="text-ink/35">Target {metric.targetDisplay}.</span>
+      {/* One plain verdict per card — good or bad, in a couple of words. The
+          full "why it matters" explanation lives in the Coaching tab. */}
+      {metric.plain && (
+        <p
+          className={`text-center text-xs font-semibold ${
+            metric.inRange ? 'text-emerald-600' : 'text-amber-600'
+          }`}
+        >
+          {metric.plain}
         </p>
       )}
     </div>
