@@ -28,6 +28,27 @@ export default defineConfig({
       workbox: {
         // The code-split transformers.js chunk exceeds workbox's 2 MB default.
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        // Make a new deploy take over the page immediately instead of the
+        // default "wait until every tab is closed" — otherwise returning
+        // visitors keep seeing the previous version. Paired with the
+        // autoUpdate register type, the page swaps to the new build on load.
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        // Always fetch the HTML entry from the network when online so the page
+        // references the newest hashed assets; fall back to cache offline.
+        // (JS/CSS are content-hashed, so they can never go stale.)
+        navigateFallback: 'index.html',
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html',
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
       },
     }),
   ],
