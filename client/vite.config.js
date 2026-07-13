@@ -36,9 +36,12 @@ export default defineConfig({
         skipWaiting: true,
         cleanupOutdatedCaches: true,
         // Always fetch the HTML entry from the network when online so the page
-        // references the newest hashed assets; fall back to cache offline.
-        // (JS/CSS are content-hashed, so they can never go stale.)
-        navigateFallback: 'index.html',
+        // references the newest hashed assets; fall back to cache offline after
+        // the first visit. (JS/CSS are content-hashed, so they never go stale.)
+        // NOTE: do NOT set navigateFallback here — it registers a cache-first
+        // NavigationRoute that takes precedence over this NetworkFirst one and
+        // reintroduces the stale-page bug.
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
