@@ -51,10 +51,10 @@ export default function OverviewTab({ results }) {
                 {feedback.summary ||
                   `Your score is the average of the ${breakdown.length} areas measured in this take.`}
               </p>
-              <p className="mt-2 text-xs text-ink/40 leading-relaxed">
-                Score is the average of the {breakdown.length} areas below.
-                {feedback.meta?.cap < 10 &&
-                  ` Short take: capped at ${feedback.meta.cap} until you record about 45 seconds.`}
+              <p className="mt-2 text-xs text-ink/40 leading-relaxed tabular-nums">
+                {wordCount} words · {formatDuration(duration)} · score is the average of the{' '}
+                {breakdown.length} areas below
+                {feedback.meta?.cap < 10 && ` · capped at ${feedback.meta.cap} for short takes`}
               </p>
             </>
           ) : (
@@ -98,15 +98,17 @@ export default function OverviewTab({ results }) {
         </div>
       )}
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {stats.map((s) => (
-          <div key={s.label} className="stat-card">
-            <span className="text-xl font-bold text-ink tabular-nums">{s.value}</span>
-            <span className="text-xs text-ink/45 font-medium">{s.label}</span>
-          </div>
-        ))}
-      </div>
+      {/* Quick stats — legacy reports only; the bento cards carry these now */}
+      {!breakdown && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {stats.map((s) => (
+            <div key={s.label} className="stat-card">
+              <span className="text-xl font-bold text-ink tabular-nums">{s.value}</span>
+              <span className="text-xs text-ink/45 font-medium">{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Eye contact card for sessions saved before the breakdown existed */}
       {!breakdown && eyeContact && (
@@ -129,8 +131,9 @@ export default function OverviewTab({ results }) {
         </div>
       )}
 
-      {/* Highlights */}
-      {feedback.highlights?.length > 0 && (
+      {/* Highlights — legacy only; the verdict and green pills cover this now,
+          and the Coaching tab keeps the full "working already" list */}
+      {!breakdown && feedback.highlights?.length > 0 && (
         <div className="card border-emerald-200 bg-emerald-50">
           <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">Strengths</h3>
           <ul className="space-y-2">
@@ -149,7 +152,8 @@ export default function OverviewTab({ results }) {
   );
 }
 
-// Shared bento card shell: header row, centered visual, target + note footer.
+// Bento card, kept to three elements: label, one tinted score pill (state and
+// score in a single glance), the visual. Words only where action is needed.
 function MetricCard({ metric, className, tinted, children }) {
   return (
     <div
@@ -157,22 +161,25 @@ function MetricCard({ metric, className, tinted, children }) {
         tinted ? 'bg-gradient-to-br from-brand-50 to-sand border-brand-100' : ''
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-ink/80">{metric.label}</h4>
         <span
-          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+          className={`text-xs font-bold tabular-nums px-2.5 py-1 rounded-full ${
             metric.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
           }`}
         >
-          {metric.inRange ? 'on target' : 'needs work'}
+          {metric.score}/10
         </span>
-        <span className="ml-auto text-sm font-bold text-ink tabular-nums">{metric.score}/10</span>
       </div>
 
       <div className="flex flex-1 flex-col justify-center py-5">{children}</div>
 
-      <p className="text-[11px] text-ink/40">target {metric.targetDisplay}</p>
-      {!metric.inRange && <p className="mt-1.5 text-sm text-ink/60 leading-relaxed">{metric.sentence}</p>}
+      {!metric.inRange && (
+        <>
+          <p className="text-sm text-ink/60 leading-relaxed">{metric.sentence}</p>
+          <p className="mt-1.5 text-[11px] text-ink/40">target {metric.targetDisplay}</p>
+        </>
+      )}
     </div>
   );
 }
