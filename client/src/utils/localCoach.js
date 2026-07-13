@@ -251,16 +251,21 @@ export function generateLocalFeedback({
   const listJoin = (arr) => (arr.length > 1 ? `${arr.slice(0, -1).join(', ')} and ${arr.at(-1)}` : arr[0]);
   const offTarget = metrics.filter((m) => !m.inRange).sort((a, b) => a.score - b.score);
   const onTarget = metrics.filter((m) => m.inRange);
+  // Structured verdict the UI renders as two scannable lines (strong / focus).
+  // `summary` is kept as a plain-sentence fallback for older render paths.
+  const assessment = {
+    strong: onTarget.map((m) => m.label),
+    focus: offTarget.slice(0, 2).map((m) => shortName[m.id]).filter(Boolean),
+  };
   let summary;
   if (offTarget.length === 0) {
     summary = 'Everything measured landed on target. The next win is doing it twice in a row.';
   } else {
-    const fix = offTarget.slice(0, 2).map((m) => shortName[m.id]).filter(Boolean);
     const held = onTarget.map((m) => m.label.toLowerCase());
     const opener = held.length
       ? `${listJoin(held).replace(/^./, (c) => c.toUpperCase())} held up well. `
       : '';
-    summary = `${opener}What pulled the score down: ${listJoin(fix)}. Start there.`;
+    summary = `${opener}What pulled the score down: ${listJoin(assessment.focus)}. Start there.`;
   }
   const share = metrics.length ? 10 / metrics.length : 0;
   const breakdown = metrics.map((m) => ({
@@ -345,6 +350,7 @@ export function generateLocalFeedback({
   return {
     overallScore,
     summary,
+    assessment,
     breakdown,
     coaching,
     categoryScores,

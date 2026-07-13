@@ -47,13 +47,13 @@ export default function OverviewTab({ results }) {
         <div className="flex-1 w-full">
           {breakdown ? (
             <>
-              <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
-                {feedback.summary ||
-                  `Your score is the average of the ${breakdown.length} areas measured in this take.`}
-              </p>
-              <p className="mt-2 text-xs text-ink/40 leading-relaxed tabular-nums">
-                {wordCount} words · {formatDuration(duration)} · score is the average of the{' '}
-                {breakdown.length} areas below
+              {feedback.assessment ? (
+                <Verdict assessment={feedback.assessment} />
+              ) : (
+                <p className="text-[15px] text-ink/80 leading-relaxed font-medium">{feedback.summary}</p>
+              )}
+              <p className="mt-3 text-xs text-ink/40 leading-relaxed tabular-nums">
+                {wordCount} words · {formatDuration(duration)}
                 {feedback.meta?.cap < 10 && ` · capped at ${feedback.meta.cap} for short takes`}
               </p>
             </>
@@ -152,19 +152,46 @@ export default function OverviewTab({ results }) {
   );
 }
 
+// Verdict: two scannable lines instead of a run-on sentence — what's strong,
+// and the 1–2 things to focus on. If nothing needs work, one clean line.
+function Verdict({ assessment }) {
+  const { strong, focus } = assessment;
+  if (!focus.length) {
+    return (
+      <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
+        Everything measured landed on target. Nice work — now do it twice in a row.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline gap-2.5">
+        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-brand-600">Focus on</span>
+        <span className="text-[15px] font-semibold text-ink leading-snug">{focus.join(', ')}</span>
+      </div>
+      {strong.length > 0 && (
+        <div className="flex items-baseline gap-2.5">
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-600">Strong</span>
+          <span className="text-sm text-ink/55 leading-snug">{strong.join(', ')}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Bento card, kept to three elements: label, one tinted score pill (state and
 // score in a single glance), the visual. Words only where action is needed.
 function MetricCard({ metric, className, tinted, children }) {
   return (
     <div
-      className={`card flex flex-col py-5 ${className} ${
+      className={`card flex flex-col py-4 ${className} ${
         tinted ? 'bg-gradient-to-br from-brand-50 to-sand border-brand-100' : ''
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-ink/80">{metric.label}</h4>
         <span
-          className={`text-xs font-bold tabular-nums px-2.5 py-1 rounded-full ${
+          className={`text-xs font-bold tabular-nums px-2 py-0.5 rounded-full ${
             metric.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
           }`}
         >
@@ -172,38 +199,37 @@ function MetricCard({ metric, className, tinted, children }) {
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center py-5">{children}</div>
+      <div className="flex flex-1 flex-col justify-center py-3">{children}</div>
 
       {!metric.inRange && (
-        <>
-          <p className="text-sm text-ink/60 leading-relaxed">{metric.sentence}</p>
-          <p className="mt-1.5 text-[11px] text-ink/40">target {metric.targetDisplay}</p>
-        </>
+        <p className="text-xs text-ink/55 leading-relaxed">
+          {metric.sentence} <span className="text-ink/35">Target {metric.targetDisplay}.</span>
+        </p>
       )}
     </div>
   );
 }
 
-// Ring gauge with the template's halo treatment, showing time spent on camera.
+// Ring gauge showing time spent on camera. Compact halo treatment.
 function EyeGauge({ data }) {
   const pct = data.contactPct;
-  const r = 34;
+  const r = 30;
   const c = 2 * Math.PI * r;
   return (
     <div className="text-center">
-      <div className="relative mx-auto flex aspect-square w-[104px] items-center justify-center rounded-full before:absolute before:-inset-2 before:rounded-full before:border before:border-brand-200/50">
-        <svg width="104" height="104" className="-rotate-90 absolute inset-0">
-          <circle cx="52" cy="52" r={r} fill="none" stroke="rgba(43,38,34,0.08)" strokeWidth="8" />
+      <div className="relative mx-auto flex aspect-square w-[84px] items-center justify-center rounded-full before:absolute before:-inset-2 before:rounded-full before:border before:border-brand-200/50">
+        <svg width="84" height="84" className="-rotate-90 absolute inset-0">
+          <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(43,38,34,0.08)" strokeWidth="7" />
           <circle
-            cx="52" cy="52" r={r} fill="none" stroke="#e0714f" strokeWidth="8" strokeLinecap="round"
+            cx="42" cy="42" r={r} fill="none" stroke="#e0714f" strokeWidth="7" strokeLinecap="round"
             strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
             className="transition-all duration-700"
           />
         </svg>
-        <span className="relative font-display text-2xl font-semibold leading-none text-ink">{pct}%</span>
+        <span className="relative font-display text-xl font-semibold leading-none text-ink">{pct}%</span>
       </div>
-      <p className="mt-3 text-xs text-ink/55 tabular-nums">
-        of the talk on camera · longest hold {Math.round(data.longestStreakSeconds)}s
+      <p className="mt-2.5 text-[11px] text-ink/50 tabular-nums">
+        on camera · longest hold {Math.round(data.longestStreakSeconds)}s
       </p>
     </div>
   );
@@ -213,7 +239,7 @@ function EyeGauge({ data }) {
 function PaceChart({ avgWpm, wpmData }) {
   const pts = (wpmData || []).map((d) => d.wpm).filter((n) => n > 0);
   const w = 220;
-  const h = 56;
+  const h = 40;
   const lo = Math.min(80, ...pts);
   const hi = Math.max(180, ...pts);
   const x = (i) => (pts.length > 1 ? (i / (pts.length - 1)) * w : w / 2);
@@ -221,12 +247,12 @@ function PaceChart({ avgWpm, wpmData }) {
   const path = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   return (
     <div className="text-center">
-      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">
+      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">
         {avgWpm}
-        <span className="ml-1.5 text-sm font-sans font-medium text-ink/45">WPM</span>
+        <span className="ml-1.5 text-xs font-sans font-medium text-ink/45">WPM</span>
       </p>
       {pts.length > 1 && (
-        <svg viewBox={`0 0 ${w} ${h}`} className="mt-4 w-full h-12" preserveAspectRatio="none" aria-hidden>
+        <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 w-full h-9" preserveAspectRatio="none" aria-hidden>
           <rect x="0" y={y(160)} width={w} height={Math.max(y(120) - y(160), 0)} fill="#e0714f" opacity="0.09" />
           <path d={path} fill="none" stroke="#e0714f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -235,20 +261,19 @@ function PaceChart({ avgWpm, wpmData }) {
   );
 }
 
-// Total up top, then the actual words as chips (the template's tag-chip motif).
+// Big total with a clear label (fixes "2912.6/min" run-together), then the top
+// offenders as chips.
 function FillerChips({ counts, total, duration }) {
   const top = Object.entries(counts).filter(([, n]) => n > 0).sort(([, a], [, b]) => b - a).slice(0, 3);
   const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : '0.0';
   return (
     <div className="text-center">
-      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">
-        {total}
-        <span className="ml-1.5 text-sm font-sans font-medium text-ink/45">{perMin}/min</span>
-      </p>
+      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">{total}</p>
+      <p className="mt-1 text-[11px] text-ink/45 tabular-nums">total · {perMin} per min</p>
       {top.length > 0 && (
-        <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
           {top.map(([word, n]) => (
-            <span key={word} className="rounded-full border border-sand bg-cream px-2.5 py-1 text-xs text-ink/70">
+            <span key={word} className="rounded-full border border-sand bg-cream px-2.5 py-0.5 text-xs text-ink/70">
               "{word}" ×{n}
             </span>
           ))}
@@ -261,8 +286,8 @@ function FillerChips({ counts, total, duration }) {
 function BigStat({ value, unit }) {
   return (
     <div className="text-center">
-      <p className="font-display text-4xl font-semibold text-ink tabular-nums leading-none">{value}</p>
-      <p className="mt-2 text-xs text-ink/45">{unit}</p>
+      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">{value}</p>
+      <p className="mt-1.5 text-[11px] text-ink/45">{unit}</p>
     </div>
   );
 }
