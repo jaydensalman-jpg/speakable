@@ -6,6 +6,7 @@ import TranscriptTab from './tabs/TranscriptTab.jsx';
 import FillerWordsTab from './tabs/FillerWordsTab.jsx';
 import PacingTab from './tabs/PacingTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
+import ShareButton from './ShareButton.jsx';
 
 const TABS = [
   { id: 'review', label: 'Watch & Listen' },
@@ -28,9 +29,12 @@ export default function Dashboard({ results }) {
             {results.words.length} words · {formatDuration(results.duration)} · {results.avgWpm} WPM avg
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-ink/45 pb-0.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-          Complete
+        <div className="flex items-center gap-3 pb-0.5">
+          <ShareButton results={results} />
+          <div className="flex items-center gap-1.5 text-xs text-ink/45">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+            Complete
+          </div>
         </div>
       </div>
 

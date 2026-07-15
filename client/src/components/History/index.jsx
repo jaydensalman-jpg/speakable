@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { listSessions, deleteSession, dayKey } from '../../lib/history.js';
 import { pullReports, deleteReport } from '../../lib/cloudSync.js';
 import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
+import ProgressView from './ProgressView.jsx';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -10,7 +11,7 @@ export default function History({ onOpenReport, onRecord, user }) {
   const [sessions, setSessions] = useState(null); // null = loading
   const [view, setView] = useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
   const [selected, setSelected] = useState(() => dayKey(Date.now()));
-  const [viewMode, setViewMode] = useState('calendar'); // calendar | all
+  const [viewMode, setViewMode] = useState('calendar'); // calendar | all | progress
 
   // Local sessions first (instant, playable). Signed in: merge in the account's
   // cloud reports — locals win on id collisions since they carry the blob.
@@ -96,11 +97,12 @@ export default function History({ onOpenReport, onRecord, user }) {
         <Stat i={2} label="Avg score" value={stats.avg ? `${stats.avg}/10` : '—'} />
       </div>
 
-      {/* View switch: the practice calendar, or every recording in one list */}
-      <div className="flex bg-sand p-1 rounded-full max-w-[300px]">
+      {/* View switch: calendar, every recording, or the progress trends */}
+      <div className="flex bg-sand p-1 rounded-full max-w-[380px]">
         {[
           { id: 'calendar', label: 'Calendar' },
-          { id: 'all', label: 'All recordings' },
+          { id: 'all', label: 'All takes' },
+          { id: 'progress', label: 'Progress' },
         ].map(({ id, label }) => (
           <button
             key={id}
@@ -114,7 +116,9 @@ export default function History({ onOpenReport, onRecord, user }) {
         ))}
       </div>
 
-      {viewMode === 'all' ? (
+      {viewMode === 'progress' ? (
+        <ProgressView sessions={sessions} />
+      ) : viewMode === 'all' ? (
         <div className="space-y-3">
           {sessions.map((s, i) => (
             <SessionRow

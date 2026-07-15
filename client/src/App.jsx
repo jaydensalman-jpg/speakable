@@ -13,7 +13,8 @@ import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
 import { transcribeLocally } from './lib/transcribe.js';
-import { saveSession, toSession } from './lib/history.js';
+import { saveSession, toSession, listSessions } from './lib/history.js';
+import { logSession } from './lib/metrics.js';
 
 // App states: home → idle (recorder) → recording → processing → results
 // (plus history and account). Keep a single Recorder mounted across
@@ -165,8 +166,19 @@ export default function App() {
       // Persist to the on-device practice history (calendar). Fire-and-forget.
       // Signed in: the report (never the blob) also syncs to the account.
       const session = toSession({ results: fullResults, blob, mediaType: mediaType ?? 'audio' });
+      const priorCount = await listSessions().then((s) => s.length).catch(() => 0);
       saveSession(session).catch((e) => console.error('Could not save to history:', e));
       if (auth.user) pushReport(session, auth.user.id);
+
+      // Anonymous, aggregate-only impact metric — numbers only, no content.
+      const fillerTotal = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
+      logSession({
+        ordinal: priorCount + 1,
+        overallScore: feedback.overallScore,
+        fillerPct: wordList.length ? Math.round((fillerTotal / wordList.length) * 1000) / 10 : 0,
+        wpm: avgWpm,
+        eyePct: eyeContact?.contactPct ?? null,
+      });
     } catch (err) {
       console.error(err);
       setError(err.message || 'Something went wrong. Please try again.');
