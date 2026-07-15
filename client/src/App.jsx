@@ -8,7 +8,7 @@ import EmailGate from './components/EmailGate/index.jsx';
 import SegmentedNav from './components/ui/SegmentedNav.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { pushReport, mergeUpLocal, flushOutbox } from './lib/cloudSync.js';
-import { detectFillerWords, mergeFillerCounts, fillerLabel, isHesitation } from './utils/fillerWords.js';
+import { detectFillerWords, fillerLabel } from './utils/fillerWords.js';
 import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
@@ -100,31 +100,35 @@ export default function App() {
       }
 
       const duration = audioDuration > 0 ? audioDuration : (wordList.at(-1)?.end ?? 0);
-      // Hesitations come from three detectors, most reliable last: Whisper text
-      // (usually scrubbed), live-recognizer interims (also often scrubbed), and
-      // the ACOUSTIC detector, which hears the hum directly in the audio and
-      // can't be scrubbed. Text sources merge per-label max; then, if the audio
-      // heard more hesitations than the text sources named, the surplus is
-      // reported as "um/uh" (we heard them, we just can't tell which form).
-      const fillerWordCounts = mergeFillerCounts(detectFillerWords(wordList), hesitations?.counts);
-      const labeledHesitations = Object.entries(fillerWordCounts)
-        .filter(([label]) => isHesitation(label))
-        .reduce((a, [, n]) => a + n, 0);
-      if (voicedGaps.length > labeledHesitations) {
-        fillerWordCounts['um/uh'] = voicedGaps.length - labeledHesitations;
+      // Reconcile fillers into ONE source so the transcript and every filler
+      // number can never disagree. Whisper scrubs "um"/"uh" from its transcript,
+      // but we still detect them two other ways: acoustically (a voiced hum in a
+      // gap) and from the live recognizer's interim hypotheses. We INJECT the
+      // ones Whisper missed into a display word list at their timestamps — so
+      // they appear, highlighted, in the transcript AND get counted, both from
+      // the same list. Real words (wordList) still drive pacing and vocabulary;
+      // injected hesitations never inflate those.
+      const NEAR = 1.2; // seconds; this close to a transcribed filler = already counted
+      const textFillers = wordList.filter((w) => fillerLabel(w.word));
+      const nearAny = (t, list) => list.some((w) => Math.abs((w.start ?? w.at ?? 0) - t) < NEAR);
+      const injected = [];
+      for (const g of voicedGaps) {
+        if (!nearAny(g.at, textFillers)) {
+          injected.push({ word: 'um', start: g.at, end: g.at + (g.duration || 0.3), heard: true });
+        }
       }
-      // Timestamped filler moments for coaching ("your cluster was around 0:45").
-      // Acoustic events only join when no text event already marks that moment.
-      const textEvents = [
-        ...wordList.filter((w) => fillerLabel(w.word)).map((w) => ({ label: fillerLabel(w.word), at: w.start })),
-        ...(hesitations?.events || []),
-      ];
-      const fillerEvents = [
-        ...textEvents,
-        ...voicedGaps
-          .filter((g) => !textEvents.some((e) => isHesitation(e.label) && Math.abs(e.at - g.at) < 1.5))
-          .map((g) => ({ label: 'um/uh', at: g.at })),
-      ].sort((a, b) => a.at - b.at);
+      for (const e of hesitations?.events || []) {
+        if (!nearAny(e.at, textFillers) && !nearAny(e.at, injected)) {
+          injected.push({ word: e.label || 'um', start: e.at, end: e.at + 0.3, heard: true });
+        }
+      }
+      // displayWords = the honest transcript (real words + hesitations Whisper
+      // dropped, in time order). Filler counts and highlights both derive from it.
+      const displayWords = [...wordList, ...injected].sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+      const fillerWordCounts = detectFillerWords(displayWords);
+      const fillerEvents = displayWords
+        .filter((w) => fillerLabel(w.word))
+        .map((w) => ({ label: fillerLabel(w.word), at: w.start ?? 0 }));
       const { avgWpm, wpmData } = computePacing(wordList, duration);
       const pauses = detectPauses(wordList);
       const volumeStdDev = computeVolumeStdDev(volumeLevels);
@@ -146,6 +150,8 @@ export default function App() {
       const fullResults = {
         transcript,
         words: wordList,
+        // Transcript view + all filler numbers read this; pacing/vocab read `words`.
+        displayWords,
         fillerWordCounts,
         avgWpm,
         wpmData,

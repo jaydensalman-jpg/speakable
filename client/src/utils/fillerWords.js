@@ -102,6 +102,36 @@ export function isFillerWord(word) {
   return fillerLabel(word) !== null;
 }
 
+// Which word indices are part of a filler — same greedy phrase+single logic as
+// detectFillerWords, so the transcript can highlight exactly what gets counted
+// (a phrase like "you know" marks both words but counts as one occurrence).
+export function markFillerWords(words) {
+  const marked = new Set();
+  for (let i = 0; i < words.length; i++) {
+    let matchedPhrase = false;
+    for (const ph of PHRASE_FILLERS) {
+      const n = ph.tokens.length;
+      if (i + n > words.length) continue;
+      let ok = true;
+      for (let k = 0; k < n; k++) {
+        if (clean(words[i + k].word) !== ph.tokens[k]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        for (let k = 0; k < n; k++) marked.add(i + k);
+        i += n - 1;
+        matchedPhrase = true;
+        break;
+      }
+    }
+    if (matchedPhrase) continue;
+    if (fillerLabel(words[i].word)) marked.add(i);
+  }
+  return marked;
+}
+
 // --- Interim-capture support -------------------------------------------------
 // Whisper's training data mostly omits disfluencies, so it drops or mangles
 // "um"/"uh" (tiny.en almost always; base.en often — verified: "um" came back as

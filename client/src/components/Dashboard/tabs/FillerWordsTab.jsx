@@ -1,7 +1,9 @@
 export default function FillerWordsTab({ results }) {
-  const { fillerWordCounts, words, duration } = results;
+  const { fillerWordCounts, words, displayWords, duration } = results;
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
-  const totalWords = words.length;
+  // Count against every spoken word, including the "um"/"uh" Whisper dropped, so
+  // the percentage lines up with the total and the transcript highlights.
+  const totalWords = (displayWords || words).length;
   const percentage = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : '0.0';
   const perMinute = duration > 0 ? (totalFillers / (duration / 60)).toFixed(1) : '0.0';
   const isGood = parseFloat(percentage) < 5;

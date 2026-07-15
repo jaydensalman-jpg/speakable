@@ -1,10 +1,15 @@
 import { Fragment } from 'react';
-import { isFillerWord } from '../../../utils/fillerWords.js';
+import { markFillerWords } from '../../../utils/fillerWords.js';
 
 export default function TranscriptTab({ results }) {
-  const { words, transcript } = results;
+  const { transcript, fillerWordCounts } = results;
+  // Show the honest transcript: real words plus the "um"/"uh" Whisper dropped but
+  // we detected (results.displayWords). Highlights and the count come from the
+  // SAME list + the shared total, so this always matches the other filler views.
+  const words = results.displayWords || results.words;
   const hasWordData = words && words.length > 0;
-  const fillerCount = hasWordData ? words.filter((w) => isFillerWord(w.word)).length : 0;
+  const marked = hasWordData ? markFillerWords(words) : new Set();
+  const totalFillers = Object.values(fillerWordCounts || {}).reduce((a, b) => a + b, 0);
 
   return (
     <div className="card">
@@ -13,7 +18,7 @@ export default function TranscriptTab({ results }) {
         {hasWordData && (
           <div className="flex items-center gap-2 text-xs text-ink/45">
             <span className="inline-block w-3 h-3 rounded bg-amber-200 border border-amber-300" />
-            {fillerCount} filler{fillerCount === 1 ? '' : 's'} highlighted
+            {totalFillers} filler{totalFillers === 1 ? '' : 's'} highlighted
           </div>
         )}
       </div>
@@ -22,16 +27,26 @@ export default function TranscriptTab({ results }) {
         {hasWordData ? (
           <p>
             {words.map((w, i) => {
-              const filler = isFillerWord(w.word);
+              const filler = marked.has(i);
+              // "heard" words were detected acoustically, not transcribed by Whisper.
+              const heard = w.heard;
               return (
                 <Fragment key={i}>
                   <span
                     className={
                       filler
-                        ? 'bg-amber-100 border border-amber-300/70 rounded px-1 text-amber-900'
+                        ? `rounded px-1 text-amber-900 bg-amber-100 border ${
+                            heard ? 'border-dashed border-amber-400' : 'border-amber-300/70'
+                          }`
                         : undefined
                     }
-                    title={filler ? `Filler at ${w.start?.toFixed(1)}s` : undefined}
+                    title={
+                      filler
+                        ? heard
+                          ? `Heard in your audio at ${w.start?.toFixed(1)}s (the transcriber skipped it)`
+                          : `Filler at ${w.start?.toFixed(1)}s`
+                        : undefined
+                    }
                   >
                     {w.word}
                   </span>{' '}
@@ -48,8 +63,8 @@ export default function TranscriptTab({ results }) {
 
       {hasWordData && (
         <p className="text-xs text-ink/45 mt-4 pt-4 border-t border-sand">
-          This is exactly what was transcribed from your audio. If a word you said is missing here,
-          the speech model didn’t catch it — fillers especially can be hard to transcribe.
+          Words with a dashed outline were heard in your audio but skipped by the speech model —
+          fillers like "um" and "uh" especially. They still count toward your totals.
         </p>
       )}
     </div>
