@@ -1,15 +1,23 @@
 import { Fragment } from 'react';
-import { markFillerWords } from '../../../utils/fillerWords.js';
+import { markFillerWords, detectFillerWords } from '../../../utils/fillerWords.js';
 
 export default function TranscriptTab({ results }) {
   const { transcript, fillerWordCounts } = results;
   // Show the honest transcript: real words plus the "um"/"uh" Whisper dropped but
-  // we detected (results.displayWords). Highlights and the count come from the
-  // SAME list + the shared total, so this always matches the other filler views.
+  // we detected (results.displayWords). NEW takes carry displayWords, so every
+  // counted filler is visible here and the numbers match the other tabs exactly.
   const words = results.displayWords || results.words;
   const hasWordData = words && words.length > 0;
   const marked = hasWordData ? markFillerWords(words) : new Set();
-  const totalFillers = Object.values(fillerWordCounts || {}).reduce((a, b) => a + b, 0);
+  // The label claims only what is actually highlighted in THIS text. Older takes
+  // (saved before hesitation-injection) counted "um"/"uh" but didn't save their
+  // positions, so those can't be shown — we surface that honestly instead of
+  // claiming a highlight count the transcript can't back up.
+  const shownFillers = hasWordData
+    ? Object.values(detectFillerWords(words)).reduce((a, b) => a + b, 0)
+    : 0;
+  const storedTotal = Object.values(fillerWordCounts || {}).reduce((a, b) => a + b, 0);
+  const unlocated = Math.max(0, storedTotal - shownFillers);
 
   return (
     <div className="card">
@@ -18,7 +26,10 @@ export default function TranscriptTab({ results }) {
         {hasWordData && (
           <div className="flex items-center gap-2 text-xs text-ink/45">
             <span className="inline-block w-3 h-3 rounded bg-amber-200 border border-amber-300" />
-            {totalFillers} filler{totalFillers === 1 ? '' : 's'} highlighted
+            {shownFillers} filler{shownFillers === 1 ? '' : 's'} highlighted
+            {unlocated > 0 && (
+              <span className="text-ink/35">· +{unlocated} detected in audio</span>
+            )}
           </div>
         )}
       </div>
@@ -63,8 +74,9 @@ export default function TranscriptTab({ results }) {
 
       {hasWordData && (
         <p className="text-xs text-ink/45 mt-4 pt-4 border-t border-sand">
-          Words with a dashed outline were heard in your audio but skipped by the speech model —
-          fillers like "um" and "uh" especially. They still count toward your totals.
+          {unlocated > 0
+            ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here — record a new take to see every one highlighted.`
+            : 'Words with a dashed outline were heard in your audio but skipped by the speech model, fillers like "um" and "uh" especially. They still count toward your totals.'}
         </p>
       )}
     </div>
