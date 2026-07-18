@@ -1,18 +1,16 @@
 import { Fragment } from 'react';
-import { markFillerWords, detectFillerWords } from '../../../utils/fillerWords.js';
+import { markFillerWords, detectFillerWords } from '../../utils/fillerWords.js';
 
-export default function TranscriptTab({ results }) {
+// Reusable transcript block. Lives inside the Watch & Listen tab (beneath the
+// players) so you can read along while the audio plays. Shows the honest
+// transcript: real words plus the "um"/"uh" Whisper dropped but we detected
+// (results.displayWords), with fillers highlighted. The count matches the other
+// filler views; older takes without saved positions get an honest "+N detected".
+export default function Transcript({ results }) {
   const { transcript, fillerWordCounts } = results;
-  // Show the honest transcript: real words plus the "um"/"uh" Whisper dropped but
-  // we detected (results.displayWords). NEW takes carry displayWords, so every
-  // counted filler is visible here and the numbers match the other tabs exactly.
   const words = results.displayWords || results.words;
   const hasWordData = words && words.length > 0;
   const marked = hasWordData ? markFillerWords(words) : new Set();
-  // The label claims only what is actually highlighted in THIS text. Older takes
-  // (saved before hesitation-injection) counted "um"/"uh" but didn't save their
-  // positions, so those can't be shown — we surface that honestly instead of
-  // claiming a highlight count the transcript can't back up.
   const shownFillers = hasWordData
     ? Object.values(detectFillerWords(words)).reduce((a, b) => a + b, 0)
     : 0;
@@ -27,9 +25,7 @@ export default function TranscriptTab({ results }) {
           <div className="flex items-center gap-2 text-xs text-ink/45">
             <span className="inline-block w-3 h-3 rounded bg-amber-200 border border-amber-300" />
             {shownFillers} filler{shownFillers === 1 ? '' : 's'} highlighted
-            {unlocated > 0 && (
-              <span className="text-ink/35">· +{unlocated} detected in audio</span>
-            )}
+            {unlocated > 0 && <span className="text-ink/35">· +{unlocated} detected in audio</span>}
           </div>
         )}
       </div>
@@ -39,8 +35,7 @@ export default function TranscriptTab({ results }) {
           <p>
             {words.map((w, i) => {
               const filler = marked.has(i);
-              // "heard" words were detected acoustically, not transcribed by Whisper.
-              const heard = w.heard;
+              const heard = w.heard; // detected acoustically, not transcribed by Whisper
               return (
                 <Fragment key={i}>
                   <span

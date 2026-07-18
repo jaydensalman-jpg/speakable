@@ -1,13 +1,20 @@
+import Transcript from '../Transcript.jsx';
+
 export default function SelfReviewTab({ results }) {
   const { mediaUrl, mediaType } = results;
   const hasVideo = mediaType === 'video' && mediaUrl;
 
+  // Even with no playable media (cloud-only takes), still show the transcript so
+  // you can read what you said.
   if (!mediaUrl) {
     return (
-      <div className="card text-center text-ink/50 text-sm py-10">
-        {results.cloudOnly
-          ? 'The recording stays on the device where it was made. Only this report synced to your account.'
-          : 'This recording isn’t available to play back. Try recording again to use the self-review.'}
+      <div className="space-y-5 animate-rise">
+        <div className="card text-center text-ink/50 text-sm py-10">
+          {results.cloudOnly
+            ? 'The recording stays on the device where it was made. Only this report synced to your account.'
+            : 'This recording isn’t available to play back. Try recording again to use the self-review.'}
+        </div>
+        <Transcript results={results} />
       </div>
     );
   }
@@ -36,8 +43,8 @@ export default function SelfReviewTab({ results }) {
 
         <ReviewCard
           label="Audio"
-          hint="No video. Focus on tone, pace, and pauses."
-          accent="Audio only"
+          hint="Play it back and read along with the transcript below."
+          accent={hasVideo ? 'Audio only' : 'Listen'}
           icon={
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
           }
@@ -48,11 +55,8 @@ export default function SelfReviewTab({ results }) {
         </ReviewCard>
       </div>
 
-      {!hasVideo && (
-        <p className="text-center text-xs text-ink/40">
-          Audio-only recording. Use Camera mode to see yourself too.
-        </p>
-      )}
+      {/* Transcript sits beneath the players so you can listen and read together. */}
+      <Transcript results={results} />
     </div>
   );
 }

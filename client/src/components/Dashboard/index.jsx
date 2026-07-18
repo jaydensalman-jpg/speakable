@@ -2,7 +2,6 @@ import { useState } from 'react';
 import TabNav from '../ui/TabNav.jsx';
 import SelfReviewTab from './tabs/SelfReviewTab.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
-import TranscriptTab from './tabs/TranscriptTab.jsx';
 import FillerWordsTab from './tabs/FillerWordsTab.jsx';
 import PacingTab from './tabs/PacingTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
@@ -11,7 +10,6 @@ import ShareButton from './ShareButton.jsx';
 const TABS = [
   { id: 'review', label: 'Watch & Listen' },
   { id: 'overview', label: 'Overview' },
-  { id: 'transcript', label: 'Transcript' },
   { id: 'fillers', label: 'Filler Words' },
   { id: 'pacing', label: 'Pacing' },
   { id: 'ai', label: 'Coaching' },
@@ -43,7 +41,6 @@ export default function Dashboard({ results }) {
       <div>
         {activeTab === 'review' && <SelfReviewTab results={results} />}
         {activeTab === 'overview' && <OverviewTab results={results} />}
-        {activeTab === 'transcript' && <TranscriptTab results={results} />}
         {activeTab === 'fillers' && <FillerWordsTab results={results} />}
         {activeTab === 'pacing' && <PacingTab results={results} />}
         {activeTab === 'ai' && <AIFeedbackTab results={results} />}
