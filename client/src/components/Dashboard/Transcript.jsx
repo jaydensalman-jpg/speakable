@@ -70,7 +70,7 @@ export default function Transcript({ results }) {
       {hasWordData && (
         <p className="text-xs text-ink/45 mt-4 pt-4 border-t border-sand">
           {unlocated > 0
-            ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here — record a new take to see every one highlighted.`
+            ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here. Record a new take to see every one highlighted.`
             : 'Words with a dashed outline were heard in your audio but skipped by the speech model, fillers like "um" and "uh" especially. They still count toward your totals.'}
         </p>
       )}

@@ -110,7 +110,7 @@ export default function PacingTab({ results }) {
           <span className="text-xs text-ink/45">{pauses.length} over 2 seconds</span>
         </div>
         {pauses.length === 0 ? (
-          <p className="text-sm text-ink/50">No stalls longer than 2 seconds — your flow never dropped.</p>
+          <p className="text-sm text-ink/50">No stalls longer than 2 seconds. Your flow never dropped.</p>
         ) : (
           <div className="space-y-2">
             {pauses.map((p, i) => (
