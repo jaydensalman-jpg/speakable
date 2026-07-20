@@ -1,12 +1,12 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { markFillerWords, detectFillerWords } from '../../utils/fillerWords.js';
 
-// Reusable transcript block. Lives inside the Watch & Listen tab (beneath the
-// players) so you can read along while the audio plays. Shows the honest
-// transcript: real words plus the "um"/"uh" Whisper dropped but we detected
-// (results.displayWords), with fillers highlighted. The count matches the other
-// filler views; older takes without saved positions get an honest "+N detected".
-export default function Transcript({ results }) {
+// Reusable transcript block, shown inside Watch & Listen beneath the players so
+// you read along while the audio plays. Every word is exactly what Whisper
+// transcribed (no acoustic guessing). When a media element is passed, words are
+// clickable — click one and the audio jumps to that moment — and the word under
+// the playhead is highlighted as it plays.
+export default function Transcript({ results, mediaRef }) {
   const { transcript, fillerWordCounts } = results;
   const words = results.displayWords || results.words;
   const hasWordData = words && words.length > 0;
@@ -16,6 +16,29 @@ export default function Transcript({ results }) {
     : 0;
   const storedTotal = Object.values(fillerWordCounts || {}).reduce((a, b) => a + b, 0);
   const unlocated = Math.max(0, storedTotal - shownFillers);
+  const interactive = !!mediaRef;
+
+  // Follow-along: track the media's current time and highlight the active word.
+  const [now, setNow] = useState(-1);
+  useEffect(() => {
+    const el = mediaRef?.current;
+    if (!el) return;
+    const onTime = () => setNow(el.currentTime);
+    const onEnd = () => setNow(-1);
+    el.addEventListener('timeupdate', onTime);
+    el.addEventListener('ended', onEnd);
+    return () => {
+      el.removeEventListener('timeupdate', onTime);
+      el.removeEventListener('ended', onEnd);
+    };
+  }, [mediaRef, results]);
+
+  const seekTo = (start) => {
+    const el = mediaRef?.current;
+    if (!el || start == null) return;
+    el.currentTime = Math.max(0, start);
+    el.play?.().catch(() => {});
+  };
 
   return (
     <div className="card">
@@ -35,27 +58,30 @@ export default function Transcript({ results }) {
           <p>
             {words.map((w, i) => {
               const filler = marked.has(i);
-              const heard = w.heard; // detected acoustically, not transcribed by Whisper
+              const active = interactive && now >= (w.start ?? -1) && now < (w.end ?? -1);
+              const cls = [
+                filler ? 'bg-amber-100 border border-amber-300/70 text-amber-900' : '',
+                active ? 'bg-brand-500 text-white' : '',
+                interactive ? 'cursor-pointer rounded px-1 hover:bg-brand-100 hover:text-ink transition-colors' : filler ? 'rounded px-1' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
                 <Fragment key={i}>
-                  <span
-                    className={
-                      filler
-                        ? `rounded px-1 text-amber-900 bg-amber-100 border ${
-                            heard ? 'border-dashed border-amber-400' : 'border-amber-300/70'
-                          }`
-                        : undefined
-                    }
-                    title={
-                      filler
-                        ? heard
-                          ? `Heard in your audio at ${w.start?.toFixed(1)}s (the transcriber skipped it)`
-                          : `Filler at ${w.start?.toFixed(1)}s`
-                        : undefined
-                    }
-                  >
-                    {w.word}
-                  </span>{' '}
+                  {interactive ? (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => seekTo(w.start)}
+                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && seekTo(w.start)}
+                      className={cls || undefined}
+                      title={w.start != null ? `Jump to ${w.start.toFixed(1)}s` : undefined}
+                    >
+                      {w.word}
+                    </span>
+                  ) : (
+                    <span className={cls || undefined}>{w.word}</span>
+                  )}{' '}
                 </Fragment>
               );
             })}
@@ -71,7 +97,9 @@ export default function Transcript({ results }) {
         <p className="text-xs text-ink/45 mt-4 pt-4 border-t border-sand">
           {unlocated > 0
             ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here. Record a new take to see every one highlighted.`
-            : 'Words with a dashed outline were heard in your audio but skipped by the speech model, fillers like "um" and "uh" especially. They still count toward your totals.'}
+            : interactive
+              ? 'Tap any word to jump the audio to that moment. Filler words are highlighted in amber.'
+              : 'Filler words are highlighted in amber.'}
         </p>
       )}
     </div>

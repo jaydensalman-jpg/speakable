@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import Transcript from '../Transcript.jsx';
 
 export default function SelfReviewTab({ results }) {
   const { mediaUrl, mediaType } = results;
   const hasVideo = mediaType === 'video' && mediaUrl;
+  const audioRef = useRef(null); // shared so the transcript can seek/follow the audio
 
   // Even with no playable media (cloud-only takes), still show the transcript so
   // you can read what you said.
@@ -50,13 +52,15 @@ export default function SelfReviewTab({ results }) {
           }
         >
           <div className="flex items-center justify-center rounded-2xl bg-cream border border-sand py-8 px-5">
-            <audio src={mediaUrl} controls className="w-full" />
+            <audio ref={audioRef} src={mediaUrl} controls className="w-full" />
           </div>
         </ReviewCard>
       </div>
 
-      {/* Transcript sits beneath the players so you can listen and read together. */}
-      <Transcript results={results} />
+      {/* Transcript sits beneath the players so you can listen and read together.
+          Passing the audio ref makes each word clickable (jump to that moment)
+          and highlights the word under the playhead as it plays. */}
+      <Transcript results={results} mediaRef={audioRef} />
     </div>
   );
 }

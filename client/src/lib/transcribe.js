@@ -139,99 +139,7 @@ async function blobToMono16k(blob, onStatus) {
   }
 }
 
-// --- Acoustic hesitation detection ------------------------------------------
-// Neither Whisper nor the live recognizer reliably reports "um"/"uh" (both are
-// trained on cleaned transcripts), so text alone under-counts badly. But the
-// sound is right there in the PCM we already decoded: a hesitation is a
-// sustained voiced hum, either in a GAP between transcribed words or smeared
-// into a stretched junk word ("ummm" → "am" lasting 0.7s). This detector finds
-// both. It can't tell "um" from "uh", so callers label these events 'um/uh'.
 
-// Tuned for RECALL after real-voice testing under-counted: this is a coaching
-// tool, so hearing every hesitation matters more than the occasional throat
-// clear sneaking in.
-const FRAME = 400; // 25ms @ 16kHz
-const MIN_GAP_S = 0.24; // word gap worth inspecting
-const MIN_VOICED_RUN_S = 0.12; // even a quick hum counts
-const LAST_WORD_CAP_S = 0.8; // whisper pads the final word's end to the clip end,
-// hiding trailing hums inside it; scan past a plausible word length
-const RUN_BREAK_FRAMES = 3; // ≥75ms of quiet splits two hums in the same gap
-const MAX_ZCR = 0.15; // vowels/nasals cross zero rarely; hiss and noise don't
-// Stretched junk words whisper writes when it half-hears a hesitation.
-const JUNK_HUM = new Set(['a', 'am', 'an', 'ah', 'oh', 'eh', 'um', 'uh', 'mm', 'hm', 'hmm', 'm', 'em', 'un', 'huh', 'hum', 'awe']);
-const JUNK_MIN_S = 0.45;
-
-function frameStats(audio, from, to) {
-  // RMS + zero-crossing rate per 25ms frame within [from, to) sample range.
-  const frames = [];
-  for (let s = from; s + FRAME <= to; s += FRAME) {
-    let sum = 0;
-    let crossings = 0;
-    for (let i = s; i < s + FRAME; i++) {
-      sum += audio[i] * audio[i];
-      if (i > s && audio[i] >= 0 !== audio[i - 1] >= 0) crossings++;
-    }
-    frames.push({ rms: Math.sqrt(sum / FRAME), zcr: crossings / FRAME });
-  }
-  return frames;
-}
-
-function detectVoicedGaps(audio, words) {
-  if (!words.length) return [];
-  // Speech reference level from the whole clip: 70th percentile frame RMS.
-  const all = frameStats(audio, 0, audio.length).map((f) => f.rms).sort((a, b) => a - b);
-  if (!all.length) return [];
-  const speechLevel = all[Math.floor(all.length * 0.7)];
-  const noiseFloor = all[Math.floor(all.length * 0.2)];
-  // Softer than speech still counts: trailing "uh"s often fade to a murmur.
-  const voicedThreshold = Math.max(noiseFloor * 2.2, speechLevel * 0.15, 0.0025);
-
-  const events = [];
-  // Inspect before the first word, every inter-word gap, and after the last word.
-  const spans = [];
-  if (words[0].start >= MIN_GAP_S) spans.push([Math.max(0, words[0].start - 3), words[0].start]);
-  for (let i = 1; i < words.length; i++) {
-    const gap = words[i].start - words[i - 1].end;
-    if (gap >= MIN_GAP_S) spans.push([words[i - 1].end, words[i].start]);
-  }
-  const last = words.at(-1);
-  const lastEnd = Math.min(last.end, last.start + LAST_WORD_CAP_S, audio.length / 16000);
-  const tail = audio.length / 16000 - lastEnd;
-  if (tail >= MIN_GAP_S) spans.push([lastEnd, Math.min(lastEnd + 4, audio.length / 16000)]);
-
-  for (const [t0, t1] of spans) {
-    const frames = frameStats(audio, Math.floor(t0 * 16000), Math.min(Math.floor(t1 * 16000), audio.length));
-    // EVERY distinct voiced run in the gap is its own hesitation ("um... um"
-    // in one pause counts twice). Runs split on ≥RUN_BREAK_FRAMES of quiet.
-    let run = 0; // voiced frames in the current hum
-    let runStart = 0;
-    let quiet = 0; // consecutive quiet frames inside/after a hum
-    const flush = () => {
-      if (run * (FRAME / 16000) >= MIN_VOICED_RUN_S) {
-        events.push({ at: t0 + runStart * (FRAME / 16000), duration: run * (FRAME / 16000), source: 'gap' });
-      }
-      run = 0;
-      quiet = 0;
-    };
-    frames.forEach((f, i) => {
-      if (f.rms > voicedThreshold && f.zcr < MAX_ZCR) {
-        if (run === 0) runStart = i;
-        run++;
-        quiet = 0; // a brief dip inside a hum doesn't split it
-      } else if (run > 0 && ++quiet >= RUN_BREAK_FRAMES) {
-        flush();
-      }
-    });
-    flush();
-  }
-  // Stretched junk words: "am"/"a"/"un"… lasting far longer than the word could.
-  for (const w of words) {
-    if (JUNK_HUM.has(w.word) && w.end - w.start >= JUNK_MIN_S) {
-      events.push({ at: w.start, duration: w.end - w.start, source: 'word' });
-    }
-  }
-  return events.sort((a, b) => a.at - b.at);
-}
 
 // Transcribe a recorded/uploaded blob → { transcript, words:[{word,start,end}] }.
 export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
@@ -262,7 +170,5 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
     .filter(Boolean);
 
   const transcript = words.map((w) => w.word).join(' ');
-  // Hesitations the text pipelines can't see — heard directly in the audio.
-  const voicedGaps = detectVoicedGaps(audio, words);
-  return { transcript, words, audioDuration, voicedGaps };
+  return { transcript, words, audioDuration };
 }

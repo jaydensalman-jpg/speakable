@@ -8,7 +8,7 @@ import EmailGate from './components/EmailGate/index.jsx';
 import SegmentedNav from './components/ui/SegmentedNav.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { pushReport, mergeUpLocal, flushOutbox } from './lib/cloudSync.js';
-import { detectFillerWords, fillerLabel } from './utils/fillerWords.js';
+import { detectFillerWords, fillerLabel, collapseRepeatedFillers } from './utils/fillerWords.js';
 import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
@@ -61,7 +61,6 @@ export default function App() {
       let transcript = '';
       let wordList = [];
       let audioDuration = 0;
-      let voicedGaps = [];
       try {
         const result = await transcribeLocally(blob, {
           onProgress: (e) => {
@@ -77,7 +76,6 @@ export default function App() {
         transcript = result.transcript;
         wordList = result.words;
         audioDuration = result.audioDuration || 0;
-        voicedGaps = result.voicedGaps || [];
       } catch (err) {
         console.error('Whisper failed, falling back to live transcript:', err);
         if (words && words.length) {
@@ -100,31 +98,13 @@ export default function App() {
       }
 
       const duration = audioDuration > 0 ? audioDuration : (wordList.at(-1)?.end ?? 0);
-      // Reconcile fillers into ONE source so the transcript and every filler
-      // number can never disagree. Whisper scrubs "um"/"uh" from its transcript,
-      // but we still detect them two other ways: acoustically (a voiced hum in a
-      // gap) and from the live recognizer's interim hypotheses. We INJECT the
-      // ones Whisper missed into a display word list at their timestamps — so
-      // they appear, highlighted, in the transcript AND get counted, both from
-      // the same list. Real words (wordList) still drive pacing and vocabulary;
-      // injected hesitations never inflate those.
-      const NEAR = 1.2; // seconds; this close to a transcribed filler = already counted
-      const textFillers = wordList.filter((w) => fillerLabel(w.word));
-      const nearAny = (t, list) => list.some((w) => Math.abs((w.start ?? w.at ?? 0) - t) < NEAR);
-      const injected = [];
-      for (const g of voicedGaps) {
-        if (!nearAny(g.at, textFillers)) {
-          injected.push({ word: 'um', start: g.at, end: g.at + (g.duration || 0.3), heard: true });
-        }
-      }
-      for (const e of hesitations?.events || []) {
-        if (!nearAny(e.at, textFillers) && !nearAny(e.at, injected)) {
-          injected.push({ word: e.label || 'um', start: e.at, end: e.at + 0.3, heard: true });
-        }
-      }
-      // displayWords = the honest transcript (real words + hesitations Whisper
-      // dropped, in time order). Filler counts and highlights both derive from it.
-      const displayWords = [...wordList, ...injected].sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+      // ACCURACY FIRST: fillers come ONLY from what Whisper actually transcribed —
+      // no acoustic guessing (that produced phantom "um"s). The one correction we
+      // make is collapsing a sustained "ummmm" that Whisper emits as several
+      // "um um um" tokens into a single occurrence, so one long um counts once.
+      // displayWords is the exact transcript shown; counts derive from the same
+      // list, so the transcript and every filler number can never disagree.
+      const displayWords = collapseRepeatedFillers(wordList);
       const fillerWordCounts = detectFillerWords(displayWords);
       const fillerEvents = displayWords
         .filter((w) => fillerLabel(w.word))

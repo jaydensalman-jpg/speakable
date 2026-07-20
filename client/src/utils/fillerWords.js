@@ -102,6 +102,34 @@ export function isFillerWord(word) {
   return fillerLabel(word) !== null;
 }
 
+// Collapse a run of the SAME vocal hesitation that Whisper emits as several
+// tokens for ONE sustained sound ("ummmmm" → "um um um um") into a single
+// occurrence. Consecutive same-label hesitations separated by only a small gap
+// are treated as one "um": the first token's start through the last's end.
+// Only vocal hesitations collapse (um/uh/er/…); real repeated words are left
+// alone. This is what keeps a long "um" from being counted five times.
+const REPEAT_MAX_GAP_S = 0.8;
+export function collapseRepeatedFillers(words) {
+  const out = [];
+  for (const w of words || []) {
+    const label = fillerLabel(w.word);
+    const prev = out[out.length - 1];
+    const prevLabel = prev ? fillerLabel(prev.word) : null;
+    if (
+      label &&
+      isHesitation(label) &&
+      prevLabel === label &&
+      (w.start ?? 0) - (prev.end ?? prev.start ?? 0) <= REPEAT_MAX_GAP_S
+    ) {
+      // Same sustained hesitation — extend the previous one instead of adding.
+      prev.end = w.end ?? prev.end;
+      continue;
+    }
+    out.push({ ...w });
+  }
+  return out;
+}
+
 // Which word indices are part of a filler — same greedy phrase+single logic as
 // detectFillerWords, so the transcript can highlight exactly what gets counted
 // (a phrase like "you know" marks both words but counts as one occurrence).
