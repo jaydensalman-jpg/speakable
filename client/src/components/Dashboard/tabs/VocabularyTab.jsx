@@ -55,7 +55,7 @@ export default function VocabularyTab({ results }) {
       <div className="card">
         <div className="flex items-baseline justify-between mb-3">
           <div className="flex items-baseline gap-2">
-            <span className={`font-display text-4xl font-semibold tabular-nums ${inRange ? 'text-emerald-600' : 'text-amber-600'}`}>
+            <span className={`text-4xl font-semibold tracking-tight tabular-nums ${inRange ? 'text-emerald-600' : 'text-amber-600'}`}>
               {ratio}%
             </span>
             <span className="text-sm font-medium text-ink/45">unique words</span>

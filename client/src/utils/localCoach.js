@@ -102,7 +102,7 @@ export function generateLocalFeedback({
       coaching: [
         {
           title: 'Record a longer take first',
-          body: `${tooFew} isn't enough to measure anything honestly — pace, fillers, and flow all need sustained speech.`,
+          body: `${tooFew} isn't enough to measure anything honestly. Pace, fillers, and flow all need sustained speech.`,
           drill: 'Pick a topic you know, speak 45–60 seconds in full sentences: one opening line, one point, one closing line.',
         },
       ],
@@ -159,7 +159,7 @@ export function generateLocalFeedback({
       valueDisplay: `${fillerTotal} (${fillerPct.toFixed(1)}% of words, ${fillersPerMin.toFixed(1)}/min)`,
       targetDisplay: 'under 3% of words',
       inRange: p <= 3,
-      plain: fillerTotal === 0 ? 'None — clean' : p <= 3 ? 'Well controlled' : 'Too many',
+      plain: fillerTotal === 0 ? 'None, clean' : p <= 3 ? 'Well controlled' : 'Too many',
       sentence:
         fillerTotal === 0
           ? `No fillers detected. Every word carried content.`

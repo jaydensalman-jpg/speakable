@@ -37,7 +37,7 @@ export default function ScoreRing({ score, size = 120, label = 'Overall' }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold leading-none" style={{ color }}>
+          <span className="text-[2rem] font-semibold tracking-tight tabular-nums leading-none" style={{ color }}>
             {score}
           </span>
           <span className="text-sm text-ink/40 font-medium leading-none mt-1">/10</span>

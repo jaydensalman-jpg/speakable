@@ -58,7 +58,7 @@ export default function PacingTab({ results }) {
       <div className="card">
         <div className="flex items-baseline justify-between mb-5">
           <div className="flex items-baseline gap-2">
-            <span className={`font-display text-4xl font-semibold tabular-nums ${toneText}`}>{avgWpm}</span>
+            <span className={`text-4xl font-semibold tracking-tight tabular-nums ${toneText}`}>{avgWpm}</span>
             <span className="text-sm font-medium text-ink/45">words / min</span>
           </div>
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${toneBg}`}>{rating.label}</span>

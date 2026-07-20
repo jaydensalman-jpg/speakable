@@ -17,17 +17,17 @@ export default function FillerWordsTab({ results }) {
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="stat-card">
-          <span className="text-2xl font-bold text-ink tabular-nums">{totalFillers}</span>
+          <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">{totalFillers}</span>
           <span className="text-xs text-ink/45 font-medium">Total fillers</span>
         </div>
         <div className="stat-card">
-          <span className={`text-2xl font-bold tabular-nums ${isGood ? 'text-emerald-600' : 'text-amber-600'}`}>
+          <span className={`text-2xl font-semibold tracking-tight tabular-nums ${isGood ? 'text-emerald-600' : 'text-amber-600'}`}>
             {percentage}%
           </span>
           <span className="text-xs text-ink/45 font-medium">Of total words</span>
         </div>
         <div className="stat-card">
-          <span className="text-2xl font-bold text-ink tabular-nums">{perMinute}</span>
+          <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">{perMinute}</span>
           <span className="text-xs text-ink/45 font-medium">Per minute</span>
         </div>
         <div className="stat-card">

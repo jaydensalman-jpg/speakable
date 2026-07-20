@@ -103,7 +103,7 @@ export default function OverviewTab({ results }) {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {stats.map((s) => (
             <div key={s.label} className="stat-card">
-              <span className="text-xl font-bold text-ink tabular-nums">{s.value}</span>
+              <span className="text-xl font-semibold tracking-tight text-ink tabular-nums">{s.value}</span>
               <span className="text-xs text-ink/45 font-medium">{s.label}</span>
             </div>
           ))}
@@ -159,7 +159,7 @@ function Verdict({ assessment }) {
   if (!focus.length) {
     return (
       <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
-        Everything measured landed on target. Nice work — now do it twice in a row.
+        Everything measured landed on target. Nice work. Now do it twice in a row.
       </p>
     );
   }
@@ -232,7 +232,7 @@ function EyeGauge({ data }) {
             className="transition-all duration-700"
           />
         </svg>
-        <span className="relative font-display text-xl font-semibold leading-none text-ink">{pct}%</span>
+        <span className="relative text-xl font-semibold tracking-tight tabular-nums leading-none text-ink">{pct}%</span>
       </div>
       <p className="mt-2.5 text-[11px] text-ink/50 tabular-nums">
         on camera · longest hold {Math.round(data.longestStreakSeconds)}s
@@ -253,7 +253,7 @@ function PaceChart({ avgWpm, wpmData }) {
   const path = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   return (
     <div className="text-center">
-      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">
+      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">
         {avgWpm}
         <span className="ml-1.5 text-xs font-sans font-medium text-ink/45">WPM</span>
       </p>
@@ -274,7 +274,7 @@ function FillerChips({ counts, total, duration }) {
   const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : '0.0';
   return (
     <div className="text-center">
-      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">{total}</p>
+      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">{total}</p>
       <p className="mt-1 text-[11px] text-ink/45 tabular-nums">total · {perMin} per min</p>
       {top.length > 0 && (
         <div className="mt-3 flex flex-wrap justify-center gap-1.5">
@@ -292,7 +292,7 @@ function FillerChips({ counts, total, duration }) {
 function BigStat({ value, unit }) {
   return (
     <div className="text-center">
-      <p className="font-display text-3xl font-semibold text-ink tabular-nums leading-none">{value}</p>
+      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">{value}</p>
       <p className="mt-1.5 text-[11px] text-ink/45">{unit}</p>
     </div>
   );

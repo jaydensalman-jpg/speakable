@@ -192,7 +192,7 @@ export default function History({ onOpenReport, onRecord, user }) {
 function Stat({ label, value, i = 0 }) {
   return (
     <div className="stat-card items-center text-center animate-rise" style={{ animationDelay: `${i * 70}ms` }}>
-      <span className="text-2xl font-bold text-ink tabular-nums">{value}</span>
+      <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">{value}</span>
       <span className="text-xs text-ink/45 font-medium">{label}</span>
     </div>
   );

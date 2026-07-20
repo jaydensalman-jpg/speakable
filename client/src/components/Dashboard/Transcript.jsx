@@ -53,16 +53,22 @@ export default function Transcript({ results, mediaRef }) {
         )}
       </div>
 
-      <div className="leading-loose text-ink/75 text-[15px]">
+      <div className="leading-relaxed text-ink/80 text-[15px]">
         {hasWordData ? (
           <p>
             {words.map((w, i) => {
               const filler = marked.has(i);
               const active = interactive && now >= (w.start ?? -1) && now < (w.end ?? -1);
+              // Highlighted words get a snug rounded background; the -mx offsets
+              // the padding so highlights never push neighbouring words apart.
+              const highlight = active
+                ? 'bg-brand-500 text-white rounded px-1 -mx-0.5'
+                : filler
+                  ? 'bg-amber-100 text-amber-900 rounded px-1 -mx-0.5'
+                  : '';
               const cls = [
-                filler ? 'bg-amber-100 border border-amber-300/70 text-amber-900' : '',
-                active ? 'bg-brand-500 text-white' : '',
-                interactive ? 'cursor-pointer rounded px-1 hover:bg-brand-100 hover:text-ink transition-colors' : filler ? 'rounded px-1' : '',
+                interactive ? 'cursor-pointer transition-colors rounded hover:bg-brand-100 hover:text-ink' : '',
+                highlight,
               ]
                 .filter(Boolean)
                 .join(' ');
