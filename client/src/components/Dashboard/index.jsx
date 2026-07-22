@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import TabNav from '../ui/TabNav.jsx';
+import { Play, LayoutGrid, MessageCircle, BookOpen, Gauge, Sparkles } from 'lucide-react';
+import TubelightTabs from '../ui/tubelight-tabs.jsx';
 import SelfReviewTab from './tabs/SelfReviewTab.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
 import FillerWordsTab from './tabs/FillerWordsTab.jsx';
@@ -8,13 +9,14 @@ import PacingTab from './tabs/PacingTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
 import ShareButton from './ShareButton.jsx';
 
+// Icons show on mobile (labels on desktop) in the tubelight tab bar.
 const TABS = [
-  { id: 'review', label: 'Watch & Listen' },
-  { id: 'overview', label: 'Overview' },
-  { id: 'fillers', label: 'Filler Words' },
-  { id: 'vocabulary', label: 'Vocabulary' },
-  { id: 'pacing', label: 'Pacing' },
-  { id: 'ai', label: 'Coaching' },
+  { id: 'review', label: 'Watch & Listen', icon: Play },
+  { id: 'overview', label: 'Overview', icon: LayoutGrid },
+  { id: 'fillers', label: 'Filler Words', icon: MessageCircle },
+  { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
+  { id: 'pacing', label: 'Pacing', icon: Gauge },
+  { id: 'ai', label: 'Coaching', icon: Sparkles },
 ];
 
 export default function Dashboard({ results }) {
@@ -38,7 +40,7 @@ export default function Dashboard({ results }) {
         </div>
       </div>
 
-      <TabNav tabs={TABS} active={activeTab} onChange={setActiveTab} />
+      <TubelightTabs items={TABS} active={activeTab} onChange={setActiveTab} />
 
       <div>
         {activeTab === 'review' && <SelfReviewTab results={results} />}

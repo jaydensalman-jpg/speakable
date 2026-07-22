@@ -78,6 +78,10 @@ src/
                       filler highlights), PaceHint, volume-reactive glow, 3-min cap
     History/          streak stats + month calendar (intensity = sessions/day) + day drill-down
     ui/SegmentedNav   sliding-pill nav used in the header
+    ui/tubelight-tabs  results tab bar (21st.dev "tubelight-navbar" adapted): a
+                      pill switcher with a framer-motion "lamp" glow that springs
+                      to the active tab; labels on desktop, icons on mobile.
+                      Controlled (active/onChange), drives the Dashboard tabs.
     ui/shape-landing-hero  Kokonut UI hero adapted to the warm palette (framer-motion,
                       floating glass shapes); Home renders inside it, full-bleed
                       (App drops the max-w main wrapper for the home state only)
