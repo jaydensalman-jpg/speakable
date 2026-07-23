@@ -17,7 +17,7 @@ npm run build      # production build → client/dist (fully static, deployable 
 
 Use **Google Chrome** for the full experience. Node comes via nvm (`nvm use --lts` if node/npm aren't found). No tests or linter are configured; verification is `npm run build` + exercising the app.
 
-> The Express `server/` directory is **dead legacy** (old Claude-API/Whisper-server flow; nothing calls it, `client/src/api/` was deleted). The repo is a git repo; deploys are static from `client/dist` (Vercel/Netlify).
+> The Express `server/` directory is **dead legacy** (old Claude-API/Whisper-server flow; nothing calls it, `client/src/api/` was deleted). **Deploys are continuous:** pushing the GitHub repo (`jaydensalman-jpg/speakable`) auto-builds on Vercel, live at **speakable-omega.vercel.app**. Full setup + the client-vs-backend split are in `DEPLOYMENT.md`. Static output is `client/dist`.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Record (MediaRecorder, video or audio; pause/resume) → blob
   → utils/: detectFillerWords · computePacing(words, duration) · detectPauses
   → hooks/useEyeContact.js — camera takes only: MediaPipe Face Landmarker @ ~10fps
   → utils/localCoach.js — on-device scored report (no API)
-  → Dashboard tabs: Watch & Listen · Overview · Transcript · Filler Words · Pacing · Coaching
+  → Dashboard tabs: Watch & Listen (transcript lives here) · Overview · Filler Words · Vocabulary · Pacing · Coaching
   → lib/history.js — session (blob + report) persisted to IndexedDB → History calendar
   → lib/cloudSync.js — signed in only: the REPORT (never the blob) syncs to Supabase
 ```
@@ -64,7 +64,7 @@ First "Start recording" from Home routes through an email-capture screen unless 
 ### Design tokens (keep everything on these)
 - Colors: `cream` bg, `sand` surfaces/dividers, `ink` text (opacity steps /80 /65 /55 /45 /35), single coral `brand` accent — no cool grays (`slate`) anywhere.
 - Type: **Fraunces** (`font-display`) for display/headings, **Inter** body.
-- Motion: `ease-organic` + `duration-250/400` (tailwind.config), keyframes in `index.css` (`animate-rise`, `word-in`, `ring-out`, `eq`, `float`); animate transform/opacity only; `prefers-reduced-motion` collapses all of it. **framer-motion** (home hero only) is NOT covered by that CSS rule — components using it must check `useReducedMotion()` themselves.
+- Motion: `ease-organic` + `duration-250/400` (tailwind.config), keyframes in `index.css` (`animate-rise`, `word-in`, `ring-out`, `eq`, `float`); animate transform/opacity only; `prefers-reduced-motion` collapses all of it. **framer-motion** (home hero `shape-landing-hero` and the results `tubelight-tabs`) is NOT covered by that CSS rule — components using it must check `useReducedMotion()` themselves.
 - Shared classes: `.card`, `.stat-card`, `.btn-primary`; global `:focus-visible` ring.
 
 ### Client structure (non-obvious parts)
@@ -78,10 +78,11 @@ src/
                       filler highlights), PaceHint, volume-reactive glow, 3-min cap
     History/          streak stats + month calendar (intensity = sessions/day) + day drill-down
     ui/SegmentedNav   sliding-pill nav used in the header
-    ui/tubelight-tabs  results tab bar (21st.dev "tubelight-navbar" adapted): a
-                      pill switcher with a framer-motion "lamp" glow that springs
-                      to the active tab; labels on desktop, icons on mobile.
-                      Controlled (active/onChange), drives the Dashboard tabs.
+    ui/tubelight-tabs  results tab bar: clean full-width segmented control, a white
+                      pill that springs to the active tab via framer-motion shared
+                      layout (the original 21st.dev "lamp" glow was removed — it read
+                      unprofessional). Labels on desktop, icons on mobile; width
+                      matches the result cards. Controlled (active/onChange).
     ui/shape-landing-hero  Kokonut UI hero adapted to the warm palette (framer-motion,
                       floating glass shapes); Home renders inside it, full-bleed
                       (App drops the max-w main wrapper for the home state only)
