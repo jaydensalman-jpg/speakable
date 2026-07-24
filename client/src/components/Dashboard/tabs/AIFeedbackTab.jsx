@@ -1,3 +1,5 @@
+import { detectWeakWords } from '../../../utils/weakWords.js';
+
 // Coaching tab. New reports carry feedback.coaching — the 2–3 weakest areas
 // from THIS take, each with the real numbers (and timestamps where measured)
 // plus one concrete drill. Sessions saved by older builds have no coaching
@@ -5,6 +7,15 @@
 export default function AIFeedbackTab({ results }) {
   const { feedback } = results;
   const coaching = feedback.coaching || null;
+
+  // A short "also keep an eye on" checklist: every off-target metric as a
+  // one-liner, plus weak-word load if notable. Complements the detailed drills.
+  const also = [];
+  (feedback.breakdown || [])
+    .filter((m) => !m.inRange)
+    .forEach((m) => also.push(`${m.label}: ${m.valueDisplay} · target ${m.targetDisplay}`));
+  const weak = detectWeakWords(results.displayWords || results.words || []);
+  if (weak.total >= 4) also.push(`Weak or empty words: ${weak.total} worth trimming (see the Words to Cut tab)`);
 
   if (coaching) {
     return (
@@ -32,6 +43,22 @@ export default function AIFeedbackTab({ results }) {
             </div>
           ))}
         </div>
+
+        {also.length > 0 && (
+          <div className="card">
+            <h3 className="text-xs font-semibold text-ink/50 uppercase tracking-wider mb-3">
+              Also keep an eye on
+            </h3>
+            <ul className="space-y-2">
+              {also.map((line, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm text-ink/70">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {feedback.highlights?.length > 0 && (
           <div className="card border-emerald-200 bg-emerald-50">

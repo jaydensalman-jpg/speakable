@@ -4,6 +4,7 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition.js';
 import { useAudioAnalyzer } from '../../hooks/useAudioAnalyzer.js';
 import { useEyeContact } from '../../hooks/useEyeContact.js';
 import { isFillerWord } from '../../utils/fillerWords.js';
+import { getRandomIdea } from '../../utils/ideas.js';
 import AudioVisualizer from './AudioVisualizer.jsx';
 import UploadZone from './UploadZone.jsx';
 import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
@@ -180,6 +181,9 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           </button>
         ))}
       </div>
+
+      {/* Stuck for a topic? A random practice prompt — only before recording. */}
+      {mode === 'record' && recState === 'idle' && <IdeaGenerator />}
 
       {mode === 'record' ? (
         <div className="card p-0 overflow-hidden">
@@ -425,6 +429,56 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+// "Generate idea": a random practice prompt so there's always a low-friction way
+// to start talking. Collapsed to a single button until asked; then shows the
+// prompt with a shuffle. Purely local — nothing generated on a server.
+function IdeaGenerator() {
+  const [idea, setIdea] = useState(null);
+  const shuffle = () => setIdea((prev) => getRandomIdea(prev?.text));
+
+  if (!idea) {
+    return (
+      <div className="mb-6 flex justify-center">
+        <button
+          onClick={shuffle}
+          className="flex items-center gap-2 rounded-full border border-sand bg-white px-4 py-2 text-sm font-medium text-ink/70 shadow-soft transition-colors duration-250 hover:border-brand-200 hover:text-ink"
+        >
+          <svg className="h-4 w-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.5-6.5l-1.4 1.4M7.9 16.1l-1.4 1.4m11-.1l-1.4-1.4M7.9 7.9L6.5 6.5" />
+            <circle cx="12" cy="12" r="3.5" />
+          </svg>
+          Need a topic? Generate an idea
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 animate-rise rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 to-sand p-5 text-center">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">{idea.category}</p>
+      <p className="mx-auto mt-2 max-w-md font-display text-2xl font-semibold leading-snug text-ink">{idea.text}</p>
+      {idea.hint && <p className="mt-1.5 text-sm text-ink/50">{idea.hint}</p>}
+      <div className="mt-4 flex items-center justify-center gap-2">
+        <button
+          onClick={shuffle}
+          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink/70 shadow-soft transition-colors duration-250 hover:text-ink"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M20 9a8 8 0 00-14.9-2M4 15a8 8 0 0014.9 2" />
+          </svg>
+          Shuffle
+        </button>
+        <button
+          onClick={() => setIdea(null)}
+          className="rounded-full px-3 py-2 text-sm font-medium text-ink/45 transition-colors duration-250 hover:text-ink/70"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   );
 }

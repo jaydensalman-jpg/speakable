@@ -326,8 +326,11 @@ export function generateLocalFeedback({
     },
   };
 
+  // Only drill areas that are genuinely OFF TARGET. A short sample caps every
+  // score under 8, but an on-target metric (e.g. zero long pauses) must never be
+  // dressed up as a weakness with a "fix this" drill.
   let coaching = metrics
-    .filter((m) => m.score < 8 && drills[m.id])
+    .filter((m) => !m.inRange && drills[m.id])
     .sort((a, b) => a.score - b.score)
     .slice(0, 3)
     .map((m) => drills[m.id]);
