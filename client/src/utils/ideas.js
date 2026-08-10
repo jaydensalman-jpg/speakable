@@ -53,3 +53,22 @@ export function getRandomIdea(previousText) {
   } while (POOL.length > 1 && pick.text === previousText);
   return pick;
 }
+
+// The sequence the shuffle animation flips through, ending on the prompt the
+// user actually gets. Every neighbouring pair differs, so no step of the reel
+// looks like a stutter, and the LAST element is the real result — it still
+// respects getRandomIdea's "don't repeat what was just shown" rule.
+export function buildShuffleReel(previousText, steps = 12) {
+  const reel = [];
+  let last = previousText;
+  for (let i = 0; i < steps; i += 1) {
+    let pick;
+    do {
+      pick = POOL[Math.floor(Math.random() * POOL.length)];
+    } while (POOL.length > 1 && pick.text === last);
+    reel.push(pick);
+    last = pick.text;
+  }
+  reel.push(getRandomIdea(last));
+  return reel;
+}

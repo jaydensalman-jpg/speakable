@@ -82,6 +82,26 @@
   animation: pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Each frame of the idea shuffle reel: the next prompt drops in from above like
+   a slot wheel. Deliberately short (90ms) so it finishes before the next tick
+   fires at the start of the roll. Transform + opacity only, and the
+   prefers-reduced-motion block below collapses it (the reel is also skipped
+   outright in JS for those users). */
+@keyframes slot-tick {
+  from {
+    opacity: 0;
+    transform: translateY(-34%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slot-tick {
+  animation: slot-tick 0.09s ease-out both;
+}
+
 /* Gentle lift on interactive cards. */
 .lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;

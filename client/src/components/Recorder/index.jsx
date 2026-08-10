@@ -4,7 +4,8 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition.js';
 import { useAudioAnalyzer } from '../../hooks/useAudioAnalyzer.js';
 import { useEyeContact } from '../../hooks/useEyeContact.js';
 import { isFillerWord } from '../../utils/fillerWords.js';
-import { getRandomIdea } from '../../utils/ideas.js';
+import { getRandomIdea, buildShuffleReel } from '../../utils/ideas.js';
+import * as sfx from '../../utils/sfx.js';
 import AudioVisualizer from './AudioVisualizer.jsx';
 import UploadZone from './UploadZone.jsx';
 import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
@@ -436,9 +437,73 @@ export default function Recorder({ onComplete, onRecordingStart }) {
 // "Generate idea": a random practice prompt so there's always a low-friction way
 // to start talking. Collapsed to a single button until asked; then shows the
 // prompt with a shuffle. Purely local — nothing generated on a server.
+// Reel shape: 12 flips then the landing. Each gap grows by 15% (35ms → 187ms)
+// so the wheel decelerates into its answer instead of stopping dead. Total roll
+// is ~1.2s, long enough to read as a spin and short enough not to be a wait.
+const REEL_STEPS = 12;
+const REEL_BASE_MS = 35;
+const REEL_RATIO = 1.15;
+
 function IdeaGenerator() {
   const [idea, setIdea] = useState(null);
-  const shuffle = () => setIdea((prev) => getRandomIdea(prev?.text));
+  const [rolling, setRolling] = useState(false);
+  const [spin, setSpin] = useState(0); // bumps per flip to retrigger the slot animation
+  const [muted, setMuted] = useState(() => sfx.isMuted());
+  const timers = useRef([]);
+
+  const clearTimers = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+
+  // The card unmounts the instant recording starts, but scheduled Web Audio and
+  // pending timeouts outlive React. Without this, a shuffle fired just before
+  // hitting record would chime into the microphone and show up in the transcript.
+  useEffect(() => () => {
+    clearTimers();
+    sfx.stopAll();
+  }, []);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    sfx.setMuted(next);
+  };
+
+  const shuffle = () => {
+    if (rolling) return;
+    clearTimers();
+    sfx.stopAll();
+
+    // Reduced motion means reduced sensory load generally, so these users get
+    // the result immediately with no reel and no sound.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setIdea((prev) => getRandomIdea(prev?.text));
+      setSpin((s) => s + 1);
+      return;
+    }
+
+    const reel = buildShuffleReel(idea?.text, REEL_STEPS);
+    setRolling(true);
+
+    let at = 0;
+    reel.forEach((pick, i) => {
+      at += Math.round(REEL_BASE_MS * REEL_RATIO ** i);
+      const isLast = i === reel.length - 1;
+      timers.current.push(
+        setTimeout(() => {
+          setIdea(pick);
+          setSpin((s) => s + 1);
+          if (isLast) {
+            setRolling(false);
+            sfx.land();
+          } else {
+            sfx.tick(i / reel.length);
+          }
+        }, at),
+      );
+    });
+  };
 
   if (!idea) {
     return (
@@ -459,18 +524,58 @@ function IdeaGenerator() {
 
   return (
     <div className="mb-6 animate-rise rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 to-sand p-5 text-center">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">{idea.category}</p>
-      <p className="mx-auto mt-2 max-w-md font-display text-2xl font-semibold leading-snug text-ink">{idea.text}</p>
-      {idea.hint && <p className="mt-1.5 text-sm text-ink/50">{idea.hint}</p>}
+      {/* aria-live is off mid-roll so a screen reader announces the result once
+          instead of every one of the 13 frames. */}
+      <div aria-live={rolling ? 'off' : 'polite'} aria-atomic="true">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">{idea.category}</p>
+        {/* Fixed heights: prompts range from one word to a full sentence, and
+            without reserved space the card would jitter through the reel. */}
+        <div className="mx-auto mt-2 flex min-h-[4.5rem] max-w-md items-center justify-center">
+          <p
+            key={spin}
+            className={`font-display text-2xl font-semibold leading-snug text-ink ${
+              rolling ? 'animate-slot-tick' : 'animate-pop'
+            }`}
+          >
+            {idea.text}
+          </p>
+        </div>
+        <div className="mt-1.5 min-h-[1.25rem]">
+          {idea.hint && <p className="text-sm text-ink/50">{idea.hint}</p>}
+        </div>
+      </div>
       <div className="mt-4 flex items-center justify-center gap-2">
         <button
           onClick={shuffle}
-          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink/70 shadow-soft transition-colors duration-250 hover:text-ink"
+          disabled={rolling}
+          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink/70 shadow-soft transition-colors duration-250 hover:text-ink disabled:cursor-default disabled:text-ink/40"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <svg
+            className={`h-4 w-4 ${rolling ? 'animate-spin' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M20 9a8 8 0 00-14.9-2M4 15a8 8 0 0014.9 2" />
           </svg>
           Shuffle
+        </button>
+        <button
+          onClick={toggleMute}
+          aria-pressed={muted}
+          aria-label={muted ? 'Turn shuffle sound on' : 'Turn shuffle sound off'}
+          title={muted ? 'Sound off' : 'Sound on'}
+          className="rounded-full p-2 text-ink/45 transition-colors duration-250 hover:text-ink/70"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H3v6h3l5 4V5z" />
+            {muted ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 9l4 6m0-6l-4 6" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 8.5a5 5 0 010 7M18 6a8 8 0 010 12" />
+            )}
+          </svg>
         </button>
         <button
           onClick={() => setIdea(null)}
