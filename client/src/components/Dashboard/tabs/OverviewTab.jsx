@@ -1,4 +1,24 @@
+import { motion, useReducedMotion } from 'framer-motion';
+import { Eye, Gauge, MessageSquare, Waves, BookOpen, Mic, Activity } from 'lucide-react';
 import ScoreRing from '../../ui/ScoreRing.jsx';
+
+// One icon per measured metric, so a card is identifiable before you read it.
+const METRIC_ICONS = {
+  eyeContact: Eye,
+  pace: Gauge,
+  fillers: MessageSquare,
+  flow: Waves,
+  vocabulary: BookOpen,
+  articulation: Mic,
+};
+
+// Two warm tints alternating down the grid. Deliberately NOT one hue per card
+// (the services layout this borrows from used purple/green/red/blue) — the
+// palette is a single coral accent, so rhythm comes from intensity instead.
+const CARD_TINTS = [
+  'from-brand-50 to-brand-100/70 border-brand-100',
+  'from-cream to-sand border-sand',
+];
 
 // Overview = the transparent score page, laid out as a bento grid (adapted from
 // Kokonut UI "features-8": 6-col grid, three visual cards up top, wider cards
@@ -9,6 +29,9 @@ import ScoreRing from '../../ui/ScoreRing.jsx';
 // Sessions saved by older builds have no breakdown → legacy category view.
 export default function OverviewTab({ results }) {
   const { feedback, avgWpm, fillerWordCounts, wpmData, pauses, duration, words, eyeContact } = results;
+  // framer-motion is not covered by the global prefers-reduced-motion CSS rule,
+  // so the stagger has to be disabled here explicitly.
+  const prefersReduced = useReducedMotion();
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
   const wordCount = words.length;
   const breakdown = feedback.breakdown || null;
@@ -36,6 +59,19 @@ export default function OverviewTab({ results }) {
     const isLastOdd = rest % 2 === 1 && i === n - 1;
     return `col-span-full sm:col-span-3 ${isLastOdd ? 'lg:col-span-6' : 'lg:col-span-3'}`;
   };
+
+  // Cards lift in one after another when the tab mounts. Reduced motion gets
+  // them fully rendered with no transform and no stagger.
+  const gridVariants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: prefersReduced ? 0 : 0.06 } },
+  };
+  const cardVariants = prefersReduced
+    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
+    : {
+        hidden: { opacity: 0, y: 24 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+      };
 
   return (
     <div className="space-y-5">
@@ -80,9 +116,20 @@ export default function OverviewTab({ results }) {
 
       {/* Metric bento grid */}
       {cards.length > 0 && (
-        <div className="grid grid-cols-6 gap-3">
+        <motion.div
+          className="grid grid-cols-6 gap-3"
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {cards.map((m, i) => (
-            <MetricCard key={m.id} metric={m} className={spanFor(i, cards.length)} tinted={m.id === 'eyeContact'}>
+            <MetricCard
+              key={m.id}
+              metric={m}
+              index={i}
+              variants={cardVariants}
+              className={spanFor(i, cards.length)}
+            >
               {m.id === 'eyeContact' && eyeContact && <EyeGauge data={eyeContact} />}
               {m.id === 'pace' && <PaceChart avgWpm={avgWpm} wpmData={wpmData} />}
               {m.id === 'fillers' && (
@@ -95,7 +142,7 @@ export default function OverviewTab({ results }) {
               {m.id === 'articulation' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="recognized clearly" />}
             </MetricCard>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Quick stats — legacy reports only; the bento cards carry these now */}
@@ -179,19 +226,26 @@ function Verdict({ assessment }) {
   );
 }
 
-// Bento card, kept to three elements: label, one tinted score pill (state and
-// score in a single glance), the visual. Words only where action is needed.
-function MetricCard({ metric, className, tinted, children }) {
+// Bento card, restyled to give each metric real presence: an index, its own
+// icon, the measurement, then the name and verdict anchored at the bottom.
+// The score pill keeps the existing emerald/amber meaning (on target vs not) —
+// those are the app's established status colors, not decoration.
+function MetricCard({ metric, index, variants, className, children }) {
+  const Icon = METRIC_ICONS[metric.id] || Activity;
+  const tint = CARD_TINTS[index % CARD_TINTS.length];
+
   return (
-    <div
-      className={`card flex flex-col py-4 ${className} ${
-        tinted ? 'bg-gradient-to-br from-brand-50 to-sand border-brand-100' : ''
-      }`}
+    <motion.div
+      variants={variants}
+      className={`flex min-h-[260px] flex-col overflow-hidden rounded-3xl border bg-gradient-to-br p-6 ${tint} ${className}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-ink/80">{metric.label}</h4>
+      {/* Index + score, the two things you scan first. */}
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-mono text-[11px] tabular-nums text-ink/35">
+          ( {String(index + 1).padStart(3, '0')} )
+        </span>
         <span
-          className={`text-xs font-bold tabular-nums px-2 py-0.5 rounded-full ${
+          className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${
             metric.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
           }`}
         >
@@ -199,20 +253,26 @@ function MetricCard({ metric, className, tinted, children }) {
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center py-3">{children}</div>
+      <Icon className="mt-4 h-8 w-8 shrink-0 text-brand-500" strokeWidth={1.5} aria-hidden />
 
-      {/* One plain verdict per card — good or bad, in a couple of words. The
-          full "why it matters" explanation lives in the Coaching tab. */}
-      {metric.plain && (
-        <p
-          className={`text-center text-xs font-semibold ${
-            metric.inRange ? 'text-emerald-600' : 'text-amber-600'
-          }`}
-        >
-          {metric.plain}
-        </p>
-      )}
-    </div>
+      {/* The measurement itself — gauge, sparkline, chips, or a big number. */}
+      <div className="flex flex-1 flex-col justify-center py-4">{children}</div>
+
+      <div>
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-ink">{metric.label}</h4>
+        {/* One plain verdict per card — good or bad, in a couple of words. The
+            full "why it matters" explanation lives in the Coaching tab. */}
+        {metric.plain && (
+          <p
+            className={`mt-1 text-xs font-semibold ${
+              metric.inRange ? 'text-emerald-600' : 'text-amber-600'
+            }`}
+          >
+            {metric.plain}
+          </p>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
