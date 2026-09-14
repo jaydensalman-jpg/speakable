@@ -12,13 +12,34 @@ const METRIC_ICONS = {
   articulation: Mic,
 };
 
-// Two warm tints alternating down the grid. Deliberately NOT one hue per card
-// (the services layout this borrows from used purple/green/red/blue) — the
-// palette is a single coral accent, so rhythm comes from intensity instead.
-const CARD_TINTS = [
-  'from-brand-50 to-brand-100/70 border-brand-100',
-  'from-cream to-sand border-sand',
-];
+// Plain explanation of where overallScore came from. Every figure is read
+// straight off `breakdown`, so this can never assert anything the metric cards
+// don't already show. "Best" is the strongest ON-TARGET metric, not simply the
+// highest score: a high score that is still off target did not hold anything up.
+function scoreRationale(feedback) {
+  const b = feedback.breakdown;
+  if (!b || !b.length) return null;
+
+  const asc = [...b].sort((a, z) => a.score - z.score);
+  const weak = asc.filter((m) => !m.inRange).slice(0, 2);
+  const best = [...b].filter((m) => m.inRange).sort((a, z) => z.score - a.score)[0];
+  const ref = (m) => `${m.label.toLowerCase()} (${m.score}/10)`;
+
+  const parts = [`Average of the ${b.length} areas measured.`];
+
+  if (!weak.length) {
+    parts.push('Everything measured landed on target.');
+  } else {
+    const dragged = weak.map(ref).join(' and ');
+    const lead = dragged.charAt(0).toUpperCase() + dragged.slice(1);
+    parts.push(best ? `${lead} pulled it down, ${ref(best)} held it up.` : `${lead} pulled it down.`);
+  }
+
+  const cap = feedback.meta?.cap;
+  if (cap && cap < 10) parts.push(`Capped at ${cap} because the take was short.`);
+
+  return parts.join(' ');
+}
 
 // Overview = the transparent score page, laid out as a bento grid (adapted from
 // Kokonut UI "features-8": 6-col grid, three visual cards up top, wider cards
@@ -88,9 +109,16 @@ export default function OverviewTab({ results }) {
               ) : (
                 <p className="text-[15px] text-ink/80 leading-relaxed font-medium">{feedback.summary}</p>
               )}
-              <p className="mt-3 text-xs text-ink/40 leading-relaxed tabular-nums">
+              {/* Why this score, in one line. The short-take cap explanation
+                  moved in here from the meta line below, since it is part of
+                  the reason for the number rather than session trivia. */}
+              {scoreRationale(feedback) && (
+                <p className="mt-3 text-[13px] text-ink/55 leading-relaxed tabular-nums">
+                  {scoreRationale(feedback)}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-ink/40 leading-relaxed tabular-nums">
                 {wordCount} words · {formatDuration(duration)}
-                {feedback.meta?.cap < 10 && ` · capped at ${feedback.meta.cap} for short takes`}
               </p>
             </>
           ) : (
@@ -232,12 +260,11 @@ function Verdict({ assessment }) {
 // those are the app's established status colors, not decoration.
 function MetricCard({ metric, index, variants, className, children }) {
   const Icon = METRIC_ICONS[metric.id] || Activity;
-  const tint = CARD_TINTS[index % CARD_TINTS.length];
 
   return (
     <motion.div
       variants={variants}
-      className={`flex min-h-[260px] flex-col overflow-hidden rounded-3xl border bg-gradient-to-br p-6 ${tint} ${className}`}
+      className={`card flex min-h-[260px] flex-col overflow-hidden ${className}`}
     >
       {/* Index + score, the two things you scan first. */}
       <div className="flex items-start justify-between gap-2">
