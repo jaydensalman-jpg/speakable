@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Play, LayoutGrid, MessageCircle, Scissors, BookOpen, Gauge, Sparkles } from 'lucide-react';
+import { Play, LayoutGrid, MessageCircle, Scissors, BookOpen, Sparkles } from 'lucide-react';
 import TubelightTabs from '../ui/tubelight-tabs.jsx';
 import SelfReviewTab from './tabs/SelfReviewTab.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
 import FillerWordsTab from './tabs/FillerWordsTab.jsx';
 import WordsToCutTab from './tabs/WordsToCutTab.jsx';
 import VocabularyTab from './tabs/VocabularyTab.jsx';
-import PacingTab from './tabs/PacingTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
 import ShareButton from './ShareButton.jsx';
 
@@ -17,7 +16,6 @@ const TABS = [
   { id: 'fillers', label: 'Filler Words', icon: MessageCircle },
   { id: 'weak', label: 'Words to Cut', icon: Scissors },
   { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
-  { id: 'pacing', label: 'Pacing', icon: Gauge },
   { id: 'ai', label: 'Coaching', icon: Sparkles },
 ];
 
@@ -50,7 +48,6 @@ export default function Dashboard({ results }) {
         {activeTab === 'fillers' && <FillerWordsTab results={results} />}
         {activeTab === 'weak' && <WordsToCutTab results={results} />}
         {activeTab === 'vocabulary' && <VocabularyTab results={results} />}
-        {activeTab === 'pacing' && <PacingTab results={results} />}
         {activeTab === 'ai' && <AIFeedbackTab results={results} />}
       </div>
     </div>

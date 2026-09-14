@@ -124,6 +124,13 @@ export function generateLocalFeedback({
   }
 
   // ---- Transparent metric scores (1–10 each, capped by sample size) -----
+  // FOUR scored areas, deliberately: pace, fillers, vocabulary, eye contact.
+  // The overall is their average, so this list is the definition of the score.
+  // "Flow & pauses" was removed (July 2026) along with the Pacing tab, and
+  // "Articulation" with it — the latter only ever appeared on the Web Speech
+  // fallback path, since Whisper returns no per-word confidence, so it made the
+  // score mean different things depending on which recognizer ran.
+  // `pauses` still rides in `results` untouched for older saved sessions.
   const cap = 3 + 7 * sufficiency;
   const capped = (n) => clamp(Math.min(n, cap));
   const metrics = [];
@@ -167,25 +174,6 @@ export function generateLocalFeedback({
     });
   }
 
-  // Flow — long (≥2s) unplanned silences per minute, plus pace steadiness.
-  {
-    let score = pauseRate <= 1 ? 9 : pauseRate <= 2 ? 8 : pauseRate <= 3 ? 6.5 : pauseRate <= 4 ? 5 : 4;
-    if (paceValues.length > 2 && paceSwing > 40) score -= 1;
-    metrics.push({
-      id: 'flow',
-      label: 'Flow & pauses',
-      score: capped(score),
-      valueDisplay: `${pauses.length} long pause${pauses.length === 1 ? '' : 's'} (${pauseRate.toFixed(1)}/min)`,
-      targetDisplay: '≤2 per minute',
-      inRange: pauseRate <= 2,
-      plain: pauses.length === 0 ? 'No stalls' : pauseRate <= 2 ? 'Good flow' : 'Too many stalls',
-      sentence:
-        pauses.length === 0
-          ? `No stalls longer than 2 seconds. The thread never dropped.`
-          : `You stalled ${pauses.length} time${pauses.length === 1 ? '' : 's'}${longestPause ? `, the longest for ${longestPause.duration.toFixed(1)} seconds around ${fmtTime(longestPause.at)}` : ''}. A silence that long reads as a lost thread unless you meant it.`,
-    });
-  }
-
   // Vocabulary — needs a real word count before variety means anything.
   if (tokens.length >= 30) {
     let score = ttr > 0.62 ? 8 : ttr > 0.52 ? 7 : ttr > 0.42 ? 6 : ttr > 0.35 ? 5 : 4;
@@ -202,23 +190,6 @@ export function generateLocalFeedback({
         ttr >= 0.5
           ? `${Math.round(ttr * 100)}% of your words were unique. Varied wording keeps people listening.`
           : `Only ${Math.round(ttr * 100)}% of your words were unique, so a few words did most of the work.`,
-    });
-  }
-
-  // Articulation — only when the recognizer supplied real confidence values.
-  if (hasConf) {
-    metrics.push({
-      id: 'articulation',
-      label: 'Articulation',
-      score: capped(avgConf * 10 - (lowConfCount >= 3 ? 1 : 0)),
-      valueDisplay: `${Math.round(avgConf * 100)}% recognition confidence`,
-      targetDisplay: '85%+',
-      inRange: avgConf >= 0.85,
-      plain: lowConfCount === 0 ? 'Clear and crisp' : 'Some unclear words',
-      sentence:
-        lowConfCount > 0
-          ? `${lowConfCount} word${lowConfCount === 1 ? ' was' : 's were'} hard to make out. If speech software struggles with a word, people in the back row do too.`
-          : `Clean articulation. The recognizer caught ${Math.round(avgConf * 100)}% of your words confidently.`,
     });
   }
 
@@ -249,9 +220,7 @@ export function generateLocalFeedback({
   const shortName = {
     pace: `pace (${Math.round(avgWpm)} WPM)`,
     fillers: `fillers (${Math.round(fillerPct)}% of your words)`,
-    flow: `long pauses (${pauses.length} of them)`,
     vocabulary: `word variety (${Math.round(ttr * 100)}% unique)`,
-    articulation: `clarity (${lowConfCount} unclear word${lowConfCount === 1 ? '' : 's'})`,
     eyeContact: hasEye ? `eye contact (${eyeContact.contactPct}% at the camera)` : '',
   };
   const listJoin = (arr) => (arr.length > 1 ? `${arr.slice(0, -1).join(', ')} and ${arr.at(-1)}` : arr[0]);

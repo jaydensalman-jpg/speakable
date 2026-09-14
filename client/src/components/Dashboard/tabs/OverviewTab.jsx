@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { Eye, Gauge, MessageSquare, Waves, BookOpen, Mic, Activity } from 'lucide-react';
+import { Eye, Gauge, MessageSquare, BookOpen, Activity } from 'lucide-react';
 import ScoreRing from '../../ui/ScoreRing.jsx';
 
 // One icon per measured metric, so a card is identifiable before you read it.
@@ -7,18 +7,20 @@ const METRIC_ICONS = {
   eyeContact: Eye,
   pace: Gauge,
   fillers: MessageSquare,
-  flow: Waves,
   vocabulary: BookOpen,
-  articulation: Mic,
 };
 
 // Plain explanation of where overallScore came from. Every figure is read
 // straight off `breakdown`, so this can never assert anything the metric cards
 // don't already show. "Best" is the strongest ON-TARGET metric, not simply the
 // highest score: a high score that is still off target did not hold anything up.
-function scoreRationale(feedback) {
+function scoreRationale(feedback, scoredIds) {
   const b = feedback.breakdown;
   if (!b || !b.length) return null;
+  // A report saved before the scoring changed averaged metrics we no longer
+  // show (flow, articulation). Naming only the visible four would misdescribe
+  // where its number came from, so those reports get no sentence at all.
+  if (b.some((m) => !scoredIds.includes(m.id))) return null;
 
   const asc = [...b].sort((a, z) => a.score - z.score);
   const weak = asc.filter((m) => !m.inRange).slice(0, 2);
@@ -66,7 +68,10 @@ export default function OverviewTab({ results }) {
   ];
 
   // Display order puts the visual cards first (eye gauge, pace chart, fillers).
-  const ORDER = ['eyeContact', 'pace', 'fillers', 'flow', 'vocabulary', 'articulation'];
+  // The four scored areas, in display order. Sessions saved before July 2026
+  // still carry flow/articulation in their breakdown; leaving them out of this
+  // list is what keeps an old report's Overview consistent with the new score.
+  const ORDER = ['eyeContact', 'pace', 'fillers', 'vocabulary'];
   const cards = breakdown
     ? ORDER.map((id) => breakdown.find((m) => m.id === id)).filter(Boolean)
     : [];
@@ -112,9 +117,9 @@ export default function OverviewTab({ results }) {
               {/* Why this score, in one line. The short-take cap explanation
                   moved in here from the meta line below, since it is part of
                   the reason for the number rather than session trivia. */}
-              {scoreRationale(feedback) && (
+              {scoreRationale(feedback, ORDER) && (
                 <p className="mt-3 text-[13px] text-ink/55 leading-relaxed tabular-nums">
-                  {scoreRationale(feedback)}
+                  {scoreRationale(feedback, ORDER)}
                 </p>
               )}
               <p className="mt-2 text-xs text-ink/40 leading-relaxed tabular-nums">
@@ -163,11 +168,7 @@ export default function OverviewTab({ results }) {
               {m.id === 'fillers' && (
                 <FillerChips counts={fillerWordCounts} total={totalFillers} duration={duration} />
               )}
-              {m.id === 'flow' && (
-                <BigStat value={pauses.length} unit={pauses.length === 1 ? 'long pause' : 'long pauses'} />
-              )}
               {m.id === 'vocabulary' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="unique words" />}
-              {m.id === 'articulation' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="recognized clearly" />}
             </MetricCard>
           ))}
         </motion.div>
