@@ -38,7 +38,7 @@ Record (MediaRecorder, video or audio; pause/resume) → blob
 
 ### Two transcription layers — don't confuse them
 - **Live captions** while recording come from the Web Speech API (`hooks/useSpeechRecognition.js`: `liveWords`/`interim`, Chrome-only, approximate). Also the *fallback* transcript if Whisper fails.
-- **The report's source of truth** is Whisper, run on the final blob. It catches fillers the live engine drops. Model is lazy-loaded (code-split) and browser-cached (~145 MB first run). Trade accuracy/speed by changing `MODEL_ID` (tiny.en ↔ base.en ↔ small.en). **Phones/tablets get `tiny.en`** (~40 MB) via a UA/touch check in `transcribe.js` — base.en is too heavy for mobile Safari.
+- **The report's source of truth** is Whisper, run on the final blob. It catches fillers the live engine drops. Model is lazy-loaded (code-split) and browser-cached. **Desktop runs `small.en`** (~238 MB quantized), raised from base.en in September 2026 because model size is the main lever on filler capture: Whisper normalizes disfluencies away and the smaller the variant the harder it does so. **Phones/tablets get `tiny.en`** (~40 MB) via a UA/touch check in `transcribe.js` — base.en was already too heavy for mobile Safari, so small.en is out of the question there. Note the usual fix for disfluency capture (priming the decoder with a filler-heavy prompt) is NOT available: transformers.js 2.17's `prompt_ids` carries language/task only, not text conditioning.
 
 ### Key constraints
 - **Single Recorder instance** stays mounted across idle/recording (`App.jsx`) — unmounting mid-stream drops the mic.
@@ -52,7 +52,7 @@ Camera-mode recordings only; fully on-device (MediaPipe Face Landmarker via `@me
 
 ### Filler detection (`utils/fillerWords.js`)
 Regex-folded vocal hesitations (um/uh/er/hmm/em/uh-huh/huh/ugh + all elongation variants → canonical labels), crutch words, and greedy longest-first phrase matching ("you know what i mean" before "you know"). Tune coverage/precision here only.
-**Accuracy over recall (changed July 2026).** Earlier builds guessed at "um"/"uh" acoustically (voiced-frame runs in gaps) and by injecting them into the transcript. That produced PHANTOM fillers ("um um um um um" where the user said none/one), which is unacceptable for a tool people rely on. That acoustic detector is **removed**. Fillers now come ONLY from what Whisper actually transcribed. The one correction: `collapseRepeatedFillers` (in `utils/fillerWords.js`) merges a sustained "ummmm" that Whisper emits as several `um` tokens (same label, gaps ≤0.8s) into ONE occurrence. `displayWords = collapseRepeatedFillers(wordList)` is the exact transcript shown; `fillerWordCounts = detectFillerWords(displayWords)`, so the transcript and every filler number derive from one list. Verified: clean speech → 0 fillers; a 6-token sustained um → 1. This is bounded by Whisper's accuracy (no ASR is literally 100%) but has no fabrication.
+**Accuracy over recall (changed July 2026).** Earlier builds guessed at "um"/"uh" acoustically (voiced-frame runs in gaps) and by injecting them into the transcript. That produced PHANTOM fillers ("um um um um um" where the user said none/one), which is unacceptable for a tool people rely on. That acoustic detector is **removed**. Fillers now come ONLY from what Whisper actually transcribed. The one correction: `collapseRepeatedFillers` (in `utils/fillerWords.js`) merges a sustained "ummmm" that Whisper emits as several `um` tokens (same label, gaps ≤0.35s) into ONE occurrence. That window was 0.8s until September 2026, which also merged genuinely separate hesitations ("um ... um" with a beat between) and under-counted real fillers; sustained-run tokens sit 0–0.2s apart, so 0.35s catches them without swallowing distinct ums. `displayWords = collapseRepeatedFillers(wordList)` is the exact transcript shown; `fillerWordCounts = detectFillerWords(displayWords)`, so the transcript and every filler number derive from one list. Verified: clean speech → 0 fillers; a 6-token sustained um → 1. This is bounded by Whisper's accuracy (no ASR is literally 100%) but has no fabrication.
 
 ### Coaching (`utils/localCoach.js`)
 Strict, evidence-based: insufficient-sample gate (< 25 words or < 12s → score 1–2, zero praise), every score capped by sample size (`cap = 3 + 7·sufficiency`), highlights must be earned. Copy is plain and factual — **never** motivational/therapeutic ("AI-sounding") phrasing, here or anywhere in the UI.
@@ -95,7 +95,7 @@ src/
 ```
 
 ### Known tradeoffs (intentional — don't "fix" without asking)
-- `whisper-base.en` over tiny: better filler capture, bigger download, slower.
+- `whisper-small.en` on desktop over base/tiny: better filler capture, bigger download (~238 MB), ~1.5–2x slower inference.
 - No per-word confidence from Whisper → no "unclear word" highlighting in Transcript.
 - `.mov`/HEVC upload fallback plays the file in real time to extract audio (slow but works).
 - History is per-browser/per-origin (IndexedDB); clearing site data erases it.

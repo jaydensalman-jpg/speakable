@@ -6,15 +6,23 @@
 // transformers.js (~MBs of WASM/ONNX runtime) is dynamically imported only when a
 // recording is processed, so it never weighs down the initial page load.
 
-// whisper-base.en captures filler words ("um", "uh", repeats) noticeably better than
-// tiny — at the cost of a larger one-time download and slightly slower processing.
-// On phones/tablets base.en is too heavy (~145 MB download + slow WASM inference,
-// risk of iOS Safari memory kills), so they get tiny.en (~40 MB) instead.
+// Model size is the main lever on filler capture. Whisper is trained to emit
+// clean, readable text and normalizes disfluencies away, and the smaller the
+// variant the more aggressively it does that — tiny.en drops the most "um"/"uh",
+// small.en keeps the most. (The usual fix, priming the decoder with a prompt
+// full of fillers, is not available: transformers.js 2.17's `prompt_ids` only
+// carries language/task, not text conditioning.)
+//
+// Desktop runs small.en (~238 MB quantized: 88 MB encoder + 150 MB decoder) for
+// the best hesitation capture, accepting a bigger one-time download and roughly
+// 1.5–2x slower inference. Phones/tablets stay on tiny.en (~40 MB): base.en was
+// already too heavy there (slow WASM inference, iOS Safari memory kills), and
+// small.en would be far worse.
 // (iPadOS reports itself as "Mac" — the maxTouchPoints check catches it.)
 const IS_MOBILE =
   /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
-const MODEL_ID = IS_MOBILE ? 'Xenova/whisper-tiny.en' : 'Xenova/whisper-base.en';
+const MODEL_ID = IS_MOBILE ? 'Xenova/whisper-tiny.en' : 'Xenova/whisper-small.en';
 
 let transcriberPromise = null;
 

@@ -108,7 +108,14 @@ export function isFillerWord(word) {
 // are treated as one "um": the first token's start through the last's end.
 // Only vocal hesitations collapse (um/uh/er/…); real repeated words are left
 // alone. This is what keeps a long "um" from being counted five times.
-const REPEAT_MAX_GAP_S = 0.8;
+// 0.35s, tightened from 0.8s (Sept 2026). The window only exists to stop ONE
+// sustained "ummmm" — which Whisper emits as several `um` tokens butted right
+// up against each other — being counted five times. Those tokens are typically
+// 0 to 0.2s apart. At 0.8s it was also merging genuinely separate hesitations
+// ("um ... um" with a short beat between them) into a single occurrence, which
+// under-counted real fillers. 0.35s still catches sustained runs and keeps
+// distinct hesitations distinct.
+const REPEAT_MAX_GAP_S = 0.35;
 export function collapseRepeatedFillers(words) {
   const out = [];
   for (const w of words || []) {
