@@ -24,6 +24,12 @@ const IS_MOBILE =
   (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
 const MODEL_ID = IS_MOBILE ? 'Xenova/whisper-tiny.en' : 'Xenova/whisper-small.en';
 
+// Real non-speech annotations, to be dropped. Deliberately does NOT include
+// um/uh/mm/er and friends: those are the fillers this whole app exists to count,
+// and Whisper sometimes emits them wrapped in brackets.
+const NON_SPEECH =
+  /^(blank ?audio|silence|silent|music|laugh(s|ter|ing)?|sigh(s|ing)?|cough(s|ing)?|sneez(e|es|ing)|applause|cheering|noise|static|inaudible|unintelligible|crosstalk|background|breath(s|ing|es)?|clears? throat|throat clear(ing)?|beep|click|pause)$/;
+
 let transcriberPromise = null;
 
 // Lazily load the library + ASR pipeline (cached). onProgress gets download events.
@@ -167,9 +173,16 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
   const words = chunks
     .map((c) => {
       const raw = (c.text || '').trim();
-      // Skip Whisper's non-speech annotations: "[BLANK_AUDIO]", "(silence)", "♪", etc.
-      if (!raw || /[[\]()♪#*]/.test(raw)) return null;
-      const word = raw.toLowerCase().replace(/[^a-z']/g, '');
+      if (!raw || /[♪#*]/.test(raw)) return null; // music / formatting marks
+      // Whisper wraps non-speech in brackets ("[BLANK_AUDIO]", "(silence)"), but
+      // it ALSO brackets vocalizations — "(um)", "[uh]", "(mm)". Discarding every
+      // bracketed token (what this did until Sept 2026) silently deleted real
+      // fillers before they could ever be counted. Unwrap first, then drop only
+      // genuine non-speech annotations.
+      const inner = raw.replace(/^[\s[(<{]+|[\s\])>}]+$/g, '').trim();
+      const annotation = inner.toLowerCase().replace(/[^a-z ]/g, ' ').trim();
+      if (NON_SPEECH.test(annotation)) return null;
+      const word = inner.toLowerCase().replace(/[^a-z']/g, '');
       if (!word) return null;
       const start = c.timestamp?.[0] ?? 0;
       const end = c.timestamp?.[1] ?? start + 0.3;
@@ -178,5 +191,21 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
     .filter(Boolean);
 
   const transcript = words.map((w) => w.word).join(' ');
+
+  // On-device diagnostic. Whisper's raw output is the only way to tell whether a
+  // missing filler was never transcribed or was dropped downstream. Stays in
+  // memory on this device, same as the transcript already shown in the UI, and
+  // is never logged or sent anywhere. Read it with:
+  //   window.__speakableDebug
+  try {
+    window.__speakableDebug = {
+      model: MODEL_ID,
+      rawChunks: chunks.map((c) => ({ text: c.text, at: c.timestamp?.[0] })),
+      keptWords: words.length,
+      droppedChunks: chunks.length - words.length,
+    };
+  } catch {
+    /* diagnostics are never allowed to break transcription */
+  }
   return { transcript, words, audioDuration };
 }
