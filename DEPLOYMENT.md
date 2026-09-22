@@ -53,7 +53,7 @@ git push
 - **Browser visitors** get the new version on next page load.
 - **Installed PWA users** ("Add to Home Screen"): the service worker checks for a new
   version on launch and auto-updates (`registerType: 'autoUpdate'` in `vite.config.js`).
-  Worst case a user sees the old version for one session; the next open is current.
+  `lib/swUpdate.js` then reloads the page once when the new worker takes control, so the update lands on THIS visit. Without that reload the new worker claims the page but the already-loaded HTML/JS keep running, which is the "I opened the link and it's still the old version" bug (it looks like a broken deploy but is entirely client-side).
 - **The Whisper model** is cached separately per device (~40–145 MB) and is unaffected
   by app updates — users don't re-download it.
 
