@@ -1,3 +1,9 @@
+// Bar runs 0 to 10% of words, double the 5% target, so a normal reading lands
+// around mid-bar and stays legible. Scaled against 100% every real result would
+// be an unreadable sliver.
+const SCALE_MAX_PCT = 10;
+const TARGET_PCT = 5;
+
 export default function FillerWordsTab({ results }) {
   const { fillerWordCounts, words, displayWords, duration } = results;
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
@@ -5,8 +11,10 @@ export default function FillerWordsTab({ results }) {
   // the percentage lines up with the total and the transcript highlights.
   const totalWords = (displayWords || words).length;
   const percentage = totalWords > 0 ? ((totalFillers / totalWords) * 100).toFixed(1) : '0.0';
-  const perMinute = duration > 0 ? (totalFillers / (duration / 60)).toFixed(1) : '0.0';
-  const isGood = parseFloat(percentage) < 5;
+  const isGood = parseFloat(percentage) < TARGET_PCT;
+
+  const fillWidth = Math.min(parseFloat(percentage) / SCALE_MAX_PCT, 1) * 100;
+  const targetLeft = (TARGET_PCT / SCALE_MAX_PCT) * 100;
 
   const sorted = Object.entries(fillerWordCounts)
     .filter(([, count]) => count > 0)
@@ -15,26 +23,36 @@ export default function FillerWordsTab({ results }) {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="stat-card">
-          <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">{totalFillers}</span>
-          <span className="text-xs text-ink/45 font-medium">Total fillers</span>
-        </div>
-        <div className="stat-card">
-          <span className={`text-2xl font-semibold tracking-tight tabular-nums ${isGood ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {percentage}%
+      {/* Headline count, with the one bar that gives the number meaning: where
+          this take sits against the 5% target. */}
+      <div className="card">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/40">Filler words</p>
+
+        <div className="mt-2 flex items-baseline gap-3">
+          <span className="font-display text-5xl font-semibold tracking-tight text-ink tabular-nums leading-none">
+            {totalFillers}
           </span>
-          <span className="text-xs text-ink/45 font-medium">Of total words</span>
+          <span className="text-sm text-ink/45 tabular-nums">of {totalWords.toLocaleString()} words</span>
         </div>
-        <div className="stat-card">
-          <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">{perMinute}</span>
-          <span className="text-xs text-ink/45 font-medium">Per minute</span>
+
+        <div className="relative mt-6 h-2.5 rounded-full bg-sand">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-brand-500 transition-all duration-700"
+            style={{ width: `${fillWidth}%` }}
+          />
+          {/* Target marker sits above the fill so it stays visible either side of it. */}
+          <div
+            className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-ink/25"
+            style={{ left: `${targetLeft}%` }}
+            aria-hidden
+          />
         </div>
-        <div className="stat-card">
-          <span className="text-xl font-bold text-ink truncate font-mono">
-            {sorted[0]?.[0] ? `"${sorted[0][0]}"` : '—'}
+
+        <div className="mt-2.5 flex items-baseline justify-between text-xs tabular-nums">
+          <span className={isGood ? 'text-emerald-600 font-semibold' : 'text-amber-600 font-semibold'}>
+            {percentage}% of what you said
           </span>
-          <span className="text-xs text-ink/45 font-medium">Most used</span>
+          <span className="text-ink/40">target under {TARGET_PCT}%</span>
         </div>
       </div>
 
@@ -59,7 +77,7 @@ export default function FillerWordsTab({ results }) {
                 </span>
                 <div className="flex-1 h-5 bg-sand rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                    className="h-full bg-brand-500 rounded-full transition-all duration-500"
                     style={{ width: `${(count / maxCount) * 100}%` }}
                   />
                 </div>
