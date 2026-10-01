@@ -61,7 +61,7 @@ export default function WordsToCutTab({ results }) {
                 <div key={it.text} className="flex items-center gap-3">
                   <span className="w-28 shrink-0 truncate text-sm font-medium text-ink/70">"{it.text}"</span>
                   <div className="h-5 flex-1 overflow-hidden rounded-full bg-sand">
-                    <div className="h-full rounded-full bg-amber-400 transition-all duration-500" style={{ width: `${(it.count / max) * 100}%` }} />
+                    <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${(it.count / max) * 100}%` }} />
                   </div>
                   <span className="w-8 shrink-0 text-right text-sm font-bold text-ink/70 tabular-nums">×{it.count}</span>
                 </div>
