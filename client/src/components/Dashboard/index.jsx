@@ -7,7 +7,6 @@ import FillerWordsTab from './tabs/FillerWordsTab.jsx';
 import WordsToCutTab from './tabs/WordsToCutTab.jsx';
 import VocabularyTab from './tabs/VocabularyTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
-import ShareButton from './ShareButton.jsx';
 
 // Icons show on mobile (labels on desktop) in the tubelight tab bar.
 const TABS = [
@@ -24,20 +23,15 @@ export default function Dashboard({ results }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-ink tracking-tight">Results</h2>
-          <p className="text-sm text-ink/45 mt-0.5">
-            {results.words.length} words · {formatDuration(results.duration)} · {results.avgWpm} WPM avg
-          </p>
-        </div>
-        <div className="flex items-center gap-3 pb-0.5">
-          <ShareButton results={results} />
-          <div className="flex items-center gap-1.5 text-xs text-ink/45">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            Complete
-          </div>
-        </div>
+      <div>
+        <h2 className="text-2xl font-semibold text-ink tracking-tight">Results</h2>
+        {/* Figures in the display face, units quiet behind them. Pace lives on
+            its own Overview card, so it does not need repeating here. */}
+        <p className="mt-1 font-display text-[15px] text-ink/45 tabular-nums">
+          <span className="font-semibold text-ink/75">{results.words.length}</span> words
+          <span className="mx-2 text-ink/25">·</span>
+          <span className="font-semibold text-ink/75">{formatDuration(results.duration)}</span>
+        </p>
       </div>
 
       <TubelightTabs items={TABS} active={activeTab} onChange={setActiveTab} />
