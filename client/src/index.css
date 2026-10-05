@@ -19,6 +19,11 @@
   }
 }
 
+html {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
 @layer components {
   .card {
     @apply bg-white rounded-3xl shadow-soft border border-sand p-6;
@@ -28,10 +33,10 @@
   }
 
   /* ---- Results tabs, editorial treatment (Oct 2026) --------------------
-     The six Results tabs dropped the white .card for the Figma redesign:
-     open sections on cream, separated by hairlines, with large Fraunces
-     numerals carrying the hierarchy. `.card` itself is UNCHANGED and still
-     used by Home, Record, History and Account — don't fold these together. */
+     Rebuilt from the Figma Make redesign. Open sections on cream separated by
+     hairlines, with large DM Serif Display numerals carrying the hierarchy.
+     Sizes below are the design's own rem values, not approximations.
+     `.card` is UNCHANGED and still used by Home, Record, History, Account. */
 
   /* One section. Hairline below, none on the last so a tab never ends on a rule. */
   .sheet {
@@ -41,42 +46,54 @@
     @apply border-b-0 pb-0 mb-0;
   }
 
-  /* Small uppercase label above a section or metric. */
-  .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/40;
-  }
-
-  /* The big serif numeral. Size is set by the caller; this carries the face. */
-  .stat-xl {
-    @apply font-display font-semibold tracking-tight tabular-nums leading-none text-ink;
-  }
-
-  /* Inter 20/600 — a short statement, e.g. "You're on target." */
-  .statement {
-    @apply text-[20px] font-semibold tracking-[-0.3px] text-ink leading-snug;
-  }
-
-  /* Quiet caption under a number. */
-  .caption {
-    @apply text-[13px] text-ink/45 leading-relaxed;
-  }
-
-  /* A subtle bordered panel. The Figma is mostly cardless, but it does keep a
-     few of these: the filler lead and the media blocks. Barely lighter than the
-     page, so the 1px border does the defining, not a shadow. */
+  /* Subtle bordered panel — the one surface the design keeps (filler lead). */
   .panel {
     @apply rounded-2xl border border-sand bg-white/50 p-5 sm:p-6;
   }
 
+  /* --type-caption 0.8125rem, weight 600, 0.11em tracking, uppercase. */
+  .eyebrow {
+    @apply text-[0.8125rem] font-semibold uppercase leading-[1.4] tracking-[0.11em] text-ink/55;
+  }
+
+  /* Display numerals. DM Serif Display has ONE weight — never add font-bold or
+     font-semibold here, it would synthesise a fake bold. Size and the face's own
+     stroke contrast carry the emphasis. */
+  .stat-xl {
+    @apply font-display font-normal tabular-nums leading-none tracking-[-0.025em] text-ink;
+  }
+
+  /* .section-heading — 1.375rem / 600 / -0.015em. Inter, not the display face. */
+  .statement {
+    @apply text-[1.375rem] font-semibold leading-[1.3] tracking-[-0.015em] text-ink;
+  }
+
+  /* --type-caption, muted. */
+  .caption {
+    @apply text-[0.8125rem] leading-[1.45] text-ink/55;
+  }
+
+  /* --type-body 1.0625rem, muted, 1.65 leading — the design's reading size. */
+  .body-copy {
+    @apply text-[1.0625rem] leading-[1.65] text-ink/60;
+  }
+
+  /* A metric column: fixed minimum height with the verdict pinned to the bottom,
+     so verdict lines align across all four columns regardless of caption length. */
+  .metric-col {
+    @apply flex min-h-[16rem] flex-col;
+  }
+
   /* On-target / off-target verdict line and score pill. */
-  .verdict-good { @apply text-[15px] font-semibold text-emerald-600; }
-  .verdict-warn { @apply text-[15px] font-semibold text-amber-600; }
+  .verdict-good { @apply text-[0.9375rem] font-semibold text-emerald-600; }
+  .verdict-warn { @apply text-[0.9375rem] font-semibold text-amber-600; }
   .pill-good {
-    @apply rounded-full bg-emerald-100 px-2 py-1 text-[13px] font-semibold text-emerald-700 tabular-nums;
+    @apply rounded-full bg-emerald-100 px-2 py-1 text-[0.8125rem] font-semibold text-emerald-700 tabular-nums;
   }
   .pill-warn {
-    @apply rounded-full bg-amber-100 px-2 py-1 text-[13px] font-semibold text-amber-700 tabular-nums;
+    @apply rounded-full bg-amber-100 px-2 py-1 text-[0.8125rem] font-semibold text-amber-700 tabular-nums;
   }
+
   /* Primary action — warm, soft, confident. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-6 py-3

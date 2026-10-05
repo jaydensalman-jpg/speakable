@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Play, LayoutGrid, MessageCircle, Scissors, BookOpen, Sparkles } from 'lucide-react';
-import TubelightTabs from '../ui/tubelight-tabs.jsx';
+import ResultsTabs from '../ui/results-tabs.jsx';
 import SelfReviewTab from './tabs/SelfReviewTab.jsx';
 import OverviewTab from './tabs/OverviewTab.jsx';
 import FillerWordsTab from './tabs/FillerWordsTab.jsx';
@@ -8,7 +8,8 @@ import WordsToCutTab from './tabs/WordsToCutTab.jsx';
 import VocabularyTab from './tabs/VocabularyTab.jsx';
 import AIFeedbackTab from './tabs/AIFeedbackTab.jsx';
 
-// Icons show on mobile (labels on desktop) in the tubelight tab bar.
+// Labels show at every width; the row scrolls on phones (see results-tabs).
+// `icon` is unused by the new bar but kept so the shape stays stable.
 const TABS = [
   { id: 'review', label: 'Watch & Listen', icon: Play },
   { id: 'overview', label: 'Overview', icon: LayoutGrid },
@@ -23,18 +24,17 @@ export default function Dashboard({ results }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-ink tracking-tight">Results</h2>
-        {/* Figures in the display face, units quiet behind them. Pace lives on
-            its own Overview card, so it does not need repeating here. */}
-        <p className="mt-1 font-display text-[15px] text-ink/45 tabular-nums">
-          <span className="font-semibold text-ink/75">{results.words.length}</span> words
-          <span className="mx-2 text-ink/25">·</span>
-          <span className="font-semibold text-ink/75">{formatDuration(results.duration)}</span>
+      {/* .page-head — title and meta share a baseline on desktop, stack on phones. */}
+      <div className="flex flex-col items-baseline justify-between gap-1 md:flex-row">
+        <h2 className="font-display text-[3rem] leading-[0.95] tracking-[-0.025em] text-ink md:text-[4rem]">
+          Results
+        </h2>
+        <p className="text-[0.8125rem] text-ink/55 tabular-nums">
+          {results.words.length.toLocaleString()} words &middot; {formatDuration(results.duration)}
         </p>
       </div>
 
-      <TubelightTabs items={TABS} active={activeTab} onChange={setActiveTab} />
+      <ResultsTabs items={TABS} active={activeTab} onChange={setActiveTab} />
 
       <div>
         {activeTab === 'review' && <SelfReviewTab results={results} />}

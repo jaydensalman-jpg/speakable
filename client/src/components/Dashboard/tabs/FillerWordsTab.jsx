@@ -31,7 +31,7 @@ export default function FillerWordsTab({ results }) {
       <section className="panel mb-8">
         <p className="eyebrow">Filler words</p>
 
-        <p className="stat-xl mt-4 text-[48px] text-brand-600 sm:text-[64px]">{totalFillers}</p>
+        <p className="stat-xl mt-4 text-[3rem] text-brand-600 md:text-[4rem]">{totalFillers}</p>
         <p className="caption mt-2">
           total used{perMinute ? ` · ${perMinute} per minute` : ''}
         </p>
@@ -79,7 +79,7 @@ export default function FillerWordsTab({ results }) {
                 className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
               >
                 <span className="font-mono text-[15px] text-ink/75">&ldquo;{word}&rdquo;</span>
-                <span className="stat-xl text-[20px] text-ink/70">{count}</span>
+                <span className="stat-xl text-[1.25rem] text-ink/70">{count}</span>
               </li>
             ))}
           </ul>

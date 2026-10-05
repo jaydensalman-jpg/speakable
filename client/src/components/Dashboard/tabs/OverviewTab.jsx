@@ -117,12 +117,12 @@ export default function OverviewTab({ results }) {
 
         {breakdown ? (
           <div className="mt-3 grid gap-x-12 gap-y-5 sm:grid-cols-[auto_1fr] sm:items-start">
-            <p className="stat-xl text-[56px] text-brand-600 sm:text-[64px]">
+            <p className="stat-xl text-[5rem] leading-[0.85] text-brand-600 md:text-[6rem]">
               {feedback.overallScore}
-              <span className="font-sans text-[18px] font-medium tracking-normal text-ink/35">/10</span>
+              <span className="font-sans text-[1.0625rem] font-normal tracking-normal text-ink/55">/10</span>
             </p>
             <div className="min-w-0">
-              <h2 className="font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink text-balance sm:text-[40px]">
+              <h2 className="text-balance font-display text-[2.125rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
                 {headline(feedback)}
               </h2>
               {feedback.assessment?.strong?.length > 0 && (
@@ -169,7 +169,7 @@ export default function OverviewTab({ results }) {
               return (
                 <div
                   key={m.id}
-                  className="border-t border-sand py-6 first:border-t-0 first:pt-0
+                  className="metric-col border-t border-sand py-6 first:border-t-0 first:pt-0
                              sm:border-t-0 sm:py-0
                              sm:[&:nth-child(even)]:border-l sm:[&:nth-child(even)]:pl-5
                              lg:border-l lg:pl-5 lg:first:border-l-0 lg:first:pl-0"
@@ -179,10 +179,10 @@ export default function OverviewTab({ results }) {
                     <span className={m.inRange ? 'pill-good' : 'pill-warn'}>{m.score}/10</span>
                   </div>
 
-                  <p className="stat-xl mt-7 text-[44px] sm:text-[48px] lg:text-[56px]">
+                  <p className="stat-xl mt-12 text-[3rem] lg:text-[3.5rem]">
                     {p.value}
                     {p.unit && (
-                      <span className="ml-1.5 font-sans text-[13px] font-medium tracking-normal text-ink/45">
+                      <span className="ml-1.5 font-sans text-[0.8125rem] font-normal tracking-normal text-ink/55">
                         {p.unit}
                       </span>
                     )}
@@ -190,7 +190,7 @@ export default function OverviewTab({ results }) {
 
                   {p.caption && <p className="caption mt-2">{p.caption}</p>}
                   {m.plain && (
-                    <p className={`mt-5 ${m.inRange ? 'verdict-good' : 'verdict-warn'}`}>{m.plain}</p>
+                    <p className={`mt-auto pt-6 ${m.inRange ? 'verdict-good' : 'verdict-warn'}`}>{m.plain}</p>
                   )}
                 </div>
               );
@@ -205,7 +205,7 @@ export default function OverviewTab({ results }) {
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label}>
-                <p className="stat-xl text-[28px]">{s.value}</p>
+                <p className="stat-xl text-[1.75rem]">{s.value}</p>
                 <p className="caption mt-1">{s.label}</p>
               </div>
             ))}
@@ -219,15 +219,15 @@ export default function OverviewTab({ results }) {
           <p className="eyebrow">Eye contact</p>
           <div className="mt-4 grid grid-cols-3 gap-6">
             <div>
-              <p className="stat-xl text-[28px]">{eyeContact.contactPct}%</p>
+              <p className="stat-xl text-[1.75rem]">{eyeContact.contactPct}%</p>
               <p className="caption mt-1">Of your talk</p>
             </div>
             <div>
-              <p className="stat-xl text-[28px]">{formatDuration(eyeContact.contactSeconds)}</p>
+              <p className="stat-xl text-[1.75rem]">{formatDuration(eyeContact.contactSeconds)}</p>
               <p className="caption mt-1">Total time</p>
             </div>
             <div>
-              <p className="stat-xl text-[28px]">{formatDuration(eyeContact.longestStreakSeconds)}</p>
+              <p className="stat-xl text-[1.75rem]">{formatDuration(eyeContact.longestStreakSeconds)}</p>
               <p className="caption mt-1">Longest hold</p>
             </div>
           </div>

@@ -18,7 +18,7 @@ export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) 
 
   return (
     <div className="animate-rise mx-auto flex min-h-[70vh] max-w-md flex-col justify-center py-10 text-center">
-      <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-ink">
+      <h1 className="font-display text-4xl leading-tight tracking-tight text-ink">
         Before you record
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-ink/55">

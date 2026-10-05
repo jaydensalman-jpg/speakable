@@ -35,7 +35,7 @@ export default function WordsToCutTab({ results }) {
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
-            <p className="stat-xl text-[48px] text-brand-600 sm:text-[64px]">{total}</p>
+            <p className="stat-xl text-[3rem] text-brand-600 md:text-[4rem]">{total}</p>
             <p className="caption mt-2">
               words worth trimming{perMin ? ` · ${perMin} per minute` : ''}
             </p>
@@ -66,7 +66,7 @@ export default function WordsToCutTab({ results }) {
                 className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
               >
                 <span className="font-mono text-[15px] text-ink/75">&ldquo;{it.text}&rdquo;</span>
-                <span className="stat-xl text-[20px] text-ink/70">{it.count}&times;</span>
+                <span className="stat-xl text-[1.25rem] text-ink/70">{it.count}&times;</span>
               </li>
             ))}
           </ul>

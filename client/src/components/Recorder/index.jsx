@@ -533,7 +533,7 @@ function IdeaGenerator() {
         <div className="mx-auto mt-2 flex min-h-[4.5rem] max-w-md items-center justify-center">
           <p
             key={spin}
-            className={`font-display text-2xl font-semibold leading-snug text-ink ${
+            className={`font-display text-2xl leading-snug text-ink ${
               rolling ? 'animate-slot-tick' : 'animate-pop'
             }`}
           >

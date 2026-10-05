@@ -132,7 +132,7 @@ function HeroGeometric({
           </motion.div>
 
           <motion.div custom={1} variants={fadeUpVariants} initial="hidden" animate="visible">
-            <h1 className="font-display text-[3.5rem] sm:text-[4.25rem] md:text-8xl font-semibold leading-[1.04] tracking-tight">
+            <h1 className="font-display text-[3.5rem] sm:text-[4.25rem] md:text-8xl leading-[1.04] tracking-tight">
               <span className="text-ink">{title1}</span>
               <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-brand-400 to-amber-500">

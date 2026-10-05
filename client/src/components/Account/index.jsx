@@ -36,7 +36,7 @@ function SignInForm({ onSubmit }) {
   if (state === 'sent') {
     return (
       <div className="card text-center">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">Check your email</h1>
+        <h1 className="font-display text-3xl tracking-tight text-ink">Check your email</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink/55">
           We sent a sign-in link to <span className="font-semibold text-ink">{email}</span>. Open it on this
           device and you'll be signed in. No password needed.
@@ -53,7 +53,7 @@ function SignInForm({ onSubmit }) {
 
   return (
     <div className="text-center">
-      <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-ink">Sign in</h1>
+      <h1 className="font-display text-4xl leading-tight tracking-tight text-ink">Sign in</h1>
       <p className="mx-auto mt-3 max-w-sm text-ink/55">
         Your scores follow you across devices. Recordings never leave the device they were made on.
       </p>
@@ -94,10 +94,10 @@ function SignInForm({ onSubmit }) {
 function SignedIn({ user, onSignOut }) {
   return (
     <div className="text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 font-display text-2xl font-semibold text-white shadow-soft">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 font-display text-2xl text-white shadow-soft">
         {(user.email?.[0] || '?').toUpperCase()}
       </div>
-      <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-ink">Your account</h1>
+      <h1 className="mt-4 font-display text-3xl tracking-tight text-ink">Your account</h1>
       <p className="mt-1 text-sm text-ink/55">{user.email}</p>
 
       <div className="card mt-8 text-left">
@@ -122,7 +122,7 @@ function SignedIn({ user, onSignOut }) {
 function NotConfigured() {
   return (
     <div className="card text-center">
-      <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">Accounts aren't set up yet</h1>
+      <h1 className="font-display text-3xl tracking-tight text-ink">Accounts aren't set up yet</h1>
       <p className="mt-3 text-sm leading-relaxed text-ink/55">
         This build has no cloud configured, so everything stays in this browser, recordings and reports both.
         Once Supabase keys are added, signing in will sync your reports across devices.

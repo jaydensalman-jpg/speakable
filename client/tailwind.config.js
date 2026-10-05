@@ -22,7 +22,10 @@ export default {
       },
       fontFamily: {
         // Editorial serif for big friendly headings; clean sans for body.
-        display: ['Fraunces', 'Georgia', 'serif'],
+        // DM Serif Display, to match the Figma redesign exactly (Oct 2026).
+        // Single weight (400) by design — it has no bold, so never set font-bold
+        // on display type; size and the high stroke contrast carry the emphasis.
+        display: ['"DM Serif Display"', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {

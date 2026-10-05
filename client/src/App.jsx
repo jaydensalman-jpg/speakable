@@ -231,7 +231,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream">
       <header className="border-b border-sand bg-cream/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-[86rem] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button onClick={goHome} className="flex items-center gap-2.5" aria-label="Speakable home">
             <div className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft">
               <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -239,7 +239,7 @@ export default function App() {
               </svg>
             </div>
             {/* Wordmark yields to the nav + account chip on narrow phones; the mic mark stays as the home button */}
-            <span className="hidden min-[480px]:inline font-display font-semibold text-ink text-[16px] tracking-tight">Speakable</span>
+            <span className="hidden min-[480px]:inline font-display text-ink text-[16px] tracking-tight">Speakable</span>
           </button>
           {showNav && (
             <div className="flex items-center gap-2.5">
@@ -271,7 +271,7 @@ export default function App() {
       </header>
 
       {/* Home is a full-bleed hero; every other state keeps the contained column. */}
-      <main className={appState === 'home' ? '' : 'max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10'}>
+      <main className={appState === 'home' ? '' : 'max-w-[60rem] mx-auto px-4 sm:px-6 py-6 sm:py-10'}>
         {error && (
           <div className="mb-6 p-4 bg-brand-50 border border-brand-100 rounded-2xl text-brand-700 text-sm leading-relaxed">
             {error}

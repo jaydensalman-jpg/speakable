@@ -68,7 +68,7 @@ function ScoreDonut({ value }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-xl font-semibold leading-none text-ink">{value}</span>
+        <span className="font-display text-xl leading-none text-ink">{value}</span>
         <span className="text-[10px] text-ink/40">/10</span>
       </div>
     </div>

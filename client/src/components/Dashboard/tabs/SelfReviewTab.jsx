@@ -34,7 +34,7 @@ export default function SelfReviewTab({ results }) {
     <div className="animate-rise">
       <section className="sheet">
         <p className="eyebrow">Your recording</p>
-        <h2 className="mt-3 font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[40px]">
+        <h2 className="mt-3 font-display text-[2.125rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
           Watch it back.
         </h2>
         <p className="caption mt-3">See it. Hear it. Put it together.</p>

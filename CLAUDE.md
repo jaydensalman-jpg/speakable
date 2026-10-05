@@ -70,10 +70,20 @@ the last), **`.eyebrow`**, **`.stat-xl`**, **`.statement`**, **`.caption`**,
 **`.panel`** (the one subtle bordered surface the design keeps, used for the filler
 lead), **`.pill-good`/`.pill-warn`**, **`.verdict-good`/`.verdict-warn`**.
 **`.card` itself is unchanged** and still used by Home, Record, History, Account and
-EmailGate — do not fold these together. The source Figma used DM Serif Display and
-its own neutrals; we deliberately kept **Fraunces** and the shipped cream/sand/ink/
-brand tokens so Results matches the rest of the app. Overview's metric grid is
-1 col → `sm:` 2 → `lg:` 4 with the dividers flipping from top-border to left-border.
+EmailGate — do not fold these together. **The display face is now DM Serif Display**, not Fraunces (changed Oct 2026 when
+the user asked for exact parity with the Figma). It is a SINGLE-WEIGHT face: never
+put `font-semibold`/`font-bold` on `font-display`, there is no bold to reach and the
+`font-synthesis: none` on `html` deliberately stops the browser faking one. Size and
+the face's own stroke contrast carry emphasis. Colours stayed on the app's
+cream/sand/ink/brand tokens — the user asked for layout, font and components, not
+the Figma's slightly different neutrals. Overview's metric grid is
+1 col → `sm:` 2 → `lg:` 4 with the dividers flipping from top-border to left-border;
+`.metric-col` holds a 16rem min-height with the verdict line pinned by `mt-auto` so
+verdicts align across columns. The Results tab bar is `ui/results-tabs.jsx` (labels
+on a hairline, coral underline on the active one, scrolls on phones) — it replaced
+`ui/tubelight-tabs.jsx`, which is kept but no longer used. Layout widths follow the
+design: header `max-w-[86rem]`, content `max-w-[60rem]`, which is why the wordmark
+sits left of where the content starts.
 Filler highlights in the transcript are **coral** (`bg-brand-100` + `border-brand-500`
 underline), not amber, so they match the design; the active word stays solid coral.
 Watch & Listen was restyled only — the Figma's "Video only / Audio only / Video +

@@ -30,7 +30,7 @@ export default function AIFeedbackTab({ results }) {
       <div className="animate-rise">
         <section className="sheet">
           <p className="eyebrow">Your next take</p>
-          <h2 className="mt-3 font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[40px]">
+          <h2 className="mt-3 font-display text-[2.125rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
             {heading} to practice.
           </h2>
           <p className="caption mt-3 max-w-prose">
@@ -40,11 +40,11 @@ export default function AIFeedbackTab({ results }) {
 
         {coaching.map((item, i) => (
           <section key={i} className="sheet">
-            <p className="stat-xl text-[20px] text-brand-600">
+            <p className="stat-xl text-[1.25rem] text-brand-600">
               {String(i + 1).padStart(2, '0')}
             </p>
 
-            <h3 className="mt-3 font-display text-[22px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+            <h3 className="mt-3 font-display text-[1.75rem] leading-[1.15] tracking-[-0.025em] text-ink">
               {item.title}
             </h3>
 
