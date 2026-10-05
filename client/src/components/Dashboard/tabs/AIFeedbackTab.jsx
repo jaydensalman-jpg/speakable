@@ -1,81 +1,95 @@
 import { detectWeakWords } from '../../../utils/weakWords.js';
 
-// Coaching tab. New reports carry feedback.coaching — the 2–3 weakest areas
-// from THIS take, each with the real numbers (and timestamps where measured)
-// plus one concrete drill. Sessions saved by older builds have no coaching
-// array and render through the legacy category view below.
+// Coaching — rebuilt Oct 2026 from the Figma Make redesign: cardless, numbered
+// drills with a "try this" block each. New reports carry feedback.coaching —
+// the 2–3 weakest areas from THIS take, each with the real numbers (and
+// timestamps where measured) plus one concrete drill, all built in
+// utils/localCoach.js. Nothing on this tab is written as a literal; the count in
+// the heading is derived from how many drills the report actually produced.
+// Sessions saved by older builds have no coaching array → legacy view below.
+
+const COUNT_WORD = { 1: 'One thing', 2: 'Two things', 3: 'Three things' };
+
 export default function AIFeedbackTab({ results }) {
   const { feedback } = results;
   const coaching = feedback.coaching || null;
 
-  // A short "also keep an eye on" checklist: every off-target metric as a
-  // one-liner, plus weak-word load if notable. Complements the detailed drills.
+  // A short "also keep an eye on" list: every off-target metric as a one-liner,
+  // plus weak-word load if notable. Complements the detailed drills.
   const also = [];
   (feedback.breakdown || [])
     .filter((m) => !m.inRange)
     .forEach((m) => also.push(`${m.label}: ${m.valueDisplay} · target ${m.targetDisplay}`));
   const weak = detectWeakWords(results.displayWords || results.words || []);
-  if (weak.total >= 4) also.push(`Weak or empty words: ${weak.total} worth trimming (see the Words to Cut tab)`);
+  if (weak.total >= 4) also.push(`Weak or empty words: ${weak.total} worth trimming (see Words to Cut)`);
 
   if (coaching) {
+    const heading = COUNT_WORD[coaching.length] || `${coaching.length} things`;
+
     return (
-      <div className="space-y-5">
-        <div className="space-y-3">
-          {coaching.map((item, i) => (
-            <div key={i} className="card">
-              <div className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <h4 className="font-semibold text-ink/85">{item.title}</h4>
-                  {item.body && (
-                    <p className="mt-1.5 text-sm text-ink/65 leading-relaxed">{item.body}</p>
-                  )}
-                  <div className="mt-3 rounded-2xl bg-brand-50 border border-brand-100 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-700 mb-1">
-                      Try this
-                    </p>
-                    <p className="text-sm text-brand-800 leading-relaxed">{item.drill}</p>
-                  </div>
-                </div>
+      <div className="animate-rise">
+        <section className="sheet">
+          <p className="eyebrow">Your next take</p>
+          <h2 className="mt-3 font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[40px]">
+            {heading} to practice.
+          </h2>
+          <p className="caption mt-3 max-w-prose">
+            Work on these in order. Keep everything else natural.
+          </p>
+        </section>
+
+        {coaching.map((item, i) => (
+          <section key={i} className="sheet">
+            <p className="stat-xl text-[20px] text-brand-600">
+              {String(i + 1).padStart(2, '0')}
+            </p>
+
+            <h3 className="mt-3 font-display text-[22px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+              {item.title}
+            </h3>
+
+            {item.body && (
+              <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-ink/65">{item.body}</p>
+            )}
+
+            {item.drill && (
+              <div className="mt-5 border-l-2 border-brand-200 pl-4">
+                <p className="eyebrow text-brand-600">Try this</p>
+                <p className="mt-1.5 max-w-prose text-[15px] leading-relaxed text-ink/75">
+                  {item.drill}
+                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </section>
+        ))}
 
         {also.length > 0 && (
-          <div className="card">
-            <h3 className="text-xs font-semibold text-ink/50 uppercase tracking-wider mb-3">
-              Also keep an eye on
-            </h3>
-            <ul className="space-y-2">
+          <section className="sheet">
+            <p className="eyebrow">Also keep an eye on</p>
+            <ul className="mt-4">
               {also.map((line, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm text-ink/70">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
-                  <span>{line}</span>
+                <li key={i} className="border-b border-sand py-3 text-[15px] text-ink/70 last:border-b-0">
+                  {line}
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         )}
 
         {feedback.highlights?.length > 0 && (
-          <div className="card border-emerald-200 bg-emerald-50">
-            <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2">
-              Working already
-            </h3>
-            <ul className="space-y-1.5">
+          <section className="sheet">
+            <p className="eyebrow text-emerald-600">Working already</p>
+            <ul className="mt-3 space-y-2">
               {feedback.highlights.map((h, i) => (
-                <li key={i} className="text-sm text-emerald-800">{h}</li>
+                <li key={i} className="text-[15px] leading-relaxed text-ink/70">{h}</li>
               ))}
             </ul>
-          </div>
+          </section>
         )}
 
-        <p className="text-xs text-ink/40 text-center pt-2">
-          Built on your device from this take's measurements · private, free
-        </p>
+        <section className="sheet">
+          <p className="caption">Built on your device from this take&rsquo;s measurements.</p>
+        </section>
       </div>
     );
   }
@@ -88,55 +102,44 @@ export default function AIFeedbackTab({ results }) {
     { key: 'confidence', label: 'Confidence' },
   ];
 
-  const getScoreBadge = (score) => {
-    if (score >= 8) return 'bg-emerald-100 text-emerald-700';
-    if (score >= 6) return 'bg-brand-100 text-brand-700';
-    if (score >= 4) return 'bg-amber-100 text-amber-700';
-    return 'bg-red-100 text-red-600';
-  };
-
   return (
-    <div className="space-y-5">
+    <div className="animate-rise">
       {feedback.tips?.length > 0 && (
-        <div className="card bg-gradient-to-br from-brand-50 to-sand border-brand-100">
-          <h3 className="font-semibold text-ink/80 mb-4">3 ways to improve</h3>
-          <ol className="space-y-4">
+        <section className="sheet">
+          <p className="eyebrow">Three ways to improve</p>
+          <ol className="mt-4">
             {feedback.tips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                  {i + 1}
+              <li key={i} className="flex gap-4 border-b border-sand py-4 last:border-b-0">
+                <span className="stat-xl shrink-0 text-[16px] text-brand-600">
+                  {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="text-sm text-ink/70 leading-relaxed">{tip}</span>
+                <span className="text-[15px] leading-relaxed text-ink/70">{tip}</span>
               </li>
             ))}
           </ol>
-        </div>
+        </section>
       )}
 
-      <div className="space-y-3">
-        {categories.map(({ key, label }) => {
-          const score = feedback.categoryScores?.[key];
-          const text = feedback.feedback?.[key];
-          if (!text) return null;
-          return (
-            <div key={key} className="card">
-              <div className="flex items-center gap-2 mb-2.5">
-                <h4 className="font-semibold text-ink/80">{label}</h4>
-                {score != null && (
-                  <span className={`ml-auto text-xs font-semibold px-2.5 py-1 rounded-full ${getScoreBadge(score)}`}>
-                    {score}/10
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-ink/65 leading-relaxed">{text}</p>
+      {categories.map(({ key, label }) => {
+        const score = feedback.categoryScores?.[key];
+        const text = feedback.feedback?.[key];
+        if (!text) return null;
+        return (
+          <section key={key} className="sheet">
+            <div className="flex items-start justify-between gap-3">
+              <p className="eyebrow">{label}</p>
+              {score != null && (
+                <span className={score >= 6 ? 'pill-good' : 'pill-warn'}>{score}/10</span>
+              )}
             </div>
-          );
-        })}
-      </div>
+            <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-ink/65">{text}</p>
+          </section>
+        );
+      })}
 
-      <p className="text-xs text-ink/40 text-center pt-2">
-        Generated on your device from your speech · private, free, no account needed
-      </p>
+      <section className="sheet">
+        <p className="caption">Generated on your device from your speech.</p>
+      </section>
     </div>
   );
 }

@@ -1,21 +1,24 @@
 import { detectWeakWords, WEAK_CATEGORIES } from '../../../utils/weakWords.js';
 
-// Words to Cut — surfaces low-value language (hedges, empty qualifiers, vague
-// words) from the full transcript so the user can see what to trim. Reads the
-// same word list the transcript shows. Deliberately gentle: it frames these as
-// "worth trimming," never as failure, and celebrates tight language.
+// Words to Cut — rebuilt Oct 2026 from the Figma Make redesign: cardless, a
+// large total, then one open section per category. The category labels, their
+// explanations and the "try" lines all come from WEAK_CATEGORIES in
+// utils/weakWords.js, which already groups exactly the way the design does, so
+// nothing here is written as a literal.
+//
+// Deliberately gentle: it frames these as worth trimming, never as failure.
 export default function WordsToCutTab({ results }) {
   const words = results.displayWords || results.words || [];
   const wordCount = words.length;
   const { total, items } = detectWeakWords(words);
   const pct = wordCount ? (total / wordCount) * 100 : 0;
   const duration = results.duration || 0;
-  const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : '0.0';
+  const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : null;
   const tight = pct < 4; // forgiving threshold — everyone uses a few
 
   if (wordCount < 20) {
     return (
-      <div className="card text-center py-10 text-sm text-ink/50">
+      <div className="animate-rise py-10 text-center text-sm text-ink/50">
         Record a longer take (about 40+ words) to see which words are worth trimming.
       </div>
     );
@@ -26,58 +29,62 @@ export default function WordsToCutTab({ results }) {
     .filter((g) => g.items.length > 0);
 
   return (
-    <div className="space-y-5">
-      {/* Summary */}
-      <div className="card">
-        <div className="flex items-baseline justify-between mb-3">
-          <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-semibold tracking-tight tabular-nums ${tight ? 'text-emerald-600' : 'text-amber-600'}`}>
-              {total}
-            </span>
-            <span className="text-sm font-medium text-ink/45">words worth trimming</span>
+    <div className="animate-rise">
+      <section className="sheet">
+        <p className="eyebrow">Words to cut</p>
+
+        <div className="mt-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="stat-xl text-[48px] text-brand-600 sm:text-[64px]">{total}</p>
+            <p className="caption mt-2">
+              words worth trimming{perMin ? ` · ${perMin} per minute` : ''}
+            </p>
           </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tight ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+          <span className={tight ? 'pill-good' : 'pill-warn'}>
             {tight ? 'Tight language' : 'Room to trim'}
           </span>
         </div>
-        <p className="text-sm text-ink/65 leading-relaxed">
-          {total === 0
-            ? 'None found. Your wording stayed direct and specific.'
-            : tight
-              ? `${total} low-value word${total === 1 ? '' : 's'} across your talk (${perMin} per minute). That is light. Trim the one or two you repeat most and it will read even cleaner.`
-              : `${total} low-value words across your talk (${perMin} per minute). These add no meaning. Cutting the ones you lean on will make you sound more certain and more specific.`}
-        </p>
-      </div>
 
-      {/* Grouped breakdown */}
-      {byCategory.map((group) => {
-        const max = group.items[0]?.count || 1;
-        return (
-          <div key={group.key} className="card">
-            <h3 className="font-semibold text-ink/80">{group.label}</h3>
-            <p className="text-xs text-ink/45 mt-0.5 mb-4">{group.why}</p>
-            <div className="space-y-2.5">
-              {group.items.map((it) => (
-                <div key={it.text} className="flex items-center gap-3">
-                  <span className="w-28 shrink-0 truncate text-sm font-medium text-ink/70">"{it.text}"</span>
-                  <div className="h-5 flex-1 overflow-hidden rounded-full bg-sand">
-                    <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${(it.count / max) * 100}%` }} />
-                  </div>
-                  <span className="w-8 shrink-0 text-right text-sm font-bold text-ink/70 tabular-nums">×{it.count}</span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 rounded-2xl bg-cream border border-sand px-4 py-2.5 text-sm text-ink/60">
-              {group.swap}
-            </p>
-          </div>
-        );
-      })}
+        <p className="statement mt-7 max-w-prose">
+          {total === 0
+            ? 'Your wording stayed direct and specific.'
+            : tight
+              ? 'That is light. Trim the one or two you repeat most.'
+              : 'These add no meaning. Cutting the ones you lean on will sound more certain.'}
+        </p>
+      </section>
+
+      {byCategory.map((group) => (
+        <section key={group.key} className="sheet">
+          <p className="eyebrow">{group.label}</p>
+          <p className="caption mt-2 max-w-prose">{group.why}</p>
+
+          <ul className="mt-5">
+            {group.items.map((it) => (
+              <li
+                key={it.text}
+                className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
+              >
+                <span className="font-mono text-[15px] text-ink/75">&ldquo;{it.text}&rdquo;</span>
+                <span className="stat-xl text-[20px] text-ink/70">{it.count}&times;</span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-5 text-[15px] leading-relaxed text-ink/65">
+            <span className="eyebrow mr-2 text-brand-600">Try</span>
+            {group.swap}
+          </p>
+        </section>
+      ))}
 
       {total > 0 && (
-        <p className="text-xs text-ink/40 text-center">
-          These are not wrong to use now and then. The goal is trimming the ones you lean on, not removing every one.
-        </p>
+        <section className="sheet">
+          <p className="caption max-w-prose">
+            These are not wrong to use now and then. The goal is trimming the ones you lean on, not
+            removing every one.
+          </p>
+        </section>
       )}
     </div>
   );

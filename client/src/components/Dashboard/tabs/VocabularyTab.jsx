@@ -1,9 +1,9 @@
 import { fillerLabel } from '../../../utils/fillerWords.js';
 
-// Vocabulary tab — makes the "unique words" number actually usable. It explains
-// in plain terms what unique vs. repeated means, shows the real breakdown, and
-// (the useful part) surfaces the exact content words you leaned on so you know
-// what to vary next time. Reads results.words / transcript; changes nothing else.
+// Vocabulary — rebuilt Oct 2026 from the Figma Make redesign: cardless, the
+// ratio carried by a large numeral, the raw unique/total counts stated plainly
+// underneath, then the content words you actually leaned on. Everything is
+// computed from this take's transcript; nothing is written as a literal.
 
 // Common function words carry sentences but aren't worth flagging as repetitive
 // ("the" ten times is normal). Excluding them surfaces the meaningful repeats.
@@ -39,89 +39,86 @@ export default function VocabularyTab({ results }) {
     .filter(([, n]) => n >= 3)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
-  const maxCount = repeated[0]?.[1] || 1;
 
   if (total < 20) {
     return (
-      <div className="card text-center py-10 text-sm text-ink/50">
+      <div className="animate-rise py-10 text-center text-sm text-ink/50">
         Record a longer take (about 40+ words) to see a meaningful vocabulary breakdown.
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      {/* The number, explained */}
-      <div className="card">
-        <div className="flex items-baseline justify-between mb-3">
-          <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-semibold tracking-tight tabular-nums ${inRange ? 'text-emerald-600' : 'text-amber-600'}`}>
-              {ratio}%
-            </span>
-            <span className="text-sm font-medium text-ink/45">unique words</span>
+    <div className="animate-rise">
+      <section className="sheet">
+        <p className="eyebrow">Vocabulary</p>
+
+        <div className="mt-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="stat-xl text-[48px] text-brand-600 sm:text-[64px]">{ratio}%</p>
+            <p className="caption mt-2 tabular-nums">
+              unique words · {unique.toLocaleString()} different out of {total.toLocaleString()}
+            </p>
           </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+          <span className={inRange ? 'pill-good' : 'pill-warn'}>
             {inRange ? 'Good variety' : 'Fairly repetitive'}
           </span>
         </div>
 
-        {/* Total vs unique, shown as a bar so "same" is concrete */}
-        <div className="relative h-2.5 rounded-full bg-sand overflow-hidden">
-          <div className="absolute inset-y-0 left-0 bg-brand-400 rounded-full" style={{ width: `${ratio}%` }} />
-        </div>
-        <div className="mt-2 flex justify-between text-xs text-ink/50 tabular-nums">
-          <span><span className="font-semibold text-ink/70">{unique}</span> different words</span>
-          <span><span className="font-semibold text-ink/70">{total}</span> words total</span>
-        </div>
-
-        <p className="mt-4 text-sm text-ink/65 leading-relaxed">
-          You spoke {total} words, but only {unique} of them were different. That is {ratio}% unique.
+        <p className="statement mt-7 max-w-prose">
           {inRange
-            ? ' Varied wording keeps an audience engaged and makes you sound in command of the topic.'
-            : ' A few words are doing a lot of the work. Swapping in alternatives will make the talk feel richer and hold attention longer.'}
+            ? 'Varied wording keeps an audience with you.'
+            : 'A few words are doing most of the work.'}
         </p>
-      </div>
+      </section>
 
-      {/* The actionable part: what you leaned on */}
-      <div className="card">
-        <h3 className="font-semibold text-ink/80 mb-1">Words you leaned on</h3>
-        <p className="text-xs text-ink/45 mb-4">
-          Content words you used three or more times. Common words like "the" and "and" are left out.
+      <section className="sheet">
+        <p className="eyebrow">Words you leaned on</p>
+        <p className="caption mt-2 max-w-prose">
+          Content words you used three or more times. Common words like &ldquo;the&rdquo; and
+          &ldquo;and&rdquo; are left out.
         </p>
+
         {repeated.length === 0 ? (
-          <p className="text-sm text-ink/55">
+          <p className="mt-5 text-[15px] text-ink/60">
             No single content word stood out as overused. Nicely balanced.
           </p>
         ) : (
           <>
-            <div className="space-y-2.5">
+            <ul className="mt-5">
               {repeated.map(([word, count]) => (
-                <div key={word} className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 text-sm font-medium text-ink/70 truncate">{word}</span>
-                  <div className="flex-1 h-5 bg-sand rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-400 rounded-full transition-all duration-500" style={{ width: `${(count / maxCount) * 100}%` }} />
-                  </div>
-                  <span className="w-8 shrink-0 text-sm font-bold text-ink/70 tabular-nums text-right">×{count}</span>
-                </div>
+                <li
+                  key={word}
+                  className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
+                >
+                  <span className="font-mono text-[15px] text-ink/75">{word}</span>
+                  <span className="stat-xl text-[20px] text-ink/70">{count}&times;</span>
+                </li>
               ))}
-            </div>
-            <p className="mt-4 text-sm text-ink/60 leading-relaxed">
-              For your top one or two, write down two or three alternatives before your next take, then
-              swap them in. It is the fastest way to raise the number above.
+            </ul>
+            <p className="mt-5 text-[15px] leading-relaxed text-ink/65">
+              <span className="eyebrow mr-2 text-brand-600">Try</span>
+              Pick your top one or two, write down two or three alternatives, then swap them into
+              your next take.
             </p>
           </>
         )}
-      </div>
+      </section>
 
-      {/* Plain explainer: what "the same" actually means */}
-      <div className="card bg-cream border-sand">
-        <h3 className="text-sm font-semibold text-ink/80 mb-2">What counts as the same word</h3>
-        <ul className="space-y-1.5 text-sm text-ink/60 leading-relaxed">
-          <li>Every time you repeat a word, it adds to your total but not to your different-word count. Say "problem" five times and that is five words but one unique word.</li>
-          <li>Different forms count separately. "speak", "speaks", and "speaking" are three different words here.</li>
-          <li>Filler words like "um" and "like" are measured in the Filler Words tab, so they are left out of this count.</li>
+      <section className="sheet">
+        <p className="statement">What counts as the same word</p>
+        <ul className="mt-3 max-w-prose space-y-2 text-[15px] leading-relaxed text-ink/60">
+          <li>
+            Every repeat adds to your total but not to your different-word count. Say
+            &ldquo;problem&rdquo; five times and that is five words but one unique word.
+          </li>
+          <li>
+            Different forms count separately. &ldquo;speak&rdquo;, &ldquo;speaks&rdquo; and
+            &ldquo;speaking&rdquo; are three different words here.
+          </li>
+          <li>Fillers like &ldquo;um&rdquo; are measured in Filler Words, so they are left out.</li>
         </ul>
-      </div>
+      </section>
     </div>
   );
 }

@@ -26,6 +26,57 @@
   .stat-card {
     @apply bg-white rounded-2xl border border-sand p-4 flex flex-col gap-1;
   }
+
+  /* ---- Results tabs, editorial treatment (Oct 2026) --------------------
+     The six Results tabs dropped the white .card for the Figma redesign:
+     open sections on cream, separated by hairlines, with large Fraunces
+     numerals carrying the hierarchy. `.card` itself is UNCHANGED and still
+     used by Home, Record, History and Account — don't fold these together. */
+
+  /* One section. Hairline below, none on the last so a tab never ends on a rule. */
+  .sheet {
+    @apply border-b border-sand pb-8 mb-8;
+  }
+  .sheet:last-child {
+    @apply border-b-0 pb-0 mb-0;
+  }
+
+  /* Small uppercase label above a section or metric. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/40;
+  }
+
+  /* The big serif numeral. Size is set by the caller; this carries the face. */
+  .stat-xl {
+    @apply font-display font-semibold tracking-tight tabular-nums leading-none text-ink;
+  }
+
+  /* Inter 20/600 — a short statement, e.g. "You're on target." */
+  .statement {
+    @apply text-[20px] font-semibold tracking-[-0.3px] text-ink leading-snug;
+  }
+
+  /* Quiet caption under a number. */
+  .caption {
+    @apply text-[13px] text-ink/45 leading-relaxed;
+  }
+
+  /* A subtle bordered panel. The Figma is mostly cardless, but it does keep a
+     few of these: the filler lead and the media blocks. Barely lighter than the
+     page, so the 1px border does the defining, not a shadow. */
+  .panel {
+    @apply rounded-2xl border border-sand bg-white/50 p-5 sm:p-6;
+  }
+
+  /* On-target / off-target verdict line and score pill. */
+  .verdict-good { @apply text-[15px] font-semibold text-emerald-600; }
+  .verdict-warn { @apply text-[15px] font-semibold text-amber-600; }
+  .pill-good {
+    @apply rounded-full bg-emerald-100 px-2 py-1 text-[13px] font-semibold text-emerald-700 tabular-nums;
+  }
+  .pill-warn {
+    @apply rounded-full bg-amber-100 px-2 py-1 text-[13px] font-semibold text-amber-700 tabular-nums;
+  }
   /* Primary action — warm, soft, confident. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-6 py-3

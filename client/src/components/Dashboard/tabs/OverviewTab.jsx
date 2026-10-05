@@ -1,17 +1,22 @@
-import { motion, useReducedMotion } from 'framer-motion';
-import { Eye, Gauge, MessageSquare, BookOpen, Activity } from 'lucide-react';
 import ScoreRing from '../../ui/ScoreRing.jsx';
 
-// One icon per measured metric, so a card is identifiable before you read it.
-const METRIC_ICONS = {
-  eyeContact: Eye,
-  pace: Gauge,
-  fillers: MessageSquare,
-  vocabulary: BookOpen,
-};
+// Overview — rebuilt Oct 2026 from the Figma Make redesign. The white cards are
+// gone: the score and the four measured areas sit open on cream, separated by
+// hairlines, with large Fraunces numerals carrying the hierarchy (.sheet /
+// .eyebrow / .stat-xl in index.css).
+//
+// Every number and every caption below is read off the report. Nothing here is
+// written as a literal, and where a session lacks the data for a line, the line
+// is omitted rather than filled in — the same rule the scoring already follows.
+// Sessions saved by older builds have no breakdown → legacy category view.
+
+// The four scored areas, in display order. Sessions saved before Sept 2026
+// still carry flow/articulation in their breakdown; leaving them out of this
+// list is what keeps an old report's Overview consistent with the new score.
+const ORDER = ['eyeContact', 'pace', 'fillers', 'vocabulary'];
 
 // Plain explanation of where overallScore came from. Every figure is read
-// straight off `breakdown`, so this can never assert anything the metric cards
+// straight off `breakdown`, so this can never assert anything the metrics
 // don't already show. "Best" is the strongest ON-TARGET metric, not simply the
 // highest score: a high score that is still off target did not hold anything up.
 function scoreRationale(feedback, scoredIds) {
@@ -43,98 +48,106 @@ function scoreRationale(feedback, scoredIds) {
   return parts.join(' ');
 }
 
-// Overview = the transparent score page, laid out as a bento grid (adapted from
-// Kokonut UI "features-8": 6-col grid, three visual cards up top, wider cards
-// below — rebuilt on our .card/cream/coral tokens instead of shadcn's). Every
-// number is real: the overall is literally the average of the metric scores in
-// feedback.breakdown, each card is anchored by its own measurement (gauge,
-// sparkline, chips), and metrics without data simply aren't rendered.
-// Sessions saved by older builds have no breakdown → legacy category view.
+// One short headline, built from which areas actually missed target. Uses the
+// metric LABELS rather than assessment.focus: those carry their numbers inline
+// ("word variety (14% unique)"), which makes the sentence long and repeats
+// figures the columns below already show. Never a qualitative judgement we
+// didn't measure.
+function headline(feedback) {
+  const b = feedback.breakdown;
+  if (!b || !b.length) return feedback.summary || null;
+  const off = b.filter((m) => !m.inRange).map((m) => m.label.toLowerCase());
+  if (!off.length) return 'Everything measured landed on target.';
+  if (off.length === 1) return `Work on ${off[0]}.`;
+  return `Work on ${off.slice(0, -1).join(', ')} and ${off[off.length - 1]}.`;
+}
+
 export default function OverviewTab({ results }) {
-  const { feedback, avgWpm, fillerWordCounts, wpmData, pauses, duration, words, eyeContact } = results;
-  // framer-motion is not covered by the global prefers-reduced-motion CSS rule,
-  // so the stagger has to be disabled here explicitly.
-  const prefersReduced = useReducedMotion();
+  const { feedback, avgWpm, fillerWordCounts, wpmData, duration, words, displayWords, eyeContact } = results;
   const totalFillers = Object.values(fillerWordCounts).reduce((a, b) => a + b, 0);
-  const wordCount = words.length;
+  const wordCount = (displayWords || words).length;
   const breakdown = feedback.breakdown || null;
 
   const stats = [
     { label: 'Words', value: wordCount.toLocaleString() },
     { label: 'Avg pace', value: `${avgWpm} WPM` },
     { label: 'Fillers', value: totalFillers },
-    { label: 'Pauses', value: pauses.length },
     { label: 'Duration', value: formatDuration(duration) },
   ];
 
-  // Display order puts the visual cards first (eye gauge, pace chart, fillers).
-  // The four scored areas, in display order. Sessions saved before July 2026
-  // still carry flow/articulation in their breakdown; leaving them out of this
-  // list is what keeps an old report's Overview consistent with the new score.
-  const ORDER = ['eyeContact', 'pace', 'fillers', 'vocabulary'];
   const cards = breakdown
     ? ORDER.map((id) => breakdown.find((m) => m.id === id)).filter(Boolean)
     : [];
 
-  // Bento spans: first three cards sit three-across on desktop, the rest two-
-  // across; a leftover card stretches the full row instead of dangling.
-  const spanFor = (i, n) => {
-    if (n <= 2) return 'col-span-full sm:col-span-3';
-    if (i < 3) return 'col-span-full sm:col-span-3 lg:col-span-2';
-    const rest = n - 3;
-    const isLastOdd = rest % 2 === 1 && i === n - 1;
-    return `col-span-full sm:col-span-3 ${isLastOdd ? 'lg:col-span-6' : 'lg:col-span-3'}`;
+  // Value, unit and caption per metric, all read off this take's measurements.
+  const present = (m) => {
+    if (m.id === 'eyeContact' && eyeContact) {
+      const hold = Math.round(eyeContact.longestStreakSeconds || 0);
+      return {
+        value: `${eyeContact.contactPct}%`,
+        unit: null,
+        caption: hold > 0 ? `on camera · longest hold ${hold}s` : 'on camera',
+      };
+    }
+    if (m.id === 'pace') {
+      return { value: avgWpm, unit: 'WPM', caption: paceCaption(wpmData, duration) };
+    }
+    if (m.id === 'fillers') {
+      const perMin = duration > 0 ? (totalFillers / (duration / 60)).toFixed(1) : null;
+      return {
+        value: totalFillers,
+        unit: null,
+        caption: perMin ? `total · ${perMin} per min` : 'total',
+      };
+    }
+    if (m.id === 'vocabulary') {
+      return { value: m.valueDisplay.split('%')[0] + '%', unit: null, caption: 'unique words' };
+    }
+    // Any other metric still falls back to what the report itself says.
+    return { value: m.valueDisplay, unit: null, caption: null };
   };
 
-  // Cards lift in one after another when the tab mounts. Reduced motion gets
-  // them fully rendered with no transform and no stagger.
-  const gridVariants = {
-    hidden: {},
-    visible: { transition: { staggerChildren: prefersReduced ? 0 : 0.06 } },
-  };
-  const cardVariants = prefersReduced
-    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
-    : {
-        hidden: { opacity: 0, y: 24 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-      };
+  const rationale = scoreRationale(feedback, ORDER);
 
   return (
-    <div className="space-y-5">
-      {/* Overall score + verdict */}
-      <div className="card flex flex-col sm:flex-row gap-8 items-center">
-        <div className="shrink-0">
-          <ScoreRing score={feedback.overallScore} size={140} label="Overall Score" />
-        </div>
-        <div className="flex-1 w-full">
-          {breakdown ? (
-            <>
-              {feedback.assessment ? (
-                <Verdict assessment={feedback.assessment} />
-              ) : (
-                <p className="text-[15px] text-ink/80 leading-relaxed font-medium">{feedback.summary}</p>
-              )}
-              {/* Why this score, in one line. The short-take cap explanation
-                  moved in here from the meta line below, since it is part of
-                  the reason for the number rather than session trivia. */}
-              {scoreRationale(feedback, ORDER) && (
-                <p className="mt-3 text-[13px] text-ink/55 leading-relaxed tabular-nums">
-                  {scoreRationale(feedback, ORDER)}
+    <div className="animate-rise">
+      {/* Overall score + what to work on */}
+      <section className="sheet">
+        <p className="eyebrow">Overall score</p>
+
+        {breakdown ? (
+          <div className="mt-3 grid gap-x-12 gap-y-5 sm:grid-cols-[auto_1fr] sm:items-start">
+            <p className="stat-xl text-[56px] text-brand-600 sm:text-[64px]">
+              {feedback.overallScore}
+              <span className="font-sans text-[18px] font-medium tracking-normal text-ink/35">/10</span>
+            </p>
+            <div className="min-w-0">
+              <h2 className="font-display text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink text-balance sm:text-[40px]">
+                {headline(feedback)}
+              </h2>
+              {feedback.assessment?.strong?.length > 0 && (
+                <p className="caption mt-3">
+                  <span className="font-semibold text-emerald-600">On target</span>{' '}
+                  {feedback.assessment.strong.join(', ').toLowerCase()}
                 </p>
               )}
-              <p className="mt-2 text-xs text-ink/40 leading-relaxed tabular-nums">
-                {wordCount} words · {formatDuration(duration)}
-              </p>
-            </>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 w-full">
-              {Object.entries(feedback.categoryScores).map(([cat, score]) => (
+              {rationale && <p className="caption mt-1.5">{rationale}</p>}
+            </div>
+          </div>
+        ) : (
+          // Legacy reports (pre-breakdown) keep the ring + category bars.
+          <div className="mt-4 flex flex-col items-center gap-8 sm:flex-row">
+            <div className="shrink-0">
+              <ScoreRing score={feedback.overallScore} size={140} label="Overall Score" />
+            </div>
+            <div className="grid w-full grid-cols-2 gap-4">
+              {Object.entries(feedback.categoryScores || {}).map(([cat, score]) => (
                 <div key={cat} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-ink/65 capitalize">{cat}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize text-ink/65">{cat}</span>
                     <span className="text-sm font-bold text-ink">{score}/10</span>
                   </div>
-                  <div className="h-1.5 bg-sand rounded-full overflow-hidden">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-sand">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${score * 10}%`, backgroundColor: barColor(score) }}
@@ -143,247 +156,110 @@ export default function OverviewTab({ results }) {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </section>
 
-      {/* Metric bento grid */}
+      {/* The four measured areas, across columns on desktop and stacked on phones */}
       {cards.length > 0 && (
-        <motion.div
-          className="grid grid-cols-6 gap-3"
-          variants={gridVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {cards.map((m, i) => (
-            <MetricCard
-              key={m.id}
-              metric={m}
-              index={i}
-              variants={cardVariants}
-              className={spanFor(i, cards.length)}
-            >
-              {m.id === 'eyeContact' && eyeContact && <EyeGauge data={eyeContact} />}
-              {m.id === 'pace' && <PaceChart avgWpm={avgWpm} wpmData={wpmData} />}
-              {m.id === 'fillers' && (
-                <FillerChips counts={fillerWordCounts} total={totalFillers} duration={duration} />
-              )}
-              {m.id === 'vocabulary' && <BigStat value={m.valueDisplay.split('%')[0] + '%'} unit="unique words" />}
-            </MetricCard>
-          ))}
-        </motion.div>
+        <section className="sheet">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {cards.map((m) => {
+              const p = present(m);
+              return (
+                <div
+                  key={m.id}
+                  className="border-t border-sand py-6 first:border-t-0 first:pt-0
+                             sm:border-t-0 sm:py-0
+                             sm:[&:nth-child(even)]:border-l sm:[&:nth-child(even)]:pl-5
+                             lg:border-l lg:pl-5 lg:first:border-l-0 lg:first:pl-0"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="eyebrow">{m.label}</p>
+                    <span className={m.inRange ? 'pill-good' : 'pill-warn'}>{m.score}/10</span>
+                  </div>
+
+                  <p className="stat-xl mt-7 text-[44px] sm:text-[48px] lg:text-[56px]">
+                    {p.value}
+                    {p.unit && (
+                      <span className="ml-1.5 font-sans text-[13px] font-medium tracking-normal text-ink/45">
+                        {p.unit}
+                      </span>
+                    )}
+                  </p>
+
+                  {p.caption && <p className="caption mt-2">{p.caption}</p>}
+                  {m.plain && (
+                    <p className={`mt-5 ${m.inRange ? 'verdict-good' : 'verdict-warn'}`}>{m.plain}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Quick stats — legacy reports only; the bento cards carry these now */}
+      {/* Quick stats — legacy reports only; the four columns carry these now */}
       {!breakdown && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className="stat-card">
-              <span className="text-xl font-semibold tracking-tight text-ink tabular-nums">{s.value}</span>
-              <span className="text-xs text-ink/45 font-medium">{s.label}</span>
-            </div>
-          ))}
-        </div>
+        <section className="sheet">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <p className="stat-xl text-[28px]">{s.value}</p>
+                <p className="caption mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Eye contact card for sessions saved before the breakdown existed */}
+      {/* Eye contact detail for sessions saved before the breakdown existed */}
       {!breakdown && eyeContact && (
-        <div className="card">
-          <h3 className="text-xs font-semibold text-ink/45 uppercase tracking-wider mb-3">Eye contact</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="stat-card">
-              <span className="text-xl font-bold text-ink tabular-nums">{eyeContact.contactPct}%</span>
-              <span className="text-xs text-ink/45 font-medium">Of your talk</span>
+        <section className="sheet">
+          <p className="eyebrow">Eye contact</p>
+          <div className="mt-4 grid grid-cols-3 gap-6">
+            <div>
+              <p className="stat-xl text-[28px]">{eyeContact.contactPct}%</p>
+              <p className="caption mt-1">Of your talk</p>
             </div>
-            <div className="stat-card">
-              <span className="text-xl font-bold text-ink tabular-nums">{formatDuration(eyeContact.contactSeconds)}</span>
-              <span className="text-xs text-ink/45 font-medium">Total time</span>
+            <div>
+              <p className="stat-xl text-[28px]">{formatDuration(eyeContact.contactSeconds)}</p>
+              <p className="caption mt-1">Total time</p>
             </div>
-            <div className="stat-card">
-              <span className="text-xl font-bold text-ink tabular-nums">{formatDuration(eyeContact.longestStreakSeconds)}</span>
-              <span className="text-xs text-ink/45 font-medium">Longest hold</span>
+            <div>
+              <p className="stat-xl text-[28px]">{formatDuration(eyeContact.longestStreakSeconds)}</p>
+              <p className="caption mt-1">Longest hold</p>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Highlights — legacy only; the verdict and green pills cover this now,
-          and the Coaching tab keeps the full "working already" list */}
+      {/* Highlights — legacy only; the headline and green pills cover this now */}
       {!breakdown && feedback.highlights?.length > 0 && (
-        <div className="card border-emerald-200 bg-emerald-50">
-          <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">Strengths</h3>
-          <ul className="space-y-2">
+        <section className="sheet">
+          <p className="eyebrow text-emerald-600">Strengths</p>
+          <ul className="mt-3 space-y-2">
             {feedback.highlights.map((h, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-emerald-800">
-                <svg className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{h}</span>
-              </li>
+              <li key={i} className="text-sm leading-relaxed text-ink/70">{h}</li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
     </div>
   );
 }
 
-// Verdict: two scannable lines instead of a run-on sentence — what's strong,
-// and the 1–2 things to focus on. If nothing needs work, one clean line.
-function Verdict({ assessment }) {
-  const { strong, focus } = assessment;
-  if (!focus.length) {
-    return (
-      <p className="text-[15px] text-ink/80 leading-relaxed font-medium">
-        Everything measured landed on target. Nice work. Now do it twice in a row.
-      </p>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      <div className="flex items-baseline gap-2.5">
-        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-brand-600">Focus on</span>
-        <span className="text-[15px] font-semibold text-ink leading-snug">{focus.join(', ')}</span>
-      </div>
-      {strong.length > 0 && (
-        <div className="flex items-baseline gap-2.5">
-          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-600">Strong</span>
-          <span className="text-sm text-ink/55 leading-snug">{strong.join(', ')}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Bento card, restyled to give each metric real presence: an index, its own
-// icon, the measurement, then the name and verdict anchored at the bottom.
-// The score pill keeps the existing emerald/amber meaning (on target vs not) —
-// those are the app's established status colors, not decoration.
-function MetricCard({ metric, index, variants, className, children }) {
-  const Icon = METRIC_ICONS[metric.id] || Activity;
-
-  return (
-    <motion.div
-      variants={variants}
-      className={`card flex min-h-[260px] flex-col overflow-hidden ${className}`}
-    >
-      {/* Index + score, the two things you scan first. */}
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-[11px] tabular-nums text-ink/35">
-          ( {String(index + 1).padStart(3, '0')} )
-        </span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${
-            metric.inRange ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-          }`}
-        >
-          {metric.score}/10
-        </span>
-      </div>
-
-      <Icon className="mt-4 h-8 w-8 shrink-0 text-brand-500" strokeWidth={1.5} aria-hidden />
-
-      {/* The measurement itself — gauge, sparkline, chips, or a big number. */}
-      <div className="flex flex-1 flex-col justify-center py-4">{children}</div>
-
-      <div>
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-ink">{metric.label}</h4>
-        {/* One plain verdict per card — good or bad, in a couple of words. The
-            full "why it matters" explanation lives in the Coaching tab. */}
-        {metric.plain && (
-          <p
-            className={`mt-1 text-xs font-semibold ${
-              metric.inRange ? 'text-emerald-600' : 'text-amber-600'
-            }`}
-          >
-            {metric.plain}
-          </p>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// Ring gauge showing time spent on camera. Compact halo treatment.
-function EyeGauge({ data }) {
-  const pct = data.contactPct;
-  const r = 30;
-  const c = 2 * Math.PI * r;
-  return (
-    <div className="text-center">
-      <div className="relative mx-auto flex aspect-square w-[84px] items-center justify-center rounded-full before:absolute before:-inset-2 before:rounded-full before:border before:border-brand-200/50">
-        <svg width="84" height="84" className="-rotate-90 absolute inset-0">
-          <circle cx="42" cy="42" r={r} fill="none" stroke="rgba(43,38,34,0.08)" strokeWidth="7" />
-          <circle
-            cx="42" cy="42" r={r} fill="none" stroke="#e0714f" strokeWidth="7" strokeLinecap="round"
-            strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
-            className="transition-all duration-700"
-          />
-        </svg>
-        <span className="relative text-xl font-semibold tracking-tight tabular-nums leading-none text-ink">{pct}%</span>
-      </div>
-      <p className="mt-2.5 text-[11px] text-ink/50 tabular-nums">
-        on camera · longest hold {Math.round(data.longestStreakSeconds)}s
-      </p>
-    </div>
-  );
-}
-
-// Big WPM + a sparkline over the take, with the 120–160 comfort band shaded.
-function PaceChart({ avgWpm, wpmData }) {
+// Pace caption from the real per-chunk WPM series: call it steady only when the
+// spread actually is, otherwise state the range. Falls back to the duration
+// alone when a take is too short to have a series.
+function paceCaption(wpmData, duration) {
   const pts = (wpmData || []).map((d) => d.wpm).filter((n) => n > 0);
-  const w = 220;
-  const h = 40;
-  const lo = Math.min(80, ...pts);
-  const hi = Math.max(180, ...pts);
-  const x = (i) => (pts.length > 1 ? (i / (pts.length - 1)) * w : w / 2);
-  const y = (v) => h - ((v - lo) / (hi - lo || 1)) * h;
-  const path = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  return (
-    <div className="text-center">
-      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">
-        {avgWpm}
-        <span className="ml-1.5 text-xs font-sans font-medium text-ink/45">WPM</span>
-      </p>
-      {pts.length > 1 && (
-        <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 w-full h-9" preserveAspectRatio="none" aria-hidden>
-          <rect x="0" y={y(160)} width={w} height={Math.max(y(120) - y(160), 0)} fill="#e0714f" opacity="0.09" />
-          <path d={path} fill="none" stroke="#e0714f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
-// Big total with a clear label (fixes "2912.6/min" run-together), then the top
-// offenders as chips.
-function FillerChips({ counts, total, duration }) {
-  const top = Object.entries(counts).filter(([, n]) => n > 0).sort(([, a], [, b]) => b - a).slice(0, 3);
-  const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : '0.0';
-  return (
-    <div className="text-center">
-      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">{total}</p>
-      <p className="mt-1 text-[11px] text-ink/45 tabular-nums">total · {perMin} per min</p>
-      {top.length > 0 && (
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {top.map(([word, n]) => (
-            <span key={word} className="rounded-full border border-sand bg-cream px-2.5 py-0.5 text-xs text-ink/70">
-              "{word}" ×{n}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BigStat({ value, unit }) {
-  return (
-    <div className="text-center">
-      <p className="text-[1.75rem] font-semibold tracking-tight text-ink tabular-nums leading-none">{value}</p>
-      <p className="mt-1.5 text-[11px] text-ink/45">{unit}</p>
-    </div>
-  );
+  if (pts.length < 3) return duration ? `across ${formatDuration(duration)}` : null;
+  const lo = Math.min(...pts);
+  const hi = Math.max(...pts);
+  return hi - lo <= 40
+    ? `steady across the full ${formatDuration(duration)}`
+    : `ranged ${Math.round(lo)}–${Math.round(hi)} WPM`;
 }
 
 function barColor(score) {

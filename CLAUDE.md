@@ -62,6 +62,24 @@ Report shape: `overallScore` = plain average of the measured metrics in **`break
 ### Email gate (`components/EmailGate/`)
 First "Start recording" from Home routes through an email-capture screen unless identity is already known (Supabase user, `localStorage.speakable-email`, or `speakable-guest`). Guest always works — recording is never blocked. The email is a local lead tag only (state + localStorage); pushing it to a backend is flagged in DEPLOYMENT.md. Supabase sign-in remains the real account system.
 
+### Results tabs are CARDLESS (Oct 2026, from the Figma Make redesign)
+All six Results tabs dropped `.card` for an editorial treatment: open sections on
+cream separated by hairlines, with large Fraunces numerals carrying the hierarchy.
+Shared classes live in `index.css`: **`.sheet`** (section + bottom hairline, none on
+the last), **`.eyebrow`**, **`.stat-xl`**, **`.statement`**, **`.caption`**,
+**`.panel`** (the one subtle bordered surface the design keeps, used for the filler
+lead), **`.pill-good`/`.pill-warn`**, **`.verdict-good`/`.verdict-warn`**.
+**`.card` itself is unchanged** and still used by Home, Record, History, Account and
+EmailGate — do not fold these together. The source Figma used DM Serif Display and
+its own neutrals; we deliberately kept **Fraunces** and the shipped cream/sand/ink/
+brand tokens so Results matches the rest of the app. Overview's metric grid is
+1 col → `sm:` 2 → `lg:` 4 with the dividers flipping from top-border to left-border.
+Filler highlights in the transcript are **coral** (`bg-brand-100` + `border-brand-500`
+underline), not amber, so they match the design; the active word stays solid coral.
+Watch & Listen was restyled only — the Figma's "Video only / Audio only / Video +
+audio" selector was deliberately NOT built, so the muted `<video>` + separate
+`<audio>` pair and the transcript's `audioRef` seek wiring are untouched.
+
 ### Design tokens (keep everything on these)
 - Colors: `cream` bg, `sand` surfaces/dividers, `ink` text (opacity steps /80 /65 /55 /45 /35), single coral `brand` accent — no cool grays (`slate`) anywhere.
 - Type: **Fraunces** (`font-display`) for display/headings, **Inter** body.

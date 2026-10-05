@@ -41,19 +41,19 @@ export default function Transcript({ results, mediaRef }) {
   };
 
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-        <h3 className="font-semibold text-ink/80">Transcript</h3>
+    <section className="sheet">
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+        <p className="eyebrow">Transcript</p>
         {hasWordData && (
-          <div className="flex items-center gap-2 text-xs text-ink/45">
-            <span className="inline-block w-3 h-3 rounded bg-amber-200 border border-amber-300" />
-            {shownFillers} filler{shownFillers === 1 ? '' : 's'} highlighted
+          <div className="flex items-center gap-2 text-[13px] text-ink/45 tabular-nums">
+            <span className="inline-block h-2 w-6 border-b-2 border-brand-500" />
+            {shownFillers} filler word{shownFillers === 1 ? '' : 's'}
             {unlocated > 0 && <span className="text-ink/35">· +{unlocated} detected in audio</span>}
           </div>
         )}
       </div>
 
-      <div className="leading-relaxed text-ink/80 text-[15px]">
+      <div className="max-w-[47rem] text-[17px] leading-[1.75] text-ink/85 sm:text-[18px]">
         {hasWordData ? (
           <p>
             {words.map((w, i) => {
@@ -64,7 +64,7 @@ export default function Transcript({ results, mediaRef }) {
               const highlight = active
                 ? 'bg-brand-500 text-white rounded px-1 -mx-0.5'
                 : filler
-                  ? 'bg-amber-100 text-amber-900 rounded px-1 -mx-0.5'
+                  ? 'bg-brand-100 border-b-2 border-brand-500 px-0.5 -mx-0.5'
                   : '';
               const cls = [
                 interactive ? 'cursor-pointer transition-colors rounded hover:bg-brand-100 hover:text-ink' : '',
@@ -100,14 +100,14 @@ export default function Transcript({ results, mediaRef }) {
       </div>
 
       {hasWordData && (
-        <p className="text-xs text-ink/45 mt-4 pt-4 border-t border-sand">
+        <p className="caption mt-5 border-t border-sand pt-5">
           {unlocated > 0
             ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here. Record a new take to see every one highlighted.`
             : interactive
-              ? 'Tap any word to jump the audio to that moment. Filler words are highlighted in amber.'
-              : 'Filler words are highlighted in amber.'}
+              ? 'Tap any word to jump the audio to that moment. Filler words are underlined in coral.'
+              : 'Filler words are underlined in coral.'}
         </p>
       )}
-    </div>
+    </section>
   );
 }
