@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
 
+const MAX_UPLOAD_MB = 200;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+
 export default function UploadZone({ onFile }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
@@ -9,6 +12,17 @@ export default function UploadZone({ onFile }) {
     const ok = file.type.startsWith('audio/') || file.type.startsWith('video/');
     if (!ok) {
       alert('Please upload an audio or video file.');
+      return;
+    }
+    // Size ceiling. The file is read whole into memory (arrayBuffer) and then
+    // decoded for Whisper, so a multi-gigabyte drop would hang or crash the tab
+    // rather than fail cleanly. Takes are capped at 3 minutes anyway, and 200 MB
+    // is far more than three minutes of any normal recording.
+    if (file.size > MAX_UPLOAD_BYTES) {
+      alert(
+        `That file is ${(file.size / 1024 / 1024).toFixed(0)} MB. Please upload one under ` +
+        `${MAX_UPLOAD_MB} MB — takes are analysed up to three minutes.`
+      );
       return;
     }
     onFile(file);
