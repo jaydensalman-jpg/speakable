@@ -136,6 +136,23 @@ Configured by `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` in `client/.env.local
 Watch & Listen · Overview · Filler Words · Words to Cut · Vocabulary · Coaching.
 **Words to Cut** (`tabs/WordsToCutTab.jsx` + `utils/weakWords.js`): low-value language (hedges, empty qualifiers, vague words), scanned from the transcript, deliberately gentle and kept NON-overlapping with `fillerWords.js` (a token already a filler is skipped). **Coaching** carries an "Also keep an eye on" checklist (every off-target `breakdown` metric + weak-word load) below the detailed drills; and coaching drills only cover `!inRange` metrics (an on-target metric must never be dressed up as a weakness, even when a short-sample cap drops its score under 8). **The transcript lives inside Watch & Listen** (`components/Dashboard/Transcript.jsx`, rendered beneath the players); pass it the audio `mediaRef` and each word becomes clickable (seeks the audio to that word's `start`) with the word under the playhead highlighted as it plays. No standalone Transcript tab. **There is no Pacing tab** (removed September 2026 with `tabs/PacingTab.jsx`); pace is still scored and still has its own Overview card with the WPM sparkline. `results.pauses` is still computed and stored, just no longer surfaced. **Vocabulary** (`tabs/VocabularyTab.jsx`) explains unique-word ratio in plain terms, lists the content words you repeated 3+ times (stopwords/fillers excluded), and spells out what counts as "the same word."
 
+### Analytics (`lib/analytics.js` → Google Analytics 4)
+Gated entirely on **`VITE_GA_ID`**: unset and Vite dead-code-eliminates the module,
+so NOTHING from Google ships (verified — zero `googletagmanager` references in the
+bundle). Set the id and rebuild to activate. Also skips when the visitor has Do Not
+Track on, and sets `anonymize_ip`.
+**GA's automatic page tracking is near-useless here**: the app never changes URL
+(`App.jsx` is a state machine), so every visitor is one view of `/`. The value is the
+custom funnel: `start_clicked` → `recording_started` → `recording_completed` →
+`report_ready`, plus `report_failed`. Those map to the real drop-off points, above all
+the gap between `recording_completed` and `report_ready`, which is the model download
+and the slowest step on a first visit.
+Events carry numbers and short enums only — never transcript, email, recording, or the
+`speakable-anon` id. This is SEPARATE from `lib/metrics.js` (Supabase), which measures
+speaking improvement over takes; analytics measures whether people arrive and finish.
+Note GA4 sets cookies, so it needs a consent banner in the EU/UK; a cookieless
+alternative (Vercel or Cloudflare Web Analytics) would avoid that.
+
 ### Metrics & sharing
 - **Anonymous metrics** (`lib/metrics.js` → Supabase `metrics` table): fired from `App.handleRecordingComplete`, logs NUMBERS ONLY (ordinal, overall_score, filler_pct, wpm, eye_pct) under a random `speakable-anon` localStorage token — never email/auth user, never transcript/audio. Table is **write-only** (RLS insert-only, no select); owner reads aggregates in the dashboard. Impact queries are in `supabase/schema.sql`. Requires re-running that schema to create the table; absent it, inserts fail silently and nothing breaks.
 - **Score card** (`components/Dashboard/ShareButton.jsx`): canvas-drawn PNG summary (score ring, stats, URL), no new deps, download-only, nothing leaves the device. **Not currently rendered** — the button was removed from the Dashboard results header in September 2026 to declutter it. The component is intact and working; re-add `<ShareButton results={results} />` to put it back (worth doing if social sharing matters, since it produces a ready-made post image).

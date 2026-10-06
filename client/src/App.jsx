@@ -15,6 +15,7 @@ import { generateLocalFeedback } from './utils/localCoach.js';
 import { transcribeLocally } from './lib/transcribe.js';
 import { saveSession, toSession, listSessions } from './lib/history.js';
 import { logSession } from './lib/metrics.js';
+import { track } from './lib/analytics.js';
 
 // App states: home → idle (recorder) → recording → processing → results
 // (plus history and account). Keep a single Recorder mounted across
@@ -35,6 +36,9 @@ export default function App() {
   function startRecordingFlow() {
     const known = auth.user || leadEmail || localStorage.getItem('speakable-guest');
     setError(null);
+    // Top of the funnel: they asked to record. `gated` tells you how many
+    // first-timers hit the email screen vs. returning users who skip it.
+    track('start_clicked', { gated: known ? 'no' : 'yes' });
     setAppState(known ? 'idle' : 'email-gate');
   }
 
@@ -53,6 +57,10 @@ export default function App() {
     setAppState('processing');
     setError(null);
     setProgress('Transcribing your speech…');
+    // They finished speaking. The gap between this and `report_ready` is the
+    // model download plus transcription — the slowest step and the likeliest
+    // place to lose someone on their first visit.
+    track('recording_completed', { source: source || 'record', media: mediaType || 'audio' });
 
     try {
       // Transcribe the recorded audio with Whisper, in-browser. This processes the
@@ -148,6 +156,12 @@ export default function App() {
       };
       setResults(fullResults);
       setAppState('results');
+      // Reached a report. Numbers only, matching what metrics.js already logs.
+      track('report_ready', {
+        score: feedback.overallScore,
+        wpm: avgWpm,
+        words: wordList.length,
+      });
 
       // Persist to the on-device practice history (calendar). Fire-and-forget.
       // Signed in: the report (never the blob) also syncs to the account.
@@ -167,6 +181,8 @@ export default function App() {
       });
     } catch (err) {
       console.error(err);
+      // Short reason only — never the message body, which can echo a filename.
+      track('report_failed', { reason: (err?.message || 'unknown').slice(0, 40) });
       setError(err.message || 'Something went wrong. Please try again.');
       setAppState('idle');
     }
@@ -308,7 +324,7 @@ export default function App() {
         {(appState === 'idle' || appState === 'recording') && (
           <Recorder
             onComplete={handleRecordingComplete}
-            onRecordingStart={() => setAppState('recording')}
+            onRecordingStart={() => { track('recording_started'); setAppState('recording'); }}
           />
         )}
 
