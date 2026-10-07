@@ -2,7 +2,17 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Stamped into the bundle so the running build is identifiable in the UI and
+// the worker can log which version took over. Vercel exposes the commit SHA;
+// locally fall back to the build time.
+const BUILD_ID =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+  new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
+  define: {
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
+  },
   plugins: [
     react(),
     // Installable PWA: manifest + service worker so the app can live on a phone
@@ -10,6 +20,11 @@ export default defineConfig({
     // transformers.js in the browser Cache API — the SW must NOT touch it).
     VitePWA({
       registerType: 'autoUpdate',
+      // Register the worker ourselves (lib/swUpdate.js) instead of letting the
+      // plugin inject registerSW.js. That injected snippet registers on `load`
+      // and never checks again, which is why an installed phone app — resumed
+      // rather than reloaded — could sit on an old build for days.
+      injectRegister: null,
       includeAssets: ['mic.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Speakable',
@@ -42,13 +57,24 @@ export default defineConfig({
         // NavigationRoute that takes precedence over this NetworkFirst one and
         // reintroduces the stale-page bug.
         navigateFallback: null,
+        // Keep index.html OUT of the precache. precacheAndRoute resolves "/"
+        // to index.html via directoryIndex and answers it cache-first, and it
+        // is registered before the NetworkFirst route below, so a precached
+        // index.html wins every navigation and pins the app to the build the
+        // worker was installed with. Excluding it lets navigations reach the
+        // NetworkFirst route, which still fills the "html" cache on the first
+        // visit so offline keeps working.
+        globIgnores: ['**/index.html'],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
               cacheName: 'html',
-              networkTimeoutSeconds: 3,
+              // Only reached when the network is genuinely slow — an offline
+              // fetch rejects immediately. 3s was short enough that ordinary
+              // cellular fell back to the stale page.
+              networkTimeoutSeconds: 10,
             },
           },
         ],

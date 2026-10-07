@@ -12,6 +12,7 @@ import { detectFillerWords, fillerLabel, collapseRepeatedFillers } from './utils
 import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
+import { BUILD_ID } from './lib/swUpdate.js';
 import { transcribeLocally } from './lib/transcribe.js';
 import { saveSession, toSession, listSessions } from './lib/history.js';
 import { logSession } from './lib/metrics.js';
@@ -332,6 +333,12 @@ export default function App() {
 
         {appState === 'results' && results && <Dashboard results={results} />}
       </main>
+
+      {/* Which build is actually running. Cheap to render, and it turns
+          "am I on the latest version?" from a guess into something checkable. */}
+      <footer className="pb-6 text-center text-[0.6875rem] text-ink/30">
+        <span className="tabular-nums">build {BUILD_ID}</span>
+      </footer>
     </div>
   );
 }
