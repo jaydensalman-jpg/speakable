@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 // 0.375rem minimum gap, spread by space-between across min(100%, 40rem) at a
 // fixed 8rem height.
 const BAR_COUNT = 28;
-const MIN_BAR = 0.18; // silence still needs a visible tick
+const MIN_BAR = 0.28; // the design's shortest bar; silence still reads
 
 export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
   const [peaks, setPeaks] = useState(null);
@@ -36,18 +36,38 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
         if (cancelled) return;
         const data = audio.getChannelData(0);
         const size = Math.floor(data.length / BAR_COUNT) || 1;
+        // RMS per bucket, not peak. A bar can span several seconds on a long
+        // take, and the peak of any few seconds of speech is close to maximum,
+        // which flattens every bar to full height. Average energy keeps the
+        // loud and quiet stretches distinguishable.
         const out = [];
         for (let i = 0; i < BAR_COUNT; i++) {
-          let peak = 0;
+          let sum = 0;
+          let count = 0;
           const start = i * size;
           for (let j = start; j < start + size && j < data.length; j++) {
-            const v = Math.abs(data[j]);
-            if (v > peak) peak = v;
+            sum += data[j] * data[j];
+            count++;
           }
-          out.push(peak);
+          out.push(count ? Math.sqrt(sum / count) : 0);
         }
-        const max = Math.max(...out) || 1;
-        setPeaks(out.map((p) => Math.max(p / max, MIN_BAR)));
+        // Map the take's own quiet-to-loud range onto the bar height rather
+        // than scaling against absolute level: a quietly recorded take would
+        // otherwise be a flat row of stubs, and a loud one a flat row of full
+        // bars. The 10th/90th percentiles keep one cough or one silent gap
+        // from setting the whole scale. The design's shortest bar is 28%, so
+        // that is the floor.
+        const sorted = [...out].sort((a, z) => a - z);
+        const at = (q) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * q))];
+        const lo = at(0.1);
+        const hi = at(0.9);
+        const span = hi - lo || hi || 1;
+        setPeaks(
+          out.map((v) => {
+            const t = Math.min(1, Math.max((v - lo) / span, 0));
+            return MIN_BAR + (1 - MIN_BAR) * t;
+          }),
+        );
       } catch {
         // Undecodable container — show the transport without bars.
       }
