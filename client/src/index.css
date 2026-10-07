@@ -78,10 +78,42 @@ html {
     @apply text-[1.0625rem] leading-[1.65] text-muted;
   }
 
-  /* A metric column: fixed minimum height with the verdict pinned to the bottom,
-     so verdict lines align across all four columns regardless of caption length. */
-  .metric-col {
-    @apply flex min-h-[16rem] flex-col;
+  /* The four measured areas (.metric-grid / .metric in the Figma).
+     Breakpoints are the design's own, written as real media queries rather than
+     Tailwind variants: `sm:` is 640px, so a 390px phone fell to ONE column and
+     the four areas turned into a long scroll. The design pairs them from 24rem
+     up, and only drops to a single column below that, where two columns would
+     crush the numerals.
+
+     Each metric is a flex column with the verdict pinned to the bottom, so the
+     verdict lines align across a row regardless of caption length. */
+  .metric-grid {
+    @apply grid grid-cols-4 border-y border-sand;
+  }
+  .metric {
+    @apply flex min-h-[16rem] flex-col border-r border-sand p-6;
+  }
+  .metric:first-child { @apply pl-0; }
+  .metric:last-child { @apply border-r-0 pr-0; }
+
+  @media (max-width: 48rem) {
+    .metric-grid { @apply grid-cols-2; }
+    .metric { @apply min-h-[15rem] border-b px-4 py-6; }
+    .metric:nth-child(2n+1) { @apply pl-0; }
+    .metric:nth-child(2n) { @apply border-r-0 pr-0; }
+    /* Bottom row carries no rule; .metric-grid's own border closes the block. */
+    .metric:nth-last-child(-n+2) { @apply border-b-0; }
+  }
+
+  @media (max-width: 24rem) {
+    .metric-grid { @apply grid-cols-1; }
+    .metric,
+    .metric:first-child,
+    .metric:nth-child(2n+1),
+    .metric:nth-child(2n) {
+      @apply min-h-0 border-b border-r-0 px-0 py-6;
+    }
+    .metric:last-child { @apply border-b-0; }
   }
 
   /* On-target / off-target verdict line and score pill. */

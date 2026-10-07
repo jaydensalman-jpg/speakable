@@ -116,13 +116,15 @@ export default function OverviewTab({ results }) {
         <p className="eyebrow">Overall score</p>
 
         {breakdown ? (
-          <div className="mt-3 grid gap-x-12 gap-y-4 md:grid-cols-[13rem_1fr] md:items-end">
+          /* Phone keeps the score beside the headline (auto 1fr, centred), as the
+             design does — stacking it pushed everything below the fold. */
+          <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-6 md:grid-cols-[13rem_1fr] md:items-end md:gap-12">
             <p className="stat-xl text-[5rem] leading-[0.85] text-brand-500 md:text-[6rem]">
               {feedback.overallScore}
               <span className="font-sans text-[1.0625rem] font-normal tracking-normal text-ink/55">/10</span>
             </p>
             <div className="min-w-0">
-              <h2 className="text-balance font-display text-[2.125rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
+              <h2 className="text-balance font-display text-[1.8rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
                 {headline(feedback)}
               </h2>
               {feedback.assessment?.strong?.length > 0 && (
@@ -160,29 +162,23 @@ export default function OverviewTab({ results }) {
         )}
       </section>
 
-      {/* The four measured areas, across columns on desktop and stacked on phones */}
+      {/* The four measured areas: four across on desktop, pairs on a phone. */}
       {cards.length > 0 && (
-        <section className="sheet">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mb-8">
+          <div className="metric-grid">
             {cards.map((m) => {
               const p = present(m);
               return (
-                <div
-                  key={m.id}
-                  className="metric-col border-t border-sand py-6 first:border-t-0 first:pt-0
-                             sm:border-t-0 sm:py-0
-                             sm:[&:nth-child(even)]:border-l sm:[&:nth-child(even)]:pl-5
-                             lg:border-l lg:pl-5 lg:first:border-l-0 lg:first:pl-0"
-                >
-                  <div className="flex items-start justify-between gap-3">
+                <div key={m.id} className="metric">
+                  <div className="flex items-start justify-between gap-2">
                     <p className="eyebrow">{m.label}</p>
                     <span className={m.inRange ? 'pill-good' : 'pill-warn'}>{m.score}/10</span>
                   </div>
 
-                  <p className="stat-xl mt-12 text-[3rem] lg:text-[3.5rem]">
+                  <p className="stat-xl mt-8 text-[3rem] md:mt-12 md:text-[3.5rem]">
                     {p.value}
                     {p.unit && (
-                      <span className="ml-1.5 font-sans text-[0.8125rem] font-normal tracking-normal text-ink/55">
+                      <span className="ml-[0.4rem] font-sans text-[0.8125rem] font-normal tracking-normal text-muted">
                         {p.unit}
                       </span>
                     )}
