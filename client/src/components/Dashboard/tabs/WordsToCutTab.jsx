@@ -11,10 +11,6 @@ export default function WordsToCutTab({ results }) {
   const words = results.displayWords || results.words || [];
   const wordCount = words.length;
   const { total, items } = detectWeakWords(words);
-  const pct = wordCount ? (total / wordCount) * 100 : 0;
-  const duration = results.duration || 0;
-  const perMin = duration > 0 ? (total / (duration / 60)).toFixed(1) : null;
-  const tight = pct < 4; // forgiving threshold — everyone uses a few
 
   if (wordCount < 20) {
     return (
@@ -30,51 +26,51 @@ export default function WordsToCutTab({ results }) {
 
   return (
     <div className="animate-rise">
+      {/* Lead: coral numeral with the heading set beside it on the baseline. */}
       <section className="sheet">
         <p className="eyebrow">Words to cut</p>
 
-        <div className="mt-4 flex items-start justify-between gap-4">
-          <div>
-            <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{total}</p>
-            <p className="caption mt-2">
-              words worth trimming{perMin ? ` · ${perMin} per minute` : ''}
-            </p>
-          </div>
-          <span className={tight ? 'pill-good' : 'pill-warn'}>
-            {tight ? 'Tight language' : 'Room to trim'}
-          </span>
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-1">
+          <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{total}</p>
+          {/* font-sans explicitly: the global h2 rule is the display face, and
+              DM Serif Display has one weight, so semibold would synthesise. */}
+          <h2 className="font-sans text-[1.5rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.875rem]">
+            Words Worth Trimming
+          </h2>
         </div>
-
-        <p className="statement mt-7 max-w-prose">
-          {total === 0
-            ? 'Your wording stayed direct and specific.'
-            : tight
-              ? 'That is light. Trim the one or two you repeat most.'
-              : 'These add no meaning. Cutting the ones you lean on will sound more certain.'}
-        </p>
       </section>
 
+      {/* One row per category: name and why on the left, the words and the swap
+          on the right. */}
       {byCategory.map((group) => (
-        <section key={group.key} className="sheet">
-          <p className="eyebrow">{group.label}</p>
-          <p className="caption mt-2 max-w-prose">{group.why}</p>
+        <section key={group.key} className="sheet grid gap-5 md:grid-cols-2 md:gap-14">
+          <div>
+            <h3 className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.625rem]">
+              {group.label}
+            </h3>
+            <p className="mt-3 max-w-prose text-[1.0625rem] leading-[1.6] text-muted">{group.why}</p>
+          </div>
 
-          <ul className="mt-5">
-            {group.items.map((it) => (
-              <li
-                key={it.text}
-                className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
-              >
-                <span className="font-mono text-[15px] text-ink/75">&ldquo;{it.text}&rdquo;</span>
-                <span className="stat-xl text-[1.25rem] text-ink/70">{it.count}&times;</span>
-              </li>
-            ))}
-          </ul>
+          <div>
+            <ul>
+              {group.items.map((it) => (
+                <li
+                  key={it.text}
+                  className="flex items-baseline justify-between gap-4 border-b border-sand py-3"
+                >
+                  <span className="text-[1.0625rem] text-ink">&ldquo;{display(it.text)}&rdquo;</span>
+                  <span className="shrink-0 text-[1.0625rem] tabular-nums text-muted">
+                    {it.count}&times;
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-          <p className="mt-5 text-[15px] leading-relaxed text-ink/65">
-            <span className="eyebrow mr-2 text-brand-500">Try</span>
-            {group.swap}
-          </p>
+            <p className="mt-4 text-[1.0625rem] leading-[1.6] text-muted">
+              <span className="eyebrow mr-3 text-brand-500">Try</span>
+              {group.swap}
+            </p>
+          </div>
         </section>
       ))}
 
@@ -88,4 +84,10 @@ export default function WordsToCutTab({ results }) {
       )}
     </div>
   );
+}
+
+// Phrases are matched in lowercase. Only the first-person "I" is restored —
+// capitalising anything else would change a word the speaker did not say.
+function display(text) {
+  return text.replace(/\bi\b/g, 'I');
 }

@@ -94,6 +94,18 @@ html {
     @apply rounded-full bg-warn-soft px-2 py-1 text-[0.8125rem] font-semibold text-warn tabular-nums;
   }
 
+  /* Scrub bar for the audio transport. The played portion is painted by an
+     inline gradient on `background`, so only the thumb is styled here. */
+  .scrub {
+    @apply h-[3px] w-full min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-sand;
+  }
+  .scrub::-webkit-slider-thumb {
+    @apply h-2.5 w-2.5 appearance-none rounded-full bg-brand-500;
+  }
+  .scrub::-moz-range-thumb {
+    @apply h-2.5 w-2.5 appearance-none rounded-full border-0 bg-brand-500;
+  }
+
   /* Primary action — warm, soft, confident. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-6 py-3

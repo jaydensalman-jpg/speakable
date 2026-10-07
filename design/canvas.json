@@ -1,0 +1,16 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",    "title": "A · Headline",  "x": 0,   "y": 0,    "w": 780, "h": 440 },
+    { "file": "Ranked.dc.html",  "title": "B · Ranked",    "x": 860, "y": 0,    "w": 780, "h": 540 },
+    { "file": "ThreeUp.dc.html", "title": "C · Three Up",  "x": 0,   "y": 620,  "w": 780, "h": 480 },
+    { "file": "Rundown.dc.html", "title": "D · Rundown",   "x": 860, "y": 620,  "w": 780, "h": 640 }
+  ],
+  "annotations": [
+    { "id": "brief", "x": -360, "y": 0, "w": 300, "text": "Four replacements for the Overview tab.\n\nSame session data in all four, so you are comparing layout and wording, not numbers.\n\nEverything uses the real tokens: cream #faf8f3, sand #f1ece2, ink #2b2622, coral #e0714f, Fraunces headings, Inter body.\n\nWatch & Listen is untouched." },
+    { "id": "note-a", "x": -360, "y": 320, "w": 300, "text": "A · Headline\nWords lead. The verdict is the biggest thing on the page, numbers sit on one hairline rule, no cards at all. The quietest option." },
+    { "id": "note-b", "x": 1700, "y": 0, "w": 300, "text": "B · Ranked\nOne chart instead of six cards. Sorted worst to best with a target marker, so where you stand is obvious in one look." },
+    { "id": "note-c", "x": -360, "y": 620, "w": 300, "text": "C · Three Up\nReduction by selection. Only three things get a card: what to fix, what is strongest, and your fillers. The rest collapses to one line." },
+    { "id": "note-d", "x": 1700, "y": 620, "w": 300, "text": "D · Rundown\nA plain list. Every measure gets a row, a value, and one sentence explaining what it means. The most scannable on a phone." }
+  ],
+  "launch": { "view": "canvas" }
+}

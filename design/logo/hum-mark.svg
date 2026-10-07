@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Speakable">
+  <g fill="#2b2622">
+    <circle cx="24" cy="23" r="3.2"/>
+    <circle cx="40" cy="23" r="3.2"/>
+  </g>
+  <g fill="none" stroke="#e0714f" stroke-linecap="round">
+    <path d="M38.89 29.79 A 9 9 0 0 1 25.11 29.79" stroke-width="4.4"/>
+    <path d="M44.26 34.28 A 16 16 0 0 1 19.74 34.28" stroke-width="3.8" opacity="0.55"/>
+    <path d="M49.62 38.78 A 23 23 0 0 1 14.38 38.78" stroke-width="3.2" opacity="0.28"/>
+  </g>
+</svg>

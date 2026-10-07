@@ -13,17 +13,17 @@ export const WEAK_CATEGORIES = {
   hedge: {
     label: 'Hedges',
     why: 'These soften your point and make you sound unsure of your own idea.',
-    swap: 'Say it plainly. "I think we should" becomes "We should."',
+    swap: 'Say it plainly. \u201cI think we should\u201d becomes \u201cWe should.\u201d',
   },
   qualifier: {
     label: 'Empty qualifiers',
     why: 'These pad a sentence without adding meaning.',
-    swap: 'Cut it, or pick a stronger word. "Very important" becomes "critical."',
+    swap: 'Cut it, or pick a stronger word. \u201cVery important\u201d becomes \u201ccritical.\u201d',
   },
   vague: {
     label: 'Vague words',
     why: 'These leave the point fuzzy instead of naming the specific thing.',
-    swap: 'Name it. "Some things" becomes the actual items you mean.',
+    swap: 'Name it. \u201cSome things\u201d becomes the actual items you mean.',
   },
 };
 

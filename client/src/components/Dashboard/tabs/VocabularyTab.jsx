@@ -54,16 +54,16 @@ export default function VocabularyTab({ results }) {
       <section className="sheet">
         <p className="eyebrow">Vocabulary</p>
 
-        <div className="mt-4 flex items-start justify-between gap-4">
+        {/* Ratio beside the raw counts it came from, baseline-aligned. */}
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+          <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{ratio}%</p>
           <div>
-            <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{ratio}%</p>
-            <p className="caption mt-2 tabular-nums">
-              unique words · {unique.toLocaleString()} different out of {total.toLocaleString()}
+            <p className="text-[1.0625rem] leading-[1.4] text-muted">Unique Words</p>
+            <p className="mt-1 text-[1.0625rem] leading-[1.4] tabular-nums text-ink">
+              <strong className="font-semibold">{unique.toLocaleString()}</strong> different words
+              out of <strong className="font-semibold">{total.toLocaleString()}</strong>
             </p>
           </div>
-          <span className={inRange ? 'pill-good' : 'pill-warn'}>
-            {inRange ? 'Good variety' : 'Fairly repetitive'}
-          </span>
         </div>
 
         <p className="statement mt-7 max-w-prose">
@@ -74,11 +74,9 @@ export default function VocabularyTab({ results }) {
       </section>
 
       <section className="sheet">
-        <p className="eyebrow">Words you leaned on</p>
-        <p className="caption mt-2 max-w-prose">
-          Content words you used three or more times. Common words like &ldquo;the&rdquo; and
-          &ldquo;and&rdquo; are left out.
-        </p>
+        <h3 className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.625rem]">
+          Words you leaned on
+        </h3>
 
         {repeated.length === 0 ? (
           <p className="mt-5 text-[1.0625rem] text-ink/60">
@@ -107,6 +105,10 @@ export default function VocabularyTab({ results }) {
             &ldquo;speaking&rdquo; are three different words here.
           </li>
           <li>Fillers like &ldquo;um&rdquo; are measured in Filler Words, so they are left out.</li>
+          <li>
+            &ldquo;Words you leaned on&rdquo; counts content words used three or more times.
+            Common words like &ldquo;the&rdquo; and &ldquo;and&rdquo; are left out.
+          </li>
         </ul>
       </section>
     </div>

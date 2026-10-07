@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #faf8f3; color: #2b2622; }
+    a { color: #cb5a39; } a:hover { color: #a8472d; }
+    .fr { font-family: Fraunces, Georgia, serif; }
+    .tnum { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="padding: 40px 44px; width: 780px; box-sizing: border-box;">
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px;">
+    <p style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(43,38,34,0.45);">August 11 &middot; 2m 11s &middot; 312 words</p>
+    <p class="tnum" style="margin: 0; font-size: 13px; font-weight: 600; color: rgba(43,38,34,0.45);">7<span style="color: rgba(43,38,34,0.3);">/10</span></p>
+  </div>
+
+  <h2 class="fr" style="margin: 18px 0 0; font-size: 34px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; max-width: 17ch; text-wrap: balance;">
+    Clear and well paced. Eye contact is where it slips.
+  </h2>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: 34px; border-top: 1px solid #f1ece2; border-bottom: 1px solid #f1ece2;">
+    <div style="padding: 20px 0;">
+      <p class="tnum fr" style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em;">142</p>
+      <p style="margin: 4px 0 0; font-size: 12px; color: rgba(43,38,34,0.45);">words per minute</p>
+    </div>
+    <div style="padding: 20px 0;">
+      <p class="tnum fr" style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em;">6</p>
+      <p style="margin: 4px 0 0; font-size: 12px; color: rgba(43,38,34,0.45);">filler words</p>
+    </div>
+    <div style="padding: 20px 0;">
+      <p class="tnum fr" style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: #cb5a39;">68%</p>
+      <p style="margin: 4px 0 0; font-size: 12px; color: rgba(43,38,34,0.45);">on camera</p>
+    </div>
+    <div style="padding: 20px 0;">
+      <p class="tnum fr" style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em;">54%</p>
+      <p style="margin: 4px 0 0; font-size: 12px; color: rgba(43,38,34,0.45);">unique words</p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; margin-top: 30px;">
+    <div>
+      <p style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #cb5a39;">Work on this</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.65; color: rgba(43,38,34,0.8);">
+        You held the camera for 68% of the take, and your longest stretch was 22 seconds. Pick one sentence per paragraph and say it straight down the lens.
+      </p>
+    </div>
+    <div>
+      <p style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(43,38,34,0.4);">Holding up</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.65; color: rgba(43,38,34,0.65);">
+        Pace sat at 142 and barely moved. Six fillers across two minutes is well controlled. Only two long pauses, both under three seconds.
+      </p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":780,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

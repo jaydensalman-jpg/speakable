@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Transcript from '../Transcript.jsx';
+import WaveformPlayer from '../../ui/waveform-player.jsx';
 
 // Watch & Listen — rebuilt Oct 2026 from the Figma redesign, including the
 // playback-format selector (`.playback-mode` / `.mode-options` / `.media-object`).
@@ -99,14 +100,16 @@ export default function SelfReviewTab({ results }) {
         )}
 
         {/* .media-object */}
-        <div className="mt-4 overflow-hidden rounded-2xl border border-sand bg-surface">
+        <div className="mt-4">
           {mode === 'audio' ? (
-            <div className="grid place-items-center gap-5 bg-cream px-6 py-10">
-              <p className="eyebrow">Your audio</p>
-              <audio ref={mediaRef} src={mediaUrl} controls className="w-full max-w-xl" />
-            </div>
+            <WaveformPlayer
+              key="audio"
+              src={mediaUrl}
+              mediaRef={mediaRef}
+              duration={results.duration || 0}
+            />
           ) : (
-            <>
+            <div className="overflow-hidden rounded-2xl border border-sand bg-surface">
               <video
                 ref={mediaRef}
                 src={mediaUrl}
@@ -120,7 +123,7 @@ export default function SelfReviewTab({ results }) {
                   Video-only playback · Select Video + audio to hear the recording
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
       </section>

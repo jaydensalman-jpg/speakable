@@ -13,19 +13,20 @@ export default function RankedBars({ rows, divided = false }) {
       {rows.map(([label, count]) => (
         <div
           key={label}
-          className={`grid grid-cols-[5.5rem_1fr_1.5rem] items-center gap-3 sm:grid-cols-[7rem_1fr_2rem] sm:gap-4 ${
+          className={`grid grid-cols-[5.5rem_1fr_1.5rem] items-center gap-4 sm:grid-cols-[8.5rem_1fr_2rem] sm:gap-6 ${
             divided ? 'min-h-[3.25rem] border-b border-sand py-3 last:border-b-0' : ''
           }`}
         >
           <span className="truncate text-[1.0625rem] text-ink">{label}</span>
-          {/* .bar-track — bordered, faintly filled, so an empty bar still reads */}
-          <div className="h-2.5 rounded border border-sand bg-sand/70">
+          {/* .bar-track — no outline, full round caps, so a part-filled bar
+              reads as one continuous rule rather than a boxed meter. */}
+          <div className="h-2 overflow-hidden rounded-full bg-sand">
             <span
-              className="block h-full rounded-[0.2rem] bg-brand-500 transition-all duration-500"
+              className="block h-full rounded-full bg-brand-500 transition-all duration-500"
               style={{ width: `${(count / max) * 100}%` }}
             />
           </div>
-          <span className="text-right text-[0.8125rem] tabular-nums text-muted">{count}</span>
+          <span className="text-right text-[0.9375rem] tabular-nums text-muted">{count}</span>
         </div>
       ))}
     </div>
