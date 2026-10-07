@@ -43,7 +43,7 @@ function SignInForm({ onSubmit }) {
         </p>
         <button
           onClick={() => setState('idle')}
-          className="mt-6 text-sm font-semibold text-brand-600 hover:text-brand-700"
+          className="mt-6 text-sm font-semibold text-brand-500 hover:text-brand-700"
         >
           Use a different email
         </button>

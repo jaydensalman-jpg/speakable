@@ -74,9 +74,12 @@ EmailGate — do not fold these together. **The display face is now DM Serif Dis
 the user asked for exact parity with the Figma). It is a SINGLE-WEIGHT face: never
 put `font-semibold`/`font-bold` on `font-display`, there is no bold to reach and the
 `font-synthesis: none` on `html` deliberately stops the browser faking one. Size and
-the face's own stroke contrast carry emphasis. Colours stayed on the app's
-cream/sand/ink/brand tokens — the user asked for layout, font and components, not
-the Figma's slightly different neutrals. Overview's metric grid is
+the face's own stroke contrast carry emphasis. **The palette is now the Figma's own**
+(Oct 2026, second pass): canvas `#f5f2ec`, surface `#fbfaf7`, ink `#1f1e1b`, line
+`#dcd6cb`, accent `#c86242` (= `brand-500`, with `brand-100` = `#f3dfd7`), plus
+semantic `good` `#287557`/`good-soft` `#deeee7` and `warn` `#99651f`/`warn-soft`
+`#f3e7cc` which REPLACED Tailwind's emerald/amber everywhere. There is no red in the
+design palette, so the lowest score tier uses `brand-700`. Overview's metric grid is
 1 col → `sm:` 2 → `lg:` 4 with the dividers flipping from top-border to left-border;
 `.metric-col` holds a 16rem min-height with the verdict line pinned by `mt-auto` so
 verdicts align across columns. The Results tab bar is `ui/results-tabs.jsx` (labels
@@ -86,9 +89,15 @@ design: header `max-w-[86rem]`, content `max-w-[60rem]`, which is why the wordma
 sits left of where the content starts.
 Filler highlights in the transcript are **coral** (`bg-brand-100` + `border-brand-500`
 underline), not amber, so they match the design; the active word stays solid coral.
-Watch & Listen was restyled only — the Figma's "Video only / Audio only / Video +
-audio" selector was deliberately NOT built, so the muted `<video>` + separate
-`<audio>` pair and the transcript's `audioRef` seek wiring are untouched.
+**Watch & Listen now has the Figma's playback selector** (Video only / Audio only /
+Video + audio). The Figma mock has no real media behind it; here the modes drive one
+blob — video muted, video unmuted, or an `<audio>`. Native controls are kept rather
+than rebuilding the mock's custom transport, so scrubbing and mobile keep working.
+Switching mode remounts the element, so the playhead is carried across via a ref, and
+the transcript seeks whichever element is mounted (verified: 431 clickable words in
+all three modes). The selector is hidden for audio-only takes.
+`ui/ranked-bars.jsx` is the Figma's `.ranked-list`, used by Filler Words' Breakdown
+(`divided`) and Vocabulary's "Words you leaned on".
 
 ### Design tokens (keep everything on these)
 - Colors: `cream` bg, `sand` surfaces/dividers, `ink` text (opacity steps /80 /65 /55 /45 /35), single coral `brand` accent — no cool grays (`slate`) anywhere.

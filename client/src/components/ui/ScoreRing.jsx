@@ -17,7 +17,7 @@ export default function ScoreRing({ score, size = 120, label = 'Overall' }) {
   const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const color =
-    score >= 8 ? '#10b981' : score >= 6 ? '#e0714f' : score >= 4 ? '#f59e0b' : '#ef4444';
+    score >= 8 ? '#287557' : score >= 6 ? '#c86242' : score >= 4 ? '#99651f' : '#8c422b';
 
   // One motion value drives both the arc and the digit, so they can never
   // disagree about what the score is mid-animation.

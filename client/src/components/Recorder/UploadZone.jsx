@@ -67,7 +67,7 @@ export default function UploadZone({ onFile }) {
         </div>
         <div>
           <p className="font-medium text-ink/70">
-            Drop a file or <span className="text-brand-600">browse</span>
+            Drop a file or <span className="text-brand-500">browse</span>
           </p>
           <p className="text-xs text-ink/45 mt-1">MP3, MP4, WAV, WebM, MOV · up to 5 minutes</p>
         </div>

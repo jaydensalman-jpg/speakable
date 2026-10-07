@@ -116,8 +116,8 @@ export default function OverviewTab({ results }) {
         <p className="eyebrow">Overall score</p>
 
         {breakdown ? (
-          <div className="mt-3 grid gap-x-12 gap-y-5 sm:grid-cols-[auto_1fr] sm:items-start">
-            <p className="stat-xl text-[5rem] leading-[0.85] text-brand-600 md:text-[6rem]">
+          <div className="mt-3 grid gap-x-12 gap-y-4 md:grid-cols-[13rem_1fr] md:items-end">
+            <p className="stat-xl text-[5rem] leading-[0.85] text-brand-500 md:text-[6rem]">
               {feedback.overallScore}
               <span className="font-sans text-[1.0625rem] font-normal tracking-normal text-ink/55">/10</span>
             </p>
@@ -127,7 +127,7 @@ export default function OverviewTab({ results }) {
               </h2>
               {feedback.assessment?.strong?.length > 0 && (
                 <p className="caption mt-3">
-                  <span className="font-semibold text-emerald-600">On target</span>{' '}
+                  <span className="font-semibold text-good">On target</span>{' '}
                   {feedback.assessment.strong.join(', ').toLowerCase()}
                 </p>
               )}
@@ -237,7 +237,7 @@ export default function OverviewTab({ results }) {
       {/* Highlights — legacy only; the headline and green pills cover this now */}
       {!breakdown && feedback.highlights?.length > 0 && (
         <section className="sheet">
-          <p className="eyebrow text-emerald-600">Strengths</p>
+          <p className="eyebrow text-good">Strengths</p>
           <ul className="mt-3 space-y-2">
             {feedback.highlights.map((h, i) => (
               <li key={i} className="text-sm leading-relaxed text-ink/70">{h}</li>
@@ -263,7 +263,7 @@ function paceCaption(wpmData, duration) {
 }
 
 function barColor(score) {
-  return score >= 8 ? '#10b981' : score >= 6 ? '#e0714f' : score >= 4 ? '#f59e0b' : '#ef4444';
+  return score >= 8 ? '#287557' : score >= 6 ? '#c86242' : score >= 4 ? '#99651f' : '#8c422b';
 }
 
 function formatDuration(s) {

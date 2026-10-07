@@ -1,4 +1,5 @@
 import { fillerLabel } from '../../../utils/fillerWords.js';
+import RankedBars from '../../ui/ranked-bars.jsx';
 
 // Vocabulary — rebuilt Oct 2026 from the Figma Make redesign: cardless, the
 // ratio carried by a large numeral, the raw unique/total counts stated plainly
@@ -55,7 +56,7 @@ export default function VocabularyTab({ results }) {
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
-            <p className="stat-xl text-[3rem] text-brand-600 md:text-[4rem]">{ratio}%</p>
+            <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{ratio}%</p>
             <p className="caption mt-2 tabular-nums">
               unique words · {unique.toLocaleString()} different out of {total.toLocaleString()}
             </p>
@@ -80,34 +81,23 @@ export default function VocabularyTab({ results }) {
         </p>
 
         {repeated.length === 0 ? (
-          <p className="mt-5 text-[15px] text-ink/60">
+          <p className="mt-5 text-[1.0625rem] text-ink/60">
             No single content word stood out as overused. Nicely balanced.
           </p>
         ) : (
           <>
-            <ul className="mt-5">
-              {repeated.map(([word, count]) => (
-                <li
-                  key={word}
-                  className="flex items-baseline justify-between gap-4 border-b border-sand py-3 last:border-b-0"
-                >
-                  <span className="font-mono text-[15px] text-ink/75">{word}</span>
-                  <span className="stat-xl text-[1.25rem] text-ink/70">{count}&times;</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 text-[15px] leading-relaxed text-ink/65">
-              <span className="eyebrow mr-2 text-brand-600">Try</span>
-              Pick your top one or two, write down two or three alternatives, then swap them into
-              your next take.
+            <RankedBars rows={repeated} />
+            <p className="body-copy mt-6 max-w-[48rem]">
+              Pick your top words, come up with two or three alternatives, and try swapping them
+              into your next take.
             </p>
           </>
         )}
       </section>
 
-      <section className="sheet">
+      <section className="sheet grid gap-4 md:grid-cols-[14rem_1fr] md:gap-8">
         <p className="statement">What counts as the same word</p>
-        <ul className="mt-3 max-w-prose space-y-2 text-[15px] leading-relaxed text-ink/60">
+        <ul className="space-y-2 text-[1.0625rem] leading-[1.65] text-muted">
           <li>
             Every repeat adds to your total but not to your different-word count. Say
             &ldquo;problem&rdquo; five times and that is five words but one unique word.

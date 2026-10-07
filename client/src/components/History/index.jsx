@@ -210,7 +210,7 @@ function SessionRow({ session, onOpen, onDelete, index = 0, showDate = false }) 
     : stamp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
     <div className="card lift animate-rise flex items-center gap-4 py-4" style={{ animationDelay: `${index * 60}ms` }}>
-      <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+      <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-500 shrink-0">
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
           {session.mediaType === 'video' ? (
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
@@ -225,7 +225,7 @@ function SessionRow({ session, onOpen, onDelete, index = 0, showDate = false }) 
           {formatDuration(r.duration)} · {r.words?.length ?? 0} words · {fillers} filler{fillers === 1 ? '' : 's'}
         </p>
       </div>
-      <button onClick={onOpen} className="text-sm font-semibold text-brand-600 hover:text-brand-700 shrink-0">View report</button>
+      <button onClick={onOpen} className="text-sm font-semibold text-brand-500 hover:text-brand-700 shrink-0">View report</button>
       <button onClick={onDelete} className="w-8 h-8 rounded-full text-ink/30 hover:text-red-500 hover:bg-red-50 flex items-center justify-center shrink-0" aria-label="Delete">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0v11a1 1 0 001 1h6a1 1 0 001-1V7" /></svg>
       </button>

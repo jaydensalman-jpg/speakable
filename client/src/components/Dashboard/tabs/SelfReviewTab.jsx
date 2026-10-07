@@ -1,25 +1,53 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Transcript from '../Transcript.jsx';
 
-// Watch & Listen — restyled Oct 2026 from the Figma Make redesign: cardless,
-// open sections on cream. BEHAVIOUR IS UNCHANGED on purpose. The video stays
-// muted with a separate <audio> on the same source, and `audioRef` is still the
-// element the transcript seeks and follows. The Figma's "Video only / Audio
-// only / Video + audio" selector was deliberately not built — this tab was
-// restyled, not rewired.
+// Watch & Listen — rebuilt Oct 2026 from the Figma redesign, including the
+// playback-format selector (`.playback-mode` / `.mode-options` / `.media-object`).
+//
+// The Figma is a static mock: its three modes are plain divs with no media
+// behind them. Here they drive real playback off the one recorded blob —
+// "video only" is the muted video, "video + audio" is the same element unmuted,
+// and "audio only" is an <audio>. Native controls are kept rather than
+// reproducing the mock's custom transport, so scrubbing, keyboard access and
+// mobile behaviour all keep working.
+//
+// Two things the mock doesn't have to handle:
+//  - switching mode remounts the element, so the playhead is carried across
+//    (otherwise every switch would silently restart the take)
+//  - the transcript seeks whichever element is currently mounted, via one ref
+const MODES = [
+  { id: 'video', label: 'Video only' },
+  { id: 'audio', label: 'Audio only' },
+  { id: 'both', label: 'Video + audio' },
+];
+
 export default function SelfReviewTab({ results }) {
   const { mediaUrl, mediaType } = results;
   const hasVideo = mediaType === 'video' && mediaUrl;
-  const audioRef = useRef(null); // shared so the transcript can seek/follow the audio
 
-  // Even with no playable media (cloud-only takes), still show the transcript so
-  // you can read what you said.
+  // Audio-only takes have nothing to choose between, so the selector is hidden.
+  const [mode, setMode] = useState(hasVideo ? 'both' : 'audio');
+  const mediaRef = useRef(null);
+  const lastTime = useRef(0);
+
+  // Carry the playhead across a mode switch.
+  useEffect(() => {
+    const el = mediaRef.current;
+    if (!el) return;
+    if (lastTime.current > 0) {
+      try { el.currentTime = lastTime.current; } catch { /* not seekable yet */ }
+    }
+    const remember = () => { lastTime.current = el.currentTime; };
+    el.addEventListener('timeupdate', remember);
+    return () => el.removeEventListener('timeupdate', remember);
+  }, [mode]);
+
   if (!mediaUrl) {
     return (
       <div className="animate-rise">
         <section className="sheet">
           <p className="eyebrow">Your recording</p>
-          <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-ink/55">
+          <p className="body-copy mt-3 max-w-prose">
             {results.cloudOnly
               ? 'The recording stays on the device where it was made. Only this report synced to your account.'
               : 'This recording isn’t available to play back. Record again to use the self-review.'}
@@ -37,41 +65,69 @@ export default function SelfReviewTab({ results }) {
         <h2 className="mt-3 font-display text-[2.125rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
           Watch it back.
         </h2>
-        <p className="caption mt-3">See it. Hear it. Put it together.</p>
+        <p className="body-copy mt-3">See it. Hear it. Put it together.</p>
 
-        <div className={`mt-7 grid gap-8 ${hasVideo ? 'lg:grid-cols-2' : ''}`}>
-          {hasVideo && (
+        {hasVideo && (
+          <div className="mt-7 flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-sand bg-surface p-4 md:flex-row md:items-center md:gap-6">
             <div>
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="eyebrow">Video</p>
-                <span className="text-[13px] text-ink/40">No audio</span>
-              </div>
-              <video
-                src={mediaUrl}
-                muted
-                controls
-                playsInline
-                className="mt-4 w-full rounded-2xl bg-ink object-cover aspect-video"
-              />
+              <p className="eyebrow">Playback format</p>
+              <p className="caption mt-1">Choose what you want to review.</p>
             </div>
-          )}
-
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="eyebrow">Audio</p>
-              <span className="text-[13px] text-ink/40">{hasVideo ? 'Audio only' : 'Listen'}</span>
-            </div>
-            <div className="mt-4 flex items-center rounded-2xl border border-sand bg-white/50 px-5 py-6">
-              <audio ref={audioRef} src={mediaUrl} controls className="w-full" />
+            <div
+              role="radiogroup"
+              aria-label="Playback format"
+              className="grid grid-cols-3 gap-1 rounded-full border border-sand bg-cream p-1"
+            >
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`whitespace-nowrap rounded-full px-2 py-2.5 text-center text-[0.72rem] font-medium leading-none transition-colors duration-250 sm:px-4 sm:text-[0.8125rem] ${
+                    mode === m.id
+                      ? 'bg-brand-500 text-white shadow-soft'
+                      : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
           </div>
+        )}
+
+        {/* .media-object */}
+        <div className="mt-4 overflow-hidden rounded-2xl border border-sand bg-surface">
+          {mode === 'audio' ? (
+            <div className="grid place-items-center gap-5 bg-cream px-6 py-10">
+              <p className="eyebrow">Your audio</p>
+              <audio ref={mediaRef} src={mediaUrl} controls className="w-full max-w-xl" />
+            </div>
+          ) : (
+            <>
+              <video
+                ref={mediaRef}
+                src={mediaUrl}
+                muted={mode === 'video'}
+                controls
+                playsInline
+                className="aspect-video w-full bg-ink object-cover"
+              />
+              {mode === 'video' && (
+                <p className="grid min-h-[3.5rem] place-items-center px-4 text-center text-[0.8125rem] text-muted">
+                  Video-only playback · Select Video + audio to hear the recording
+                </p>
+              )}
+            </>
+          )}
         </div>
       </section>
 
-      {/* Transcript sits beneath the players so you can listen and read together.
-          Passing the audio ref makes each word clickable (jump to that moment)
-          and highlights the word under the playhead as it plays. */}
-      <Transcript results={results} mediaRef={audioRef} />
+      {/* Transcript follows whichever element is mounted, so click-to-seek keeps
+          working in every mode rather than only against the audio player. */}
+      <Transcript results={results} mediaRef={mediaRef} />
     </div>
   );
 }

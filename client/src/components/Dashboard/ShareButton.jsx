@@ -8,8 +8,8 @@ import { useState } from 'react';
 const CREAM = '#faf8f3';
 const SAND = '#f1ece2';
 const INK = '#2b2622';
-const BRAND = '#e0714f';
-const EMERALD = '#10b981';
+const BRAND = '#c86242';
+const EMERALD = '#287557';
 
 export default function ShareButton({ results }) {
   const [busy, setBusy] = useState(false);

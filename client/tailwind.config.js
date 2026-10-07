@@ -4,21 +4,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Single warm accent — coral. Replaces the old indigo "brand".
+        // Palette lifted verbatim from the Figma redesign's index.css custom
+        // properties (Oct 2026). 500 IS --color-accent and 100 IS
+        // --color-accent-soft; the rest of the ramp is interpolated around them.
         brand: {
-          50: '#fdf4f1',
-          100: '#fbe6df',
-          200: '#f6cabb',
-          300: '#efa890',
-          400: '#e88a6c',
-          500: '#e0714f',
-          600: '#cb5a39',
-          700: '#a8472d',
+          50: '#faf0ec',
+          100: '#f3dfd7', // --color-accent-soft
+          200: '#e8c3b5',
+          300: '#dca491',
+          400: '#d4826a',
+          500: '#c86242', // --color-accent
+          600: '#ad5236',
+          700: '#8c422b',
         },
-        // Warm neutrals for the calm, paper-like surface.
-        cream: '#faf8f3',
-        sand: '#f1ece2',
-        ink: '#2b2622',
+        cream: '#f5f2ec',   // --color-canvas
+        surface: '#fbfaf7', // --color-surface (the .panel fill)
+        sand: '#dcd6cb',    // --color-line
+        ink: '#1f1e1b',     // --color-ink
+        muted: '#74716b',   // --color-muted
+        faint: '#aaa59c',   // --color-faint
+        // Semantic pair. Replaces Tailwind's emerald/amber so on-target and
+        // off-target match the design instead of approximating it.
+        good: '#287557',
+        'good-soft': '#deeee7',
+        warn: '#99651f',
+        'warn-soft': '#f3e7cc',
       },
       fontFamily: {
         // Editorial serif for big friendly headings; clean sans for body.

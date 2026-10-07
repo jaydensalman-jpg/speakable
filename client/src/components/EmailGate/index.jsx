@@ -52,7 +52,7 @@ export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) 
       {canSignIn && (
         <p className="mt-4 text-xs text-ink/40">
           Want your scores on every device?{' '}
-          <button onClick={onSignIn} className="font-semibold text-brand-600 hover:text-brand-700">
+          <button onClick={onSignIn} className="font-semibold text-brand-500 hover:text-brand-700">
             Sign in instead
           </button>
         </p>

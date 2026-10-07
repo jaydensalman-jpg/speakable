@@ -35,7 +35,7 @@ export default function WordsToCutTab({ results }) {
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
-            <p className="stat-xl text-[3rem] text-brand-600 md:text-[4rem]">{total}</p>
+            <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{total}</p>
             <p className="caption mt-2">
               words worth trimming{perMin ? ` · ${perMin} per minute` : ''}
             </p>
@@ -72,7 +72,7 @@ export default function WordsToCutTab({ results }) {
           </ul>
 
           <p className="mt-5 text-[15px] leading-relaxed text-ink/65">
-            <span className="eyebrow mr-2 text-brand-600">Try</span>
+            <span className="eyebrow mr-2 text-brand-500">Try</span>
             {group.swap}
           </p>
         </section>

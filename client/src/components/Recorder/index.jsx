@@ -211,7 +211,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
             </div>
             <div className={`flex items-center gap-2 font-mono text-sm tabular-nums transition-opacity duration-250 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
               {recState === 'paused' ? (
-                <span className="text-[11px] font-sans font-semibold uppercase tracking-wide text-amber-600">Paused</span>
+                <span className="text-[11px] font-sans font-semibold uppercase tracking-wide text-warn">Paused</span>
               ) : (
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               )}
@@ -276,7 +276,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
                 <p className="text-[15px] leading-relaxed text-ink/80">
                   {liveWords.map((w) => (
                     <span key={w.i} className="animate-word-in inline-block will-change-transform">
-                      <span className={isFillerWord(w.word) ? 'rounded bg-amber-100/80 px-0.5 text-amber-900' : undefined}>
+                      <span className={isFillerWord(w.word) ? 'rounded bg-warn-soft/80 px-0.5 text-warn' : undefined}>
                         {w.word}
                       </span>
                       {' '}
@@ -402,7 +402,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
             <div className="flex items-center justify-between p-3 bg-brand-50 rounded-2xl border border-brand-100">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-brand-100 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
                 </div>
@@ -527,7 +527,7 @@ function IdeaGenerator() {
       {/* aria-live is off mid-roll so a screen reader announces the result once
           instead of every one of the 13 frames. */}
       <div aria-live={rolling ? 'off' : 'polite'} aria-atomic="true">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">{idea.category}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-500">{idea.category}</p>
         {/* Fixed heights: prompts range from one word to a full sentence, and
             without reserved space the card would jitter through the reel. */}
         <div className="mx-auto mt-2 flex min-h-[4.5rem] max-w-md items-center justify-center">
@@ -602,7 +602,7 @@ function EyeHint({ state, active }) {
     >
       <span
         className={`h-1.5 w-1.5 rounded-full transition-colors duration-400 ${
-          contact ? 'bg-emerald-500' : 'bg-amber-500'
+          contact ? 'bg-good' : 'bg-warn'
         }`}
       />
       {contact ? 'eye contact' : 'eyes away'}
@@ -625,7 +625,7 @@ function PaceHint({ liveWords, elapsed, active }) {
 
   return (
     <span className={`flex items-center gap-1.5 text-xs tabular-nums transition-opacity duration-400 ${breathing ? 'text-ink/30' : 'text-ink/50'}`}>
-      <span className={`h-1.5 w-1.5 rounded-full transition-colors duration-400 ${inRange ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+      <span className={`h-1.5 w-1.5 rounded-full transition-colors duration-400 ${inRange ? 'bg-good' : 'bg-warn'}`} />
       ≈ {wpm} wpm
     </span>
   );

@@ -60,7 +60,7 @@ function ScoreDonut({ value }) {
           cy="36"
           r={r}
           fill="none"
-          stroke="#e0714f"
+          stroke="#c86242"
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={c}

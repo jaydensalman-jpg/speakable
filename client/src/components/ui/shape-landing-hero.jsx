@@ -73,7 +73,7 @@ function HeroGeometric({
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] w-full flex items-center justify-center overflow-hidden bg-cream">
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.05] via-transparent to-amber-500/[0.05] blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.05] via-transparent to-brand-300/[0.05] blur-3xl" />
 
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
         <ElegantShape
@@ -97,7 +97,7 @@ function HeroGeometric({
           width={300}
           height={80}
           rotate={-8}
-          gradient="from-amber-400/[0.14]"
+          gradient="from-brand-300/[0.14]"
           className="left-[5%] md:left-[10%] bottom-[5%] md:bottom-[10%]"
         />
         <ElegantShape
@@ -135,7 +135,7 @@ function HeroGeometric({
             <h1 className="font-display text-[3.5rem] sm:text-[4.25rem] md:text-8xl leading-[1.04] tracking-tight">
               <span className="text-ink">{title1}</span>
               <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-brand-400 to-amber-500">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-brand-400 to-brand-300">
                 {title2}
               </span>
             </h1>

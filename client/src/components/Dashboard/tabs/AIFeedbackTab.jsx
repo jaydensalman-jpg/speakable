@@ -40,7 +40,7 @@ export default function AIFeedbackTab({ results }) {
 
         {coaching.map((item, i) => (
           <section key={i} className="sheet">
-            <p className="stat-xl text-[1.25rem] text-brand-600">
+            <p className="stat-xl text-[1.25rem] text-brand-500">
               {String(i + 1).padStart(2, '0')}
             </p>
 
@@ -54,7 +54,7 @@ export default function AIFeedbackTab({ results }) {
 
             {item.drill && (
               <div className="mt-5 border-l-2 border-brand-200 pl-4">
-                <p className="eyebrow text-brand-600">Try this</p>
+                <p className="eyebrow text-brand-500">Try this</p>
                 <p className="mt-1.5 max-w-prose text-[15px] leading-relaxed text-ink/75">
                   {item.drill}
                 </p>
@@ -66,11 +66,9 @@ export default function AIFeedbackTab({ results }) {
         {also.length > 0 && (
           <section className="sheet">
             <p className="eyebrow">Also keep an eye on</p>
-            <ul className="mt-4">
+            <ul className="mt-4 list-disc space-y-2 pl-[1.1rem] text-[0.9375rem] leading-[1.6] text-muted marker:text-brand-500">
               {also.map((line, i) => (
-                <li key={i} className="border-b border-sand py-3 text-[15px] text-ink/70 last:border-b-0">
-                  {line}
-                </li>
+                <li key={i}>{line}</li>
               ))}
             </ul>
           </section>
@@ -78,7 +76,7 @@ export default function AIFeedbackTab({ results }) {
 
         {feedback.highlights?.length > 0 && (
           <section className="sheet">
-            <p className="eyebrow text-emerald-600">Working already</p>
+            <p className="eyebrow text-good">Working already</p>
             <ul className="mt-3 space-y-2">
               {feedback.highlights.map((h, i) => (
                 <li key={i} className="text-[15px] leading-relaxed text-ink/70">{h}</li>
@@ -110,7 +108,7 @@ export default function AIFeedbackTab({ results }) {
           <ol className="mt-4">
             {feedback.tips.map((tip, i) => (
               <li key={i} className="flex gap-4 border-b border-sand py-4 last:border-b-0">
-                <span className="stat-xl shrink-0 text-[16px] text-brand-600">
+                <span className="stat-xl shrink-0 text-[16px] text-brand-500">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="text-[15px] leading-relaxed text-ink/70">{tip}</span>
