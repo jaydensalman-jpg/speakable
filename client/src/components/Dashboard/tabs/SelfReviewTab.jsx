@@ -69,7 +69,9 @@ export default function SelfReviewTab({ results }) {
         <p className="body-copy mt-3">See it. Hear it. Put it together.</p>
 
         {hasVideo && (
-          <div className="mt-7 flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-sand bg-surface p-4 md:flex-row md:items-center md:gap-6">
+          /* .playback-mode — stacks and stretches below 48rem, exactly as the
+             design does; the pill row then becomes three equal columns. */
+          <div className="mt-7 flex flex-col items-stretch gap-6 rounded-2xl border border-sand bg-surface p-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="eyebrow">Playback format</p>
               <p className="caption mt-1">Choose what you want to review.</p>
@@ -77,7 +79,7 @@ export default function SelfReviewTab({ results }) {
             <div
               role="radiogroup"
               aria-label="Playback format"
-              className="grid grid-cols-3 gap-1 rounded-full border border-sand bg-cream p-1"
+              className="grid grid-cols-3 gap-[0.15rem] rounded-full border border-sand bg-cream p-[0.2rem] md:grid-cols-[repeat(3,auto)] md:gap-1 md:p-1"
             >
               {MODES.map((m) => (
                 <button
@@ -86,9 +88,9 @@ export default function SelfReviewTab({ results }) {
                   role="radio"
                   aria-checked={mode === m.id}
                   onClick={() => setMode(m.id)}
-                  className={`whitespace-nowrap rounded-full px-2 py-2.5 text-center text-[0.72rem] font-medium leading-none transition-colors duration-250 sm:px-4 sm:text-[0.8125rem] ${
+                  className={`whitespace-nowrap rounded-full px-[0.3rem] py-[0.45rem] text-center text-[0.72rem] font-medium leading-none transition-colors duration-[180ms] md:px-4 md:py-2.5 md:text-[0.8125rem] md:leading-normal ${
                     mode === m.id
-                      ? 'bg-brand-500 text-white shadow-soft'
+                      ? 'bg-brand-500 text-white shadow-[0_0.2rem_0.6rem_rgba(200,98,66,0.24)]'
                       : 'text-muted hover:text-ink'
                   }`}
                 >
@@ -116,7 +118,7 @@ export default function SelfReviewTab({ results }) {
                 muted={mode === 'video'}
                 controls
                 playsInline
-                className="aspect-video w-full bg-ink object-cover"
+                className="aspect-[4/3] w-full bg-[#302e2a] object-cover md:aspect-[16/8.9]"
               />
               {mode === 'video' && (
                 <p className="grid min-h-[3.5rem] place-items-center px-4 text-center text-[0.8125rem] text-muted">

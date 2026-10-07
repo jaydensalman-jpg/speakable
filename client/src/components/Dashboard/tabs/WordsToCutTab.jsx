@@ -26,61 +26,63 @@ export default function WordsToCutTab({ results }) {
 
   return (
     <div className="animate-rise">
-      {/* Lead: coral numeral with the heading set beside it on the baseline. */}
-      <section className="sheet">
+      {/* .data-lead — no rule under it here; .cut-groups carries the top border. */}
+      <div className="pb-4 md:pb-6">
         <p className="eyebrow">Words to cut</p>
 
-        <div className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-1">
-          <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{total}</p>
+        {/* .cut-headline — the numeral and the heading sit on their bottom edge. */}
+        <div className="mt-4 flex items-center gap-6 md:items-end">
+          <p className="font-display text-[3rem] leading-none tracking-[-0.025em] text-brand-500 md:text-[4rem]">
+            {total}
+          </p>
           {/* font-sans explicitly: the global h2 rule is the display face, and
-              DM Serif Display has one weight, so semibold would synthesise. */}
-          <h2 className="font-sans text-[1.5rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.875rem]">
+              DM Serif Display has one weight, so 500 would synthesise a bold. */}
+          <h2 className="font-sans text-[1.25rem] font-medium text-ink md:pb-[0.6rem] md:text-[1.375rem]">
             Words Worth Trimming
           </h2>
         </div>
-      </section>
+      </div>
 
-      {/* One row per category: name and why on the left, the words and the swap
-          on the right. */}
-      {byCategory.map((group) => (
-        <section key={group.key} className="sheet grid gap-5 md:grid-cols-2 md:gap-14">
-          <div>
-            <h3 className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.625rem]">
-              {group.label}
-            </h3>
-            <p className="mt-3 max-w-prose text-[1.0625rem] leading-[1.6] text-muted">{group.why}</p>
-          </div>
+      {/* .cut-groups / .cut-group — heading spans both rows of the left column,
+          with the words and the swap stacked in the right. */}
+      <div className="border-t border-sand">
+        {byCategory.map((group) => (
+          <section
+            key={group.key}
+            className="grid grid-cols-1 gap-y-6 border-b border-sand py-8 md:grid-cols-2 md:gap-x-12 md:gap-y-0"
+          >
+            <div className="md:row-span-2">
+              <h3 className="statement">{group.label}</h3>
+              <p className="body-copy mt-2">{group.why}</p>
+            </div>
 
-          <div>
-            <ul>
+            <div className="grid gap-3">
               {group.items.map((it) => (
-                <li
+                <div
                   key={it.text}
-                  className="flex items-baseline justify-between gap-4 border-b border-sand py-3"
+                  className="flex justify-between gap-4 border-b border-sand pb-3 text-[1.0625rem]"
                 >
-                  <span className="text-[1.0625rem] text-ink">&ldquo;{display(it.text)}&rdquo;</span>
-                  <span className="shrink-0 text-[1.0625rem] tabular-nums text-muted">
-                    {it.count}&times;
-                  </span>
-                </li>
+                  <span>&ldquo;{display(it.text)}&rdquo;</span>
+                  <span className="shrink-0 tabular-nums text-muted">{it.count}&times;</span>
+                </div>
               ))}
-            </ul>
+            </div>
 
-            <p className="mt-4 text-[1.0625rem] leading-[1.6] text-muted">
-              <span className="eyebrow mr-3 text-brand-500">Try</span>
+            <p className="mt-4 text-[0.9375rem] leading-[1.55] text-muted">
+              <span className="mr-2 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-brand-500">
+                Try
+              </span>
               {group.swap}
             </p>
-          </div>
-        </section>
-      ))}
+          </section>
+        ))}
+      </div>
 
       {total > 0 && (
-        <section className="sheet">
-          <p className="caption max-w-prose">
-            These are not wrong to use now and then. The goal is trimming the ones you lean on, not
-            removing every one.
-          </p>
-        </section>
+        <p className="body-copy mt-8 max-w-[48rem]">
+          These are not wrong to use now and then. The goal is trimming the ones you lean on, not
+          removing every one.
+        </p>
       )}
     </div>
   );

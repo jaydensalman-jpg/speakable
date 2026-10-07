@@ -10,8 +10,11 @@ import { useEffect, useRef, useState } from 'react';
 // about the user's own take. If decoding fails (Safari refuses some webm), the
 // bars are dropped and the transport alone is shown rather than drawing
 // something invented.
-const BAR_COUNT = 44;
-const MIN_BAR = 0.12; // silence still needs a visible tick
+// Geometry is the design's own `.waveform`: 28 bars, each 0.25rem wide with a
+// 0.375rem minimum gap, spread by space-between across min(100%, 40rem) at a
+// fixed 8rem height.
+const BAR_COUNT = 28;
+const MIN_BAR = 0.18; // silence still needs a visible tick
 
 export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
   const [peaks, setPeaks] = useState(null);
@@ -107,19 +110,14 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
     <div className="overflow-hidden rounded-2xl border border-sand bg-surface">
       <audio ref={mediaRef} src={src} preload="metadata" className="hidden" />
 
-      <div className="grid place-items-center gap-7 bg-cream px-6 py-12">
+      {/* .audio-visual */}
+      <div className="grid min-h-[21rem] content-center justify-items-center gap-6 bg-cream p-8">
         <p className="eyebrow">Your audio</p>
 
         {peaks && (
-          /* Bars flex to fill the row rather than taking a fixed width, so the
-             same 44 buckets fit a phone without overflowing the card. */
-          <div className="flex h-32 w-full max-w-3xl items-center gap-[2px] sm:gap-[0.4rem]" aria-hidden>
+          <div className="flex h-32 w-[min(100%,40rem)] items-center justify-between gap-1.5" aria-hidden>
             {peaks.map((p, i) => (
-              <span
-                key={i}
-                className="min-w-[2px] max-w-1 flex-1 rounded-full bg-brand-500"
-                style={{ height: `${p * 100}%` }}
-              />
+              <span key={i} className="wave-bar" style={{ height: `${p * 100}%` }} />
             ))}
           </div>
         )}
@@ -127,26 +125,27 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
         <p className="caption">{fmt(len)} recording</p>
       </div>
 
-      <div className="flex items-center gap-4 border-t border-sand px-5 py-4">
+      {/* .player-controls — five auto/1fr columns, no rule above it: the canvas
+          panel ends and the surface begins, which is the edge in the design. */}
+      <div className="grid min-h-[4.5rem] grid-cols-[auto_auto_1fr_auto_auto] items-center gap-3 px-3 md:px-6">
         <button
           type="button"
           onClick={toggle}
           aria-label={playing ? 'Pause' : 'Play'}
-          className="shrink-0 rounded-full p-1 text-ink transition-colors hover:text-brand-500"
+          className="control-icon"
         >
           {playing ? (
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden>
-              <rect x="3" y="2" width="4" height="14" rx="1" />
-              <rect x="11" y="2" width="4" height="14" rx="1" />
+            <svg viewBox="0 0 20 20" aria-hidden>
+              <path d="M7.5 4v12M12.5 4v12" />
             </svg>
           ) : (
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden>
-              <path d="M4 2.5 15 9 4 15.5Z" />
+            <svg viewBox="0 0 20 20" aria-hidden>
+              <path d="M5.5 3.5 16 10 5.5 16.5Z" />
             </svg>
           )}
         </button>
 
-        <span className="w-10 shrink-0 text-[0.8125rem] tabular-nums text-muted">{fmt(time)}</span>
+        <span className="text-[0.8125rem] tabular-nums text-muted">{fmt(time)}</span>
 
         <input
           type="range"
@@ -157,26 +156,20 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
           onChange={seek}
           aria-label="Seek"
           className="scrub"
-          style={{
-            background: `linear-gradient(to right, #c86242 ${pct}%, #dcd6cb ${pct}%)`,
-          }}
+          style={{ background: `linear-gradient(to right, #c86242 ${pct}%, #dcd6cb ${pct}%)` }}
         />
 
-        <span className="w-10 shrink-0 text-right text-[0.8125rem] tabular-nums text-muted">{fmt(len)}</span>
+        <span className="text-[0.8125rem] tabular-nums text-muted">{fmt(len)}</span>
 
         <button
           type="button"
           onClick={toggleMute}
           aria-label={muted ? 'Unmute' : 'Mute'}
-          className="shrink-0 rounded-full p-1 text-ink transition-colors hover:text-brand-500"
+          className="control-icon"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M4 6.5h2.5L10 3.5v11L6.5 11.5H4z" />
-            {muted ? (
-              <path d="M12.5 7 16 10.5M16 7l-3.5 3.5" />
-            ) : (
-              <path d="M12.5 6.8a3.4 3.4 0 0 1 0 4.4M14.6 5a6 6 0 0 1 0 8" />
-            )}
+          <svg viewBox="0 0 20 20" aria-hidden>
+            <path d="M4.5 7.5h2.5L10.5 4v12L7 12.5H4.5z" />
+            {muted ? <path d="M13.5 8l3.5 3.5M17 8l-3.5 3.5" /> : <path d="M13.5 7.6a3.6 3.6 0 0 1 0 4.8M15.8 5.6a6.4 6.4 0 0 1 0 8.8" />}
           </svg>
         </button>
       </div>

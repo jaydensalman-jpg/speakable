@@ -51,32 +51,34 @@ export default function VocabularyTab({ results }) {
 
   return (
     <div className="animate-rise">
-      <section className="sheet">
+      {/* .data-lead — ratio, then the raw counts it was derived from. */}
+      <div className="border-b border-sand pb-2 md:pb-4">
         <p className="eyebrow">Vocabulary</p>
 
-        {/* Ratio beside the raw counts it came from, baseline-aligned. */}
-        <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <p className="stat-xl text-[3rem] text-brand-500 md:text-[4rem]">{ratio}%</p>
-          <div>
-            <p className="text-[1.0625rem] leading-[1.4] text-muted">Unique Words</p>
-            <p className="mt-1 text-[1.0625rem] leading-[1.4] tabular-nums text-ink">
-              <strong className="font-semibold">{unique.toLocaleString()}</strong> different words
-              out of <strong className="font-semibold">{total.toLocaleString()}</strong>
-            </p>
-          </div>
+        {/* .headline-data */}
+        <div className="mt-2 flex items-center gap-6 md:items-end">
+          <p className="font-display text-[3rem] leading-none tracking-[-0.025em] text-brand-500 md:text-[4rem]">
+            {ratio}%
+          </p>
+          <p className="text-[1.0625rem] leading-[1.45] text-muted md:pb-[0.45rem]">
+            Unique Words
+            <span className="mt-[0.3rem] block whitespace-nowrap text-[0.9375rem] tabular-nums">
+              <strong className="font-semibold text-ink">{unique.toLocaleString()}</strong> different
+              words out of <strong className="font-semibold text-ink">{total.toLocaleString()}</strong>
+            </span>
+          </p>
         </div>
 
-        <p className="statement mt-7 max-w-prose">
+        <p className="body-copy mt-6 max-w-[44rem]">
           {inRange
             ? 'Varied wording keeps an audience with you.'
             : 'A few words are doing most of the work.'}
         </p>
-      </section>
+      </div>
 
-      <section className="sheet">
-        <h3 className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink md:text-[1.625rem]">
-          Words you leaned on
-        </h3>
+      {/* .content-section — no rule of its own; the lead above carries it. */}
+      <section className="pt-2 md:pt-4">
+        <h3 className="statement">Words you leaned on</h3>
 
         {repeated.length === 0 ? (
           <p className="mt-5 text-[1.0625rem] text-ink/60">
@@ -85,7 +87,7 @@ export default function VocabularyTab({ results }) {
         ) : (
           <>
             <RankedBars rows={repeated} />
-            <p className="body-copy mt-6 max-w-[48rem]">
+            <p className="body-copy mt-8 max-w-[48rem]">
               Pick your top words, come up with two or three alternatives, and try swapping them
               into your next take.
             </p>
@@ -93,7 +95,8 @@ export default function VocabularyTab({ results }) {
         )}
       </section>
 
-      <section className="sheet grid gap-4 md:grid-cols-[14rem_1fr] md:gap-8">
+      {/* .plain-note */}
+      <section className="mt-8 grid gap-2 border-t border-sand pt-8 md:grid-cols-[14rem_1fr] md:gap-8">
         <p className="statement">What counts as the same word</p>
         <ul className="space-y-2 text-[1.0625rem] leading-[1.65] text-muted">
           <li>
