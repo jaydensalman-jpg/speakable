@@ -250,13 +250,12 @@ export default function App() {
       <header className="border-b border-sand bg-cream/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[86rem] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button onClick={goHome} className="flex items-center gap-2.5" aria-label="Speakable home">
-            <div className="w-7 h-7 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft">
+            <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft">
               <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1a4 4 0 014 4v7a4 4 0 01-8 0V5a4 4 0 014-4zm-2 15.93A7 7 0 0019 12h2a9 9 0 01-18 0h2a7 7 0 006 6.93V21H9v2h6v-2h-2v-2.07z" />
               </svg>
             </div>
-            {/* Wordmark yields to the nav + account chip on narrow phones; the mic mark stays as the home button */}
-            <span className="hidden min-[480px]:inline font-display text-ink text-[16px] tracking-tight">Speakable</span>
+            <span className="font-display text-ink text-[16px] leading-none tracking-tight">Speakable</span>
           </button>
           {showNav && (
             <div className="flex items-center gap-2.5">
@@ -265,10 +264,10 @@ export default function App() {
                 <button
                   onClick={() => setAppState('account')}
                   aria-label={auth.user ? `Account: ${auth.user.email}` : 'Sign in'}
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors duration-250 ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors duration-250 ${
                     auth.user
-                      ? 'bg-brand-500 text-white shadow-soft hover:bg-brand-600'
-                      : 'border border-sand bg-white text-ink/45 hover:text-ink/70'
+                      ? 'border-brand-500 bg-brand-500 text-white shadow-soft hover:bg-brand-600'
+                      : 'border-sand bg-surface text-ink/55 hover:text-ink/80'
                   }`}
                 >
                   {auth.user ? (
