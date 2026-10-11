@@ -30,7 +30,7 @@ export default defineConfig({
         name: 'Speakable',
         short_name: 'Speakable',
         description:
-          'Private, on-device public speaking coach — record a talk, get scored feedback on fillers, pacing, and delivery. Nothing leaves your device.',
+          'Private, on-device public speaking coach — record a talk, get scored feedback on fillers, pacing, and delivery. Recordings never leave your device.',
         theme_color: '#faf8f3',
         background_color: '#faf8f3',
         display: 'standalone',
@@ -85,13 +85,5 @@ export default defineConfig({
   // (excluding it leaves onnxruntime-common un-deduped → "registerBackend" undefined).
   optimizeDeps: {
     include: ['@xenova/transformers'],
-  },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
   },
 });

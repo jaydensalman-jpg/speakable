@@ -4,8 +4,9 @@ The app is a fully static React (Vite) build — `client/dist` can be hosted any
 It is live today at **https://speakable-omega.vercel.app** on the Vercel project
 `speakable`, deployed manually from this folder. This doc covers (A) the current
 manual deploy, (B) upgrading to continuous deployment from GitHub so every push
-auto-updates the live site for all users, and (C) what runs client-side vs. what
-needs a backend.
+auto-updates the live site for all users, (C) what runs client-side vs. what
+needs a backend, (D) the security headers, and (E) the Supabase settings that
+only exist in its dashboard.
 
 ---
 
@@ -18,6 +19,10 @@ npx vercel deploy --prod --yes
 
 That's it — Vercel builds with `npm run build` (see `client/vercel.json`) and swaps
 the live site. Use this until the GitHub flow below is set up.
+
+Since October 2026 this path is a fallback only: `client/vercel.json` has none of the
+security headers or the `/privacy` rewrite, which live in the root `vercel.json`
+(section D). A deploy made this way serves the app without them and `/privacy` 404s.
 
 ## B. Continuous deployment — LIVE since July 2026 ✅
 
@@ -34,7 +39,13 @@ the live site. Use this until the GitHub flow below is set up.
 **Environment variables** — already set on the project (`VITE_SUPABASE_URL`,
 `VITE_SUPABASE_ANON_KEY` for Production). If you ever recreate the project, re-add
 them under **Settings → Environment Variables**. They are baked in at build time,
-so changing them requires a redeploy.
+so changing them requires a redeploy. If `VITE_SUPABASE_URL` ever changes, change
+the Supabase host in the `connect-src` of `vercel.json` too (section D).
+
+`VITE_GA_ID` is optional and unset today. Setting it (a GA4 measurement id,
+`G-XXXXXXXXXX`) turns on the funnel events in `lib/analytics.js` and makes the
+privacy page show its Google Analytics paragraph. GA4 sets cookies, so add a consent
+banner first if you expect EU/UK visitors.
 
 ### Day-to-day after setup
 
@@ -70,10 +81,80 @@ Needs the existing Supabase backend (free tier, already configured):
 - Email magic-link sign-in and cross-device sync of session REPORTS (`sessions` table,
   row-level security; schema in `supabase/schema.sql`). Add new synced fields by
   extending the `results` JSON — no migration needed.
+- Anonymous per-take numbers (`metrics` table) and email-gate signups (`leads` table,
+  with the visit's `utm_source`). Both are insert-only from the browser; read them
+  with the owner queries at the bottom of each section of `supabase/schema.sql`.
+  Until that file has been run in the SQL editor these inserts fail silently and
+  nothing else breaks; a failed signup is retried on the visitor's next app start.
+
+Not served by Speakable, but worth knowing: **live captions use the browser's own
+speech recognition** (`hooks/useSpeechRecognition.js`). In Chrome that streams
+microphone audio to Google while recording. The privacy page says so; making
+captions opt-in would be the way to change it.
 
 Would need NEW backend work (flagged, not built):
-- **Email-gate leads**: the pre-recording email capture stores to localStorage only
-  (`speakable-email`). To actually collect these, POST them somewhere — simplest is a
-  Supabase `leads` table (insert-only RLS policy) or a Vercel serverless function.
+- Rate limiting on the two insert-only tables. The check constraints stop impossible
+  values, not volume; a Vercel function or Supabase Edge Function in front would.
+- A self-serve "delete my account and data" flow. Today that is an email to the
+  address on the privacy page, handled by hand in the Supabase dashboard.
 - Anything involving sending email to users (digests, reminders), team/coach dashboards,
   or server-side processing of recordings (which would break the privacy promise — don't).
+
+---
+
+## D. Security headers and the content security policy
+
+All in the root `vercel.json`, applied to every path: `X-Content-Type-Options`,
+`X-Frame-Options: DENY` (the app cannot be embedded in an iframe on another site),
+`Referrer-Policy`, a `Permissions-Policy` that allows camera and microphone for this
+origin only, and a content security policy (CSP).
+
+**The CSP is report-only.** It blocks nothing yet; the browser logs what it would
+have blocked as `[Report Only]` console lines. To enforce it, rename the header key
+from `Content-Security-Policy-Report-Only` to `Content-Security-Policy`.
+
+Rehearse locally before that, because `vite preview` applies none of these headers:
+
+```bash
+cd client && npm run build && cd ..
+node scripts/serve-prod.mjs             # report-only, http://127.0.0.1:4789
+node scripts/serve-prod.mjs --enforce   # blocking,    http://127.0.0.1:4790
+```
+
+State as of October 2026: an uploaded take transcribes correctly with the policy
+enforced (model download, WASM, inference). The two `eval` violations from the
+transformers chunk are expected and harmless: a guarded Node-only `require` lookup
+in protobufjs. Not yet exercised under enforcement: a camera take with eye contact,
+and Supabase sign-in.
+
+Three things in the policy are tied to code and have to move with it:
+
+| In the policy | Tied to | Symptom if stale (once enforced) |
+|---|---|---|
+| `'sha256-…'` in `script-src` | the inline theme script in `client/index.html` | dark-mode visitors see a light flash; `serve-prod.mjs` prints the new hash on start |
+| `…/@mediapipe/tasks-vision@0.10.35/wasm/` in `script-src` | `WASM_BASE` in `hooks/useEyeContact.js` | eye contact silently stops loading |
+| the `*.supabase.co` host in `connect-src` | `VITE_SUPABASE_URL` | sign-in, sync, metrics and signups all fail |
+
+A new third-party host (analytics, a font, a model CDN) needs a line in the policy
+and a line on the privacy page (`components/Privacy/index.jsx`).
+
+---
+
+## E. Supabase settings that live only in the dashboard
+
+Nothing in this repo can set these; check them whenever the project is created,
+restored or moved.
+
+1. **The project is running.** Free-tier projects pause after about a week without
+   activity and their URL stops resolving, which takes sign-in, sync, metrics and
+   signups down together while the rest of the app keeps working. Restore it from the
+   dashboard. If the app is quiet for long stretches, a paid plan or a scheduled
+   keep-alive request avoids the pause.
+2. **`supabase/schema.sql` has been run** in the SQL editor (safe to re-run). Then
+   confirm in Table Editor that `sessions`, `metrics` and `leads` each show RLS enabled.
+3. **Custom SMTP** (Authentication → Emails → SMTP settings). The built-in sender is
+   heavily rate-limited and meant for testing; magic-link sign-in stalls under real
+   traffic without a provider such as Resend.
+4. **Redirect allowlist** (Authentication → URL Configuration). Site URL
+   `https://speakable-omega.vercel.app`; redirect URLs limited to that origin, plus
+   `http://localhost:5173` and `http://localhost:5180` for development. No wildcards.

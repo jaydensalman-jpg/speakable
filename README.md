@@ -23,6 +23,10 @@ Coaching is generated on-device from the take's real numbers ("your densest fill
 
 - **Recordings (video/audio) never leave the device.** They live in IndexedDB, full stop. There is deliberately no code path that uploads media.
 - **Reports optionally sync.** With the (optional, never required) email magic-link account, the report JSON — scores, stats, transcript — syncs via Supabase with row-level security so each user can only touch their own rows (`supabase/schema.sql`). Without keys configured, the app is 100% local.
+- **Two write-only tables.** Each take logs five anonymous numbers (take number, score, filler %, WPM, eye contact %) under a random device ID. A visitor who leaves an email before recording has that email stored with the source of their visit. Neither table can be read back through the public API.
+- **Live captions are the browser's.** The captions shown while recording come from the Web Speech API; in Chrome that sends microphone audio to Google during the take. The report's transcript is produced separately, on-device, by Whisper.
+
+The user-facing version of this is the app's [privacy page](https://speakable-omega.vercel.app/privacy).
 
 ## Stack
 

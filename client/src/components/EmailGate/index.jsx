@@ -4,10 +4,11 @@ import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
 // Pre-recording email capture. Shown once, on the first "Start recording", and
 // only when we don't already know who this is (no Supabase account, no saved
 // email, no earlier guest choice) — recording itself is never blocked, "Continue
-// as guest" always works. The email lands in state + localStorage (see App.jsx);
-// pushing it to a backend/CRM would happen where App stores it. Note the real
-// account system is Supabase sign-in — this is a lightweight tag, not auth.
-export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) {
+// as guest" always works. The email lands in state + localStorage and, when
+// Supabase is configured (`savesEmail`), in the `leads` table (see App.jsx and
+// lib/leads.js). The copy has to say so: it is what the visitor agrees to. Note
+// the real account system is Supabase sign-in — this is a lightweight tag, not auth.
+export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn, savesEmail }) {
   const [email, setEmail] = useState('');
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -22,8 +23,10 @@ export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) 
         Before you record
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-ink/55">
-        Leave an email to tag your practice sessions, or skip straight to recording. Either way,
-        recordings never leave your device.
+        {savesEmail
+          ? 'Leave an email if you want updates about Speakable, or skip straight to recording.'
+          : 'Leave an email to tag your practice sessions, or skip straight to recording.'}{' '}
+        Either way, recordings never leave your device.
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-8 flex flex-col gap-4 text-left">
@@ -40,6 +43,20 @@ export default function EmailGate({ onContinue, onGuest, onSignIn, canSignIn }) 
           className="rounded-2xl border border-sand bg-cream px-4 py-3 text-[15px] text-ink placeholder:text-ink/30"
         />
         <InteractiveHoverButton type="submit" disabled={!valid} text="Continue" className="w-full px-6 py-3" />
+        {savesEmail && (
+          <p className="text-xs leading-relaxed text-ink/40">
+            We save your email so we can send updates or ask for feedback. You can ask us to delete
+            it at any time.{' '}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener"
+              className="font-semibold text-brand-500 hover:text-brand-700"
+            >
+              Privacy
+            </a>
+          </p>
+        )}
         <button
           type="button"
           onClick={onGuest}

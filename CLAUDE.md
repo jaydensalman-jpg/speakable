@@ -17,7 +17,9 @@ npm run build      # production build → client/dist (fully static, deployable 
 
 Use **Google Chrome** for the full experience. Node comes via nvm (`nvm use --lts` if node/npm aren't found). No tests or linter are configured; verification is `npm run build` + exercising the app.
 
-> The Express `server/` directory is **dead legacy** (old Claude-API/Whisper-server flow; nothing calls it, `client/src/api/` was deleted). **Deploys are continuous:** pushing the GitHub repo (`jaydensalman-jpg/speakable`) auto-builds on Vercel, live at **speakable-omega.vercel.app**. Full setup + the client-vs-backend split are in `DEPLOYMENT.md`. Static output is `client/dist`.
+> There is no server in this repo (the legacy Express `server/` was deleted October 2026). **Deploys are continuous:** pushing the GitHub repo (`jaydensalman-jpg/speakable`) auto-builds on Vercel, live at **speakable-omega.vercel.app**. Full setup, the client-vs-backend split, the security headers and the Supabase dashboard checklist are in `DEPLOYMENT.md`. Static output is `client/dist`.
+
+To see the build the way Vercel serves it (headers, CSP, the `/privacy` rewrite), use `node scripts/serve-prod.mjs` after a build, or the `speakable-prod` / `speakable-prod-enforced` launch configs. `vite preview` and `speakcoach-dist` apply none of that.
 
 ## Architecture
 
@@ -59,8 +61,20 @@ Regex-folded vocal hesitations (um/uh/er/hmm/em/uh-huh/huh/ugh + all elongation 
 Strict, evidence-based: insufficient-sample gate (< 25 words or < 12s → score 1–2, zero praise), every score capped by sample size (`cap = 3 + 7·sufficiency`), highlights must be earned. Copy is plain and factual — **never** motivational/therapeutic ("AI-sounding") phrasing, here or anywhere in the UI.
 Report shape: `overallScore` = plain average of the measured metrics in **`breakdown`** — FOUR scored areas since September 2026 (pace/fillers/vocabulary/eyeContact, each with raw value, target, points contributed, one plain sentence; unmeasurable metrics are OMITTED, never faked). `flow` was dropped along with the Pacing tab, and `articulation` with it, since articulation only ever appeared on the Web Speech fallback path and so made the score mean different things depending on which recognizer ran. Plus **`coaching`** (2–3 weakest areas, real numbers + timestamps — filler cluster via `fillerEvents`, longest pause via `pauses[].at` — each with a concrete drill). Legacy fields (`categoryScores`/`feedback`/`tips`) are still emitted, and Overview/AIFeedback tabs keep legacy render paths because sessions saved by older builds have the old shape.
 
-### Email gate (`components/EmailGate/`)
-First "Start recording" from Home routes through an email-capture screen unless identity is already known (Supabase user, `localStorage.speakable-email`, or `speakable-guest`). Guest always works — recording is never blocked. The email is a local lead tag only (state + localStorage); pushing it to a backend is flagged in DEPLOYMENT.md. Supabase sign-in remains the real account system.
+### Email gate (`components/EmailGate/`) and leads (`lib/leads.js`)
+First "Start recording" from Home routes through an email-capture screen unless identity is already known (Supabase user, `localStorage.speakable-email`, or `speakable-guest`). Guest always works — recording is never blocked. Supabase sign-in remains the real account system.
+Since October 2026 a submitted email is also inserted into the Supabase `leads` table (insert-only RLS, like `metrics`) together with `lib/source.js`'s first-touch `utm_source`/`src` slug. Rules that must hold:
+- **The gate copy is the consent.** It says the email is saved and why; change what is done with emails and the copy and the privacy page change with it. Without Supabase keys (`savesEmail` false) the old local-only copy shows.
+- **Only an email submitted under that copy is sent.** `speakable-email` values from older builds stay on the device; a retry reads only the `speakable-lead-pending` marker written at submit time. Do not "backfill" from `speakable-email`.
+- A lead row never carries the `speakable-anon` id or practice numbers, and the email never goes to analytics. `metrics` stays anonymous.
+- No unique constraint on `leads.email` on purpose (a duplicate error would reveal who is on the list); dedupe in the read queries.
+
+### Privacy page (`components/Privacy/`, `/privacy`)
+The one state with its own URL: `vercel.json` rewrites `/privacy` to `index.html` and `App.jsx` picks the `privacy` state from the pathname (leaving it resets the address to `/`). Footer and email-gate links open it in a new tab so a take or an open report is never navigated away from.
+**It is a description of what the code does and has to change with the code.** A new upload path, third-party host, stored field or cookie means a new line there and a new `UPDATED` date. The Google Analytics paragraph renders from `analyticsConfigured`, so it tracks `VITE_GA_ID` by itself. It also discloses that live captions go through the browser's speech service (Google in Chrome), which is the one place microphone audio leaves the device; that is why public copy says "recordings never leave your device" and never "nothing leaves your device" (the meta description and manifest said the latter until October 2026).
+
+### Security headers (root `vercel.json`)
+`nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, a camera/mic-only `Permissions-Policy`, and a CSP that is **report-only** for now. Three CSP entries are coupled to code (the inline theme script's hash in `index.html`, the MediaPipe `WASM_BASE` path, the Supabase host); the table in `DEPLOYMENT.md` section D lists each and what breaks if it goes stale. Adding any third-party host means updating the CSP and the privacy page together.
 
 ### Results tabs are CARDLESS (Oct 2026, from the Figma Make redesign)
 All six Results tabs dropped `.card` for an editorial treatment: open sections on

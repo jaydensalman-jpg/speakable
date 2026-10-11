@@ -19,6 +19,10 @@
 
 const GA_ID = import.meta.env.VITE_GA_ID;
 
+// Whether this build ships Google Analytics at all. The privacy page reads it
+// so its Google paragraph is only shown when it is true.
+export const analyticsConfigured = !!GA_ID;
+
 let enabled = false;
 
 export function initAnalytics() {

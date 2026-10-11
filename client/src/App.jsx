@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard/index.jsx';
 import History from './components/History/index.jsx';
 import Account from './components/Account/index.jsx';
 import EmailGate from './components/EmailGate/index.jsx';
+import Privacy from './components/Privacy/index.jsx';
 import SegmentedNav from './components/ui/SegmentedNav.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { pushReport, mergeUpLocal, flushOutbox } from './lib/cloudSync.js';
@@ -17,19 +18,25 @@ import ThemeSwitch from './components/ui/theme-switch.jsx';
 import { transcribeLocally } from './lib/transcribe.js';
 import { saveSession, toSession, listSessions } from './lib/history.js';
 import { logSession } from './lib/metrics.js';
+import { saveLead } from './lib/leads.js';
 import { track } from './lib/analytics.js';
 
+// The one state with a URL of its own, so the privacy page can be linked to.
+// vercel.json rewrites /privacy to index.html.
+const onPrivacyPath = () => window.location.pathname.replace(/\/+$/, '') === '/privacy';
+
 // App states: home → idle (recorder) → recording → processing → results
-// (plus history and account). Keep a single Recorder mounted across
+// (plus history, account and privacy). Keep a single Recorder mounted across
 // idle/recording so the stream never drops.
 export default function App() {
-  const [appState, setAppState] = useState('home');
+  const [appState, setAppState] = useState(() => (onPrivacyPath() ? 'privacy' : 'home'));
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState('');
   // Lightweight identity tag from the pre-recording email gate. Kept in state +
-  // localStorage so a future backend/CRM push has it; Supabase sign-in remains
-  // the real account system and always outranks this.
+  // localStorage so the gate only shows once; lib/leads.js is what sends it to
+  // the `leads` table. Supabase sign-in remains the real account system and
+  // always outranks this.
   const [leadEmail, setLeadEmail] = useState(() => localStorage.getItem('speakable-email') || '');
   const auth = useAuth();
 
@@ -54,6 +61,12 @@ export default function App() {
     window.addEventListener('online', onOnline);
     return () => window.removeEventListener('online', onOnline);
   }, [auth.user?.id]);
+
+  // Leaving the privacy page puts the address back to "/", so a reload lands
+  // on the app rather than back on the page they navigated away from.
+  useEffect(() => {
+    if (appState !== 'privacy' && onPrivacyPath()) window.history.replaceState(null, '', '/');
+  }, [appState]);
 
   async function handleRecordingComplete({ blob, words, hesitations, volumeLevels, eyeContact, source, mediaType }) {
     setAppState('processing');
@@ -308,6 +321,7 @@ export default function App() {
             onContinue={(email) => {
               localStorage.setItem('speakable-email', email);
               setLeadEmail(email);
+              saveLead(email);
               setAppState('idle');
             }}
             onGuest={() => {
@@ -316,6 +330,7 @@ export default function App() {
             }}
             onSignIn={() => setAppState('account')}
             canSignIn={auth.configured}
+            savesEmail={auth.configured}
           />
         )}
 
@@ -324,6 +339,8 @@ export default function App() {
         )}
 
         {appState === 'account' && <Account auth={auth} />}
+
+        {appState === 'privacy' && <Privacy />}
 
         {/* Single Recorder instance for both idle and recording — prevents unmount mid-stream */}
         {(appState === 'idle' || appState === 'recording') && (
@@ -341,6 +358,20 @@ export default function App() {
       {/* Which build is actually running. Cheap to render, and it turns
           "am I on the latest version?" from a guess into something checkable. */}
       <footer className="pb-6 text-center text-[0.6875rem] text-ink/30">
+        {/* Opens in a new tab so a take or an open report is never navigated away from. */}
+        {showNav && appState !== 'privacy' && (
+          <>
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener"
+              className="text-ink/55 underline-offset-2 transition-colors duration-250 hover:text-ink/80 hover:underline"
+            >
+              Privacy
+            </a>
+            <span aria-hidden="true"> · </span>
+          </>
+        )}
         <span className="tabular-nums">build {BUILD_ID}</span>
       </footer>
     </div>
