@@ -451,15 +451,13 @@ html {
   border-color: rgb(236 102 58);
 }
 
-/* Filler words in the transcript. Light keeps the design's quiet underline
-   tint; dark uses a solid coral chip with a deep-brown label. Horizontal
-   padding is untouched so the paragraph does not reflow when the theme changes. */
+/* Filler words in the transcript: the same quiet mark as light, a soft coral
+   tint with a coral underline, regular weight, text in the normal ink. Dark
+   only softens the tint, because brand-100 here is tuned for buttons and pills
+   and is too heavy repeated across a paragraph. (A solid bold coral chip was
+   tried and rejected as shouting.) */
 :root[data-theme='dark'] .filler-mark {
-  background-color: rgb(var(--c-brand-500));
-  border-bottom-color: transparent;
-  border-radius: 0.34em;
-  color: rgb(var(--c-onchip));
-  font-weight: 600;
+  background-color: rgb(var(--c-brand-500) / 0.16);
 }
 
 /* Waveform. Bars ahead of the playhead are the deep coral; bars already played
