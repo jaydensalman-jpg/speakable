@@ -90,7 +90,7 @@ export default function SelfReviewTab({ results }) {
                   onClick={() => setMode(m.id)}
                   className={`whitespace-nowrap rounded-full px-[0.3rem] py-[0.45rem] text-center text-[0.72rem] font-medium leading-none transition-colors duration-[180ms] md:px-4 md:py-2.5 md:text-[0.8125rem] md:leading-normal ${
                     mode === m.id
-                      ? 'bg-brand-500 text-white shadow-[0_0.2rem_0.6rem_rgba(200,98,66,0.24)]'
+                      ? 'bg-brand-500 text-onbrand shadow-[0_0.2rem_0.6rem_rgb(var(--c-brand-500)_/_0.24)] glow-accent'
                       : 'text-muted hover:text-ink'
                   }`}
                 >

@@ -18,7 +18,7 @@ const InteractiveHoverButton = forwardRef(function InteractiveHoverButton(
     <button
       ref={ref}
       className={cn(
-        'group relative cursor-pointer overflow-hidden rounded-full border border-sand bg-white text-center font-semibold text-ink shadow-soft',
+        'group relative cursor-pointer overflow-hidden rounded-full border border-sand bg-card text-center font-semibold text-ink shadow-soft',
         'transition-colors duration-300 ease-organic hover:border-brand-500',
         'disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
         className
@@ -30,7 +30,7 @@ const InteractiveHoverButton = forwardRef(function InteractiveHoverButton(
       </span>
       <div
         aria-hidden
-        className="absolute inset-0 z-10 flex translate-x-12 items-center justify-center gap-2 text-white opacity-0 transition-all duration-300 ease-organic group-hover:-translate-x-1 group-hover:opacity-100"
+        className="absolute inset-0 z-10 flex translate-x-12 items-center justify-center gap-2 text-onbrand opacity-0 transition-all duration-300 ease-organic group-hover:-translate-x-1 group-hover:opacity-100"
       >
         <span>{text}</span>
         <ArrowRight className="h-4 w-4" />

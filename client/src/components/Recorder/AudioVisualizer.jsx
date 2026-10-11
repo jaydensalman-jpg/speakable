@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
+import { themeColor, useTheme } from '../../lib/theme.js';
 
 const BAR_COUNT = 60;
 
 export default function AudioVisualizer({ getAnalyser, isActive }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
+  // A canvas paints with literal colours, so it has to be told when the theme
+  // changes; `theme` is in the effect's deps for exactly that.
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -18,8 +22,8 @@ export default function AudioVisualizer({ getAnalyser, isActive }) {
 
     // Gradient computed once, reused each frame
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, 'rgba(224, 113, 79, 0.9)');
-    gradient.addColorStop(1, 'rgba(239, 168, 144, 0.45)');
+    gradient.addColorStop(0, themeColor('brand-500', 0.95));
+    gradient.addColorStop(1, themeColor('brand-300', 0.5));
 
     const draw = () => {
       const analyser = getAnalyser();
@@ -48,7 +52,7 @@ export default function AudioVisualizer({ getAnalyser, isActive }) {
 
     draw();
     return () => cancelAnimationFrame(rafRef.current);
-  }, [isActive, getAnalyser]);
+  }, [isActive, getAnalyser, theme]);
 
   return (
     <canvas
@@ -63,7 +67,7 @@ export default function AudioVisualizer({ getAnalyser, isActive }) {
 function drawIdle(ctx, w, h) {
   ctx.clearRect(0, 0, w, h);
   const barW = Math.floor(w / BAR_COUNT) - 1;
-  ctx.fillStyle = 'rgba(225, 217, 203, 0.9)';
+  ctx.fillStyle = themeColor('sand', 0.9);
   for (let i = 0; i < BAR_COUNT; i++) {
     ctx.fillRect(i * (barW + 1), h - 3, barW, 3);
   }

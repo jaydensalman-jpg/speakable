@@ -13,6 +13,7 @@ import { computePacing } from './utils/pacing.js';
 import { detectPauses } from './utils/pauses.js';
 import { generateLocalFeedback } from './utils/localCoach.js';
 import { BUILD_ID } from './lib/swUpdate.js';
+import ThemeSwitch from './components/ui/theme-switch.jsx';
 import { transcribeLocally } from './lib/transcribe.js';
 import { saveSession, toSession, listSessions } from './lib/history.js';
 import { logSession } from './lib/metrics.js';
@@ -250,15 +251,16 @@ export default function App() {
       <header className="border-b border-sand bg-cream/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[86rem] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button onClick={goHome} className="flex items-center gap-2.5" aria-label="Speakable home">
-            <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft">
+            <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft glow-accent">
               <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1a4 4 0 014 4v7a4 4 0 01-8 0V5a4 4 0 014-4zm-2 15.93A7 7 0 0019 12h2a9 9 0 01-18 0h2a7 7 0 006 6.93V21H9v2h6v-2h-2v-2.07z" />
               </svg>
             </div>
-            <span className="font-display text-ink text-[16px] leading-none tracking-tight">Speakable</span>
+            <span className="font-display text-ink text-[16px] leading-none tracking-tight max-[339px]:hidden">Speakable</span>
           </button>
-          {showNav && (
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {showNav && (
+              <>
               <SegmentedNav items={NAV_ITEMS} active={navActive} onChange={navTo} />
               {auth.configured && (
                 <button
@@ -266,7 +268,7 @@ export default function App() {
                   aria-label={auth.user ? `Account: ${auth.user.email}` : 'Sign in'}
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors duration-250 ${
                     auth.user
-                      ? 'border-brand-500 bg-brand-500 text-white shadow-soft hover:bg-brand-600'
+                      ? 'border-brand-500 bg-brand-500 text-onbrand shadow-soft hover:bg-brand-600'
                       : 'border-sand bg-surface text-ink/55 hover:text-ink/80'
                   }`}
                 >
@@ -281,8 +283,11 @@ export default function App() {
                   )}
                 </button>
               )}
-            </div>
-          )}
+              </>
+            )}
+            {/* Always present, including on Home where the nav is hidden. */}
+            <ThemeSwitch />
+          </div>
         </div>
       </header>
 

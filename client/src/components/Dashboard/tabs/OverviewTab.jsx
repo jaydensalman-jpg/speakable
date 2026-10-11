@@ -259,7 +259,7 @@ function paceCaption(wpmData, duration) {
 }
 
 function barColor(score) {
-  return score >= 8 ? '#287557' : score >= 6 ? '#c86242' : score >= 4 ? '#99651f' : '#8c422b';
+  return `rgb(var(--c-${score >= 8 ? 'good' : score >= 6 ? 'brand-500' : score >= 4 ? 'warn' : 'brand-700'}))`;
 }
 
 function formatDuration(s) {

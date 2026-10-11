@@ -26,7 +26,7 @@ export default function Home({ onStart }) {
 function ReportPreview() {
   return (
     <div className="animate-float">
-      <div className="overflow-hidden rounded-3xl border border-sand bg-white shadow-soft">
+      <div className="overflow-hidden rounded-3xl border border-sand bg-card shadow-soft">
         <div className="flex items-center gap-1.5 border-b border-sand px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
@@ -54,13 +54,13 @@ function ScoreDonut({ value }) {
   return (
     <div className="relative h-[72px] w-[72px] shrink-0">
       <svg width="72" height="72" className="-rotate-90">
-        <circle cx="36" cy="36" r={r} fill="none" stroke="#f1ece2" strokeWidth="7" />
+        <circle cx="36" cy="36" r={r} fill="none" className="stroke-sand" strokeWidth="7" />
         <circle
           cx="36"
           cy="36"
           r={r}
           fill="none"
-          stroke="#c86242"
+          className="stroke-brand-500"
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={c}

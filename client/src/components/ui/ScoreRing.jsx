@@ -16,8 +16,9 @@ export default function ScoreRing({ score, size = 120, label = 'Overall' }) {
   const strokeWidth = 10;
   const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
-  const color =
-    score >= 8 ? '#287557' : score >= 6 ? '#c86242' : score >= 4 ? '#99651f' : '#8c422b';
+  // Theme variables rather than hexes, so the dial follows the light/dark switch.
+  const tier = score >= 8 ? 'good' : score >= 6 ? 'brand-500' : score >= 4 ? 'warn' : 'brand-700';
+  const color = `rgb(var(--c-${tier}))`;
 
   // One motion value drives both the arc and the digit, so they can never
   // disagree about what the score is mid-animation.
@@ -51,7 +52,7 @@ export default function ScoreRing({ score, size = 120, label = 'Overall' }) {
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#f1ece2"
+            className="stroke-sand"
             strokeWidth={strokeWidth}
             strokeDasharray="3 7"
             strokeLinecap="round"
@@ -61,11 +62,10 @@ export default function ScoreRing({ score, size = 120, label = 'Overall' }) {
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke={color}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeLinecap="round"
-            style={{ strokeDashoffset: dashoffset }}
+            style={{ strokeDashoffset: dashoffset, stroke: color }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">

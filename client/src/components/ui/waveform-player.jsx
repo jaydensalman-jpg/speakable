@@ -176,7 +176,7 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
           onChange={seek}
           aria-label="Seek"
           className="scrub"
-          style={{ background: `linear-gradient(to right, #c86242 ${pct}%, #dcd6cb ${pct}%)` }}
+          style={{ background: `linear-gradient(to right, rgb(var(--c-brand-500)) ${pct}%, rgb(var(--c-sand)) ${pct}%)` }}
         />
 
         <span className="text-[0.8125rem] tabular-nums text-muted">{fmt(len)}</span>

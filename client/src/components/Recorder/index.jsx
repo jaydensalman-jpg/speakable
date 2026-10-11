@@ -174,7 +174,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
             disabled={isActive}
             className={`flex-1 py-2 text-sm font-medium rounded-full transition-all duration-250 ease-organic ${
               mode === id
-                ? 'bg-white text-ink shadow-soft'
+                ? 'bg-card text-ink shadow-soft'
                 : 'text-ink/50 hover:text-ink/80 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
           >
@@ -223,7 +223,9 @@ export default function Recorder({ onComplete, onRecordingStart }) {
           {/* Preview stage */}
           <div className="px-5">
             {captureMode === 'camera' ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-ink/95">
+              // .stage, not `bg-ink`: ink flips to cream in dark mode and would
+              // turn the camera stage white behind its white labels.
+              <div className="stage relative aspect-video w-full overflow-hidden rounded-2xl">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -243,8 +245,8 @@ export default function Recorder({ onComplete, onRecordingStart }) {
                   </div>
                 )}
                 {recState === 'paused' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-ink/40 backdrop-blur-[2px]">
-                    <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-semibold text-ink">Paused</span>
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#1f1e1b]/40 backdrop-blur-[2px]">
+                    <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-semibold text-[#1f1e1b]">Paused</span>
                   </div>
                 )}
               </div>
@@ -343,7 +345,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               {recState === 'idle' && (
                 <button
                   onClick={handleStart}
-                  className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
+                  className="glow-accent relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
                   aria-label="Start recording"
                 >
                   <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
@@ -365,7 +367,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               {recState === 'paused' && (
                 <button
                   onClick={handleResume}
-                  className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
+                  className="glow-accent relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
                   aria-label="Resume recording"
                 >
                   <svg className="h-7 w-7" fill="currentColor" viewBox="0 0 24 24">
@@ -413,7 +415,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               </div>
               <button
                 onClick={() => setUploadedFile(null)}
-                className="w-7 h-7 rounded-full bg-white border border-sand flex items-center justify-center text-ink/40 hover:text-ink/70 transition-colors shrink-0 ml-2"
+                className="w-7 h-7 rounded-full bg-card border border-sand flex items-center justify-center text-ink/40 hover:text-ink/70 transition-colors shrink-0 ml-2"
                 aria-label="Remove file"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -510,7 +512,7 @@ function IdeaGenerator() {
       <div className="mb-6 flex justify-center">
         <button
           onClick={shuffle}
-          className="flex items-center gap-2 rounded-full border border-sand bg-white px-4 py-2 text-sm font-medium text-ink/70 shadow-soft transition-colors duration-250 hover:border-brand-200 hover:text-ink"
+          className="flex items-center gap-2 rounded-full border border-sand bg-card px-4 py-2 text-sm font-medium text-ink/70 shadow-soft transition-colors duration-250 hover:border-brand-200 hover:text-ink"
         >
           <svg className="h-4 w-4 text-brand-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.5-6.5l-1.4 1.4M7.9 16.1l-1.4 1.4m11-.1l-1.4-1.4M7.9 7.9L6.5 6.5" />
@@ -548,7 +550,7 @@ function IdeaGenerator() {
         <button
           onClick={shuffle}
           disabled={rolling}
-          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink/70 shadow-soft transition-colors duration-250 hover:text-ink disabled:cursor-default disabled:text-ink/40"
+          className="flex items-center gap-1.5 rounded-full bg-card px-4 py-2 text-sm font-semibold text-ink/70 shadow-soft transition-colors duration-250 hover:text-ink disabled:cursor-default disabled:text-ink/40"
         >
           <svg
             className={`h-4 w-4 ${rolling ? 'animate-spin' : ''}`}

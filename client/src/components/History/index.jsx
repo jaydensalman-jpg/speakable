@@ -106,7 +106,7 @@ export default function History({ onOpenReport, onRecord, user }) {
             key={id}
             onClick={() => setViewMode(id)}
             className={`flex-1 py-2 text-sm font-medium rounded-full transition-all duration-250 ease-organic ${
-              viewMode === id ? 'bg-white text-ink shadow-soft' : 'text-ink/50 hover:text-ink/80'
+              viewMode === id ? 'bg-card text-ink shadow-soft' : 'text-ink/50 hover:text-ink/80'
             }`}
           >
             {label}
@@ -234,8 +234,8 @@ function SessionRow({ session, onOpen, onDelete, index = 0, showDate = false }) 
 }
 
 function intensityClass(count) {
-  if (count >= 3) return 'bg-brand-600 text-white';
-  if (count === 2) return 'bg-brand-400 text-white';
+  if (count >= 3) return 'bg-brand-600 text-onbrand';
+  if (count === 2) return 'bg-brand-400 text-onbrand';
   return 'bg-brand-200 text-brand-800';
 }
 

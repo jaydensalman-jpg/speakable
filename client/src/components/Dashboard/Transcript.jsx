@@ -62,7 +62,7 @@ export default function Transcript({ results, mediaRef }) {
               // Highlighted words get a snug rounded background; the -mx offsets
               // the padding so highlights never push neighbouring words apart.
               const highlight = active
-                ? 'bg-brand-500 text-white rounded px-1 -mx-0.5'
+                ? 'bg-brand-500 text-onbrand rounded px-1 -mx-0.5'
                 : filler
                   ? 'bg-brand-100 border-b-2 border-brand-500 px-0.5 -mx-0.5'
                   : '';

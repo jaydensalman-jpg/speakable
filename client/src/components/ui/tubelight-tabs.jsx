@@ -28,7 +28,7 @@ export default function TubelightTabs({ items, active, onChange }) {
             {isActive && (
               <motion.span
                 layoutId="tab-pill"
-                className="absolute inset-0 -z-10 rounded-full bg-white shadow-soft"
+                className="absolute inset-0 -z-10 rounded-full bg-card shadow-soft"
                 initial={false}
                 transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 34 }}
               />

@@ -101,6 +101,13 @@ all three modes). The selector is hidden for audio-only takes.
 
 ### Design tokens (keep everything on these)
 - Colors: `cream` bg, `sand` surfaces/dividers, `ink` text (opacity steps /80 /65 /55 /45 /35), single coral `brand` accent — no cool grays (`slate`) anywhere.
+- **Light + dark theme (Oct 2026).** Every Tailwind colour is a CSS variable (`--c-*`, "R G B" triplets in `index.css`; `tailwind.config.js` maps them with `<alpha-value>`), and the header switch (`ui/theme-switch.jsx`, state in `lib/theme.js`) sets `<html data-theme="dark">`. Light values are the Figma palette; dark values are the 3D explainer video's (`speakable-3d/js/kit.js`: canvas `#07080b`, cream ink, glowing coral `#ee7a55`, mint/amber, glass cards). Rules that keep both themes correct:
+  - **Never write a hex/rgba or `bg-white`/`text-white` for UI colour.** Use the tokens: `bg-card` (raised surface), `bg-surface`, `text-onbrand` (text on a coral fill), and `rgb(var(--c-brand-500))` / `themeColor()` where CSS classes can't reach (SVG `style`, canvas). No `dark:` variants: a class written once is right in both themes.
+  - `ink` flips to cream in dark, so **`bg-ink` is not "a dark box"**. Things that must stay dark in both themes (the camera stage) use `.stage`.
+  - The dark `brand` ramp is inverted on purpose: 50-300 sink into the canvas (tints, borders), 600-800 get lighter (hover, text).
+  - Dark-only treatments (ambient haze, glass `.card`/`.panel`/`.stat-card`, `.glow-accent`) live at the bottom of `index.css`. `.glow-accent` is a no-op in light.
+  - `index.html` applies the saved theme inline before first paint (no flash). Default is light; the choice is per-device (`localStorage['speakable-theme']`), not synced.
+  - `ShareButton`'s exported score card is deliberately always the light card.
 - Type: **Fraunces** (`font-display`) for display/headings, **Inter** body.
 - Motion: `ease-organic` + `duration-250/400` (tailwind.config), keyframes in `index.css` (`animate-rise`, `word-in`, `ring-out`, `eq`, `float`); animate transform/opacity only; `prefers-reduced-motion` collapses all of it. **framer-motion** (home hero `shape-landing-hero` and the results `tubelight-tabs`) is NOT covered by that CSS rule — components using it must check `useReducedMotion()` themselves.
 - Shared classes: `.card`, `.stat-card`, `.btn-primary`; global `:focus-visible` ring.

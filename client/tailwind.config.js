@@ -1,34 +1,48 @@
+// `rgb(var(--c-x) / <alpha-value>)` keeps Tailwind's opacity modifiers working
+// (text-ink/55, bg-sand/70, ...) on top of a themeable variable.
+const v = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        // Palette lifted verbatim from the Figma redesign's index.css custom
-        // properties (Oct 2026). 500 IS --color-accent and 100 IS
-        // --color-accent-soft; the rest of the ramp is interpolated around them.
+        // Every colour is a CSS variable (an "R G B" triplet in index.css), so
+        // the light/dark switch re-themes the whole app by swapping variables
+        // on <html data-theme>. No `dark:` variants anywhere: a class written
+        // once is correct in both themes, including its /opacity steps.
+        //
+        // Light values are the Figma redesign's custom properties. Dark values
+        // are the palette of the 3D explainer video (speakable-3d/js/kit.js).
         brand: {
-          50: '#faf0ec',
-          100: '#f3dfd7', // --color-accent-soft
-          200: '#e8c3b5',
-          300: '#dca491',
-          400: '#d4826a',
-          500: '#c86242', // --color-accent
-          600: '#ad5236',
-          700: '#8c422b',
+          50: v('brand-50'),
+          100: v('brand-100'), // --color-accent-soft
+          200: v('brand-200'),
+          300: v('brand-300'),
+          400: v('brand-400'),
+          500: v('brand-500'), // --color-accent
+          600: v('brand-600'),
+          700: v('brand-700'),
+          800: v('brand-800'),
         },
-        cream: '#f5f2ec',   // --color-canvas
-        surface: '#fbfaf7', // --color-surface (the .panel fill)
-        sand: '#dcd6cb',    // --color-line
-        ink: '#1f1e1b',     // --color-ink
-        muted: '#74716b',   // --color-muted
-        faint: '#aaa59c',   // --color-faint
+        cream: v('cream'),     // --color-canvas
+        surface: v('surface'), // --color-surface (the .panel fill)
+        card: v('card'),       // raised surface: white in light, glass-dark in dark
+        sand: v('sand'),       // --color-line
+        ink: v('ink'),         // --color-ink
+        muted: v('muted'),     // --color-muted
+        faint: v('faint'),     // --color-faint
+        // Text/icon colour on a solid accent fill. White in light; in dark the
+        // video sets labels on coral in a deep warm brown, which also reads
+        // better on the brighter coral than white does.
+        onbrand: v('onbrand'),
         // Semantic pair. Replaces Tailwind's emerald/amber so on-target and
         // off-target match the design instead of approximating it.
-        good: '#287557',
-        'good-soft': '#deeee7',
-        warn: '#99651f',
-        'warn-soft': '#f3e7cc',
+        good: v('good'),
+        'good-soft': v('good-soft'),
+        warn: v('warn'),
+        'warn-soft': v('warn-soft'),
       },
       fontFamily: {
         // Editorial serif for big friendly headings; clean sans for body.
@@ -39,7 +53,7 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(43, 38, 34, 0.04), 0 8px 24px -12px rgba(43, 38, 34, 0.12)',
+        soft: 'var(--shadow-soft)', // themed in index.css
       },
       // Motion tokens — one organic curve + two durations, reused everywhere.
       transitionTimingFunction: {

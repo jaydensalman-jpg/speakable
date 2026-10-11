@@ -125,7 +125,7 @@ function HeroGeometric({
             variants={fadeUpVariants}
             initial="hidden"
             animate="visible"
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.6] border border-ink/[0.08] shadow-soft mb-8 md:mb-10"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-card/60 border border-ink/[0.08] shadow-soft mb-8 md:mb-10"
           >
             <Circle className="h-2 w-2 fill-brand-500/80 text-brand-500/80" />
             <span className="text-sm text-ink/55 tracking-wide">{badge}</span>

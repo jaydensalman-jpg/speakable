@@ -94,7 +94,7 @@ function SignInForm({ onSubmit }) {
 function SignedIn({ user, onSignOut }) {
   return (
     <div className="text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 font-display text-2xl text-white shadow-soft">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 font-display text-2xl text-onbrand shadow-soft">
         {(user.email?.[0] || '?').toUpperCase()}
       </div>
       <h1 className="mt-4 font-display text-3xl tracking-tight text-ink">Your account</h1>
