@@ -234,12 +234,12 @@ export default function Recorder({ onComplete, onRecordingStart }) {
                   className="h-full w-full object-cover -scale-x-100"
                 />
                 {!isActive && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/60">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/75">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
                     </svg>
                     <p className="text-xs">Camera turns on when you press record</p>
-                    <p className="text-[11px] text-white/35 px-6 text-center">
+                    <p className="text-[11px] text-white/50 px-6 text-center">
                       Eye contact is tracked on your device while you speak. Video is analyzed in your browser, never uploaded.
                     </p>
                   </div>
@@ -345,7 +345,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               {recState === 'idle' && (
                 <button
                   onClick={handleStart}
-                  className="glow-accent relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
+                  className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
                   aria-label="Start recording"
                 >
                   <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
@@ -367,7 +367,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               {recState === 'paused' && (
                 <button
                   onClick={handleResume}
-                  className="glow-accent relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
+                  className="relative flex h-20 w-20 items-center justify-center rounded-full bg-brand-500 text-white shadow-soft transition-all duration-250 ease-organic hover:scale-105 hover:bg-brand-600 active:scale-95"
                   aria-label="Resume recording"
                 >
                   <svg className="h-7 w-7" fill="currentColor" viewBox="0 0 24 24">

@@ -30,13 +30,22 @@ export default {
         surface: v('surface'), // --color-surface (the .panel fill)
         card: v('card'),       // raised surface: white in light, glass-dark in dark
         sand: v('sand'),       // --color-line
-        ink: v('ink'),         // --color-ink
+        // Ink carries an extra multiplier on its alpha. The app leans on opacity
+        // steps for secondary text (text-ink/40, /55 ...), and on a dark canvas
+        // the same step reads much dimmer than it does on cream. Dark mode sets
+        // --ink-alpha above 1 so every one of those steps is lifted in one
+        // place; it is 1 in light, where nothing changes.
+        ink: 'rgb(var(--c-ink) / calc(<alpha-value> * var(--ink-alpha, 1)))',
         muted: v('muted'),     // --color-muted
         faint: v('faint'),     // --color-faint
         // Text/icon colour on a solid accent fill. White in light; in dark the
         // video sets labels on coral in a deep warm brown, which also reads
         // better on the brighter coral than white does.
         onbrand: v('onbrand'),
+        // Text on a coral CHIP (transcript highlight, calendar heat cell). White
+        // in light. In dark the chips are the bright coral and take the video's
+        // deep-brown label colour, which white cannot match for contrast.
+        onchip: v('onchip'),
         // Semantic pair. Replaces Tailwind's emerald/amber so on-target and
         // off-target match the design instead of approximating it.
         good: v('good'),

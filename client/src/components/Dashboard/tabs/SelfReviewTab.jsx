@@ -71,7 +71,7 @@ export default function SelfReviewTab({ results }) {
         {hasVideo && (
           /* .playback-mode — stacks and stretches below 48rem, exactly as the
              design does; the pill row then becomes three equal columns. */
-          <div className="mt-7 flex flex-col items-stretch gap-6 rounded-2xl border border-sand bg-surface p-4 md:flex-row md:items-center md:justify-between">
+          <div className="glass mt-7 flex flex-col items-stretch gap-6 rounded-2xl border border-sand bg-surface p-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="eyebrow">Playback format</p>
               <p className="caption mt-1">Choose what you want to review.</p>
@@ -90,7 +90,7 @@ export default function SelfReviewTab({ results }) {
                   onClick={() => setMode(m.id)}
                   className={`whitespace-nowrap rounded-full px-[0.3rem] py-[0.45rem] text-center text-[0.72rem] font-medium leading-none transition-colors duration-[180ms] md:px-4 md:py-2.5 md:text-[0.8125rem] md:leading-normal ${
                     mode === m.id
-                      ? 'bg-brand-500 text-onbrand shadow-[0_0.2rem_0.6rem_rgb(var(--c-brand-500)_/_0.24)] glow-accent'
+                      ? 'bg-brand-500 text-onbrand shadow-[0_0.2rem_0.6rem_rgb(var(--c-brand-500)_/_0.24)]'
                       : 'text-muted hover:text-ink'
                   }`}
                 >
@@ -111,7 +111,7 @@ export default function SelfReviewTab({ results }) {
               duration={results.duration || 0}
             />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-sand bg-surface">
+            <div className="glass overflow-hidden rounded-2xl border border-sand bg-surface">
               <video
                 ref={mediaRef}
                 src={mediaUrl}

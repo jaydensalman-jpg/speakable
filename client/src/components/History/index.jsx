@@ -234,8 +234,8 @@ function SessionRow({ session, onOpen, onDelete, index = 0, showDate = false }) 
 }
 
 function intensityClass(count) {
-  if (count >= 3) return 'bg-brand-600 text-onbrand';
-  if (count === 2) return 'bg-brand-400 text-onbrand';
+  if (count >= 3) return 'bg-brand-600 text-onchip';
+  if (count === 2) return 'bg-brand-400 text-onchip';
   return 'bg-brand-200 text-brand-800';
 }
 

@@ -20,12 +20,12 @@ export default function ThemeSwitch({ className = '' }) {
       onClick={toggle}
       className={`group relative inline-flex h-8 w-[3.5rem] shrink-0 items-center rounded-full border p-[3px] transition-colors duration-250 ease-organic ${
         isDark
-          ? 'border-white/[0.14] bg-white/[0.06] shadow-soft'
+          ? 'border-white/25 bg-white/[0.1] shadow-soft'
           : 'border-sand bg-surface'
       } ${className}`}
     >
       {/* Both icons sit in the track; the thumb covers the active side. */}
-      <span className="pointer-events-none absolute inset-0 flex items-center justify-between px-[0.5rem] text-faint" aria-hidden="true">
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-between px-[0.5rem] text-muted" aria-hidden="true">
         <SunIcon className="h-3.5 w-3.5" />
         <MoonIcon className="h-3.5 w-3.5" />
       </span>
@@ -34,7 +34,7 @@ export default function ThemeSwitch({ className = '' }) {
         aria-hidden="true"
         className={`relative z-10 grid h-6 w-6 place-items-center rounded-full transition-all duration-400 ease-organic ${
           isDark
-            ? 'translate-x-6 bg-brand-500 text-onbrand glow-accent'
+            ? 'translate-x-6 bg-brand-500 text-onbrand'
             : 'translate-x-0 bg-card text-brand-500 shadow-soft ring-1 ring-sand'
         }`}
       >

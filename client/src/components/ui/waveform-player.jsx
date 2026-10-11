@@ -127,17 +127,23 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
   const pct = len > 0 ? (time / len) * 100 : 0;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-sand bg-surface">
+    <div className="glass overflow-hidden rounded-2xl border border-sand bg-surface">
       <audio ref={mediaRef} src={src} preload="metadata" className="hidden" />
 
       {/* .audio-visual */}
-      <div className="grid min-h-[21rem] content-center justify-items-center gap-6 bg-cream p-8">
+      <div className="media-well grid min-h-[21rem] content-center justify-items-center gap-6 bg-cream p-8">
         <p className="eyebrow">Your audio</p>
 
         {peaks && (
           <div className="flex h-32 w-[min(100%,40rem)] items-center justify-between gap-1.5" aria-hidden>
             {peaks.map((p, i) => (
-              <span key={i} className="wave-bar" style={{ height: `${p * 100}%` }} />
+              <span
+                key={i}
+                className="wave-bar"
+                // Dark mode lights the bars the playhead has passed (index.css).
+                data-played={(i + 0.5) / peaks.length <= pct / 100}
+                style={{ height: `${p * 100}%` }}
+              />
             ))}
           </div>
         )}

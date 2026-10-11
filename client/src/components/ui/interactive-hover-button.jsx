@@ -39,7 +39,7 @@ const InteractiveHoverButton = forwardRef(function InteractiveHoverButton(
           the padding on wide/full-width buttons instead of under the label. */}
       <div
         aria-hidden
-        className="absolute left-4 top-[40%] h-2 w-2 scale-[1] rounded-lg bg-brand-500 transition-all duration-300 ease-organic group-hover:left-0 group-hover:top-0 group-hover:h-full group-hover:w-full group-hover:scale-[1.8]"
+        className="accent-solid absolute left-4 top-[40%] h-2 w-2 scale-[1] rounded-lg bg-brand-500 transition-all duration-300 ease-organic group-hover:left-0 group-hover:top-0 group-hover:h-full group-hover:w-full group-hover:scale-[1.8]"
       />
     </button>
   );

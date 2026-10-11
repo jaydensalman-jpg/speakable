@@ -62,9 +62,9 @@ export default function Transcript({ results, mediaRef }) {
               // Highlighted words get a snug rounded background; the -mx offsets
               // the padding so highlights never push neighbouring words apart.
               const highlight = active
-                ? 'bg-brand-500 text-onbrand rounded px-1 -mx-0.5'
+                ? 'bg-brand-500 text-onchip rounded px-1 -mx-0.5'
                 : filler
-                  ? 'bg-brand-100 border-b-2 border-brand-500 px-0.5 -mx-0.5'
+                  ? 'filler-mark bg-brand-100 border-b-2 border-brand-500 px-0.5 -mx-0.5'
                   : '';
               const cls = [
                 interactive ? 'cursor-pointer transition-colors rounded hover:bg-brand-100 hover:text-ink' : '',
@@ -104,8 +104,8 @@ export default function Transcript({ results, mediaRef }) {
           {unlocated > 0
             ? `This take was recorded before we started placing detected fillers in the transcript, so ${unlocated} "um"/"uh" heard in your audio can't be shown here. Record a new take to see every one highlighted.`
             : interactive
-              ? 'Tap any word to jump the audio to that moment. Filler words are underlined in coral.'
-              : 'Filler words are underlined in coral.'}
+              ? 'Tap any word to jump the audio to that moment. Filler words are marked in coral.'
+              : 'Filler words are marked in coral.'}
         </p>
       )}
     </section>

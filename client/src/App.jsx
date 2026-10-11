@@ -247,11 +247,11 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen">
       <header className="border-b border-sand bg-cream/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[86rem] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button onClick={goHome} className="flex items-center gap-2.5" aria-label="Speakable home">
-            <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft glow-accent">
+            <div className="w-8 h-8 rounded-xl bg-brand-500 flex items-center justify-center shadow-soft accent-solid">
               <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1a4 4 0 014 4v7a4 4 0 01-8 0V5a4 4 0 014-4zm-2 15.93A7 7 0 0019 12h2a9 9 0 01-18 0h2a7 7 0 006 6.93V21H9v2h6v-2h-2v-2.07z" />
               </svg>
