@@ -2,7 +2,7 @@ import { HeroGeometric } from '../ui/shape-landing-hero.jsx';
 import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
 
 // Deliberately spare: one headline, one action, one visual anchor — now staged
-// on the HeroGeometric backdrop (floating warm-glass shapes, framer-motion
+// on the HeroGeometric backdrop (flat coral-tinted capsules, framer-motion
 // entrance). The preview card still shows what the product does better than
 // copy can; the CTA/tagline/preview ride the hero's third entrance beat.
 export default function Home({ onStart }) {
@@ -14,7 +14,6 @@ export default function Home({ onStart }) {
         <p className="mt-4 text-xs text-ink/40">Three minutes. Recordings never leave your device.</p>
 
         <div className="relative mt-12 w-full max-w-md">
-          <div className="absolute -inset-10 -z-10 rounded-full bg-brand-200/25 blur-3xl" />
           <ReportPreview />
         </div>
       </div>

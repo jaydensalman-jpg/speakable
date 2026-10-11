@@ -4,9 +4,8 @@ import { useTheme } from '../../lib/theme.js';
 //
 // A real switch (role="switch"), not a button that swaps an icon: the thumb's
 // side tells you the state at a glance and one tap or Space/Enter flips it.
-// Styled after the 3D explainer video: in dark the track is a glass pill with
-// a white hairline and the thumb is the glowing coral disc the video uses for
-// its record button; in light it is the same control in the cream palette.
+// Flat in both themes: a hairline track and a solid thumb, white with a coral
+// sun in light, coral with a moon in dark.
 export default function ThemeSwitch({ className = '' }) {
   const { isDark, toggle } = useTheme();
 

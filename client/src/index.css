@@ -8,10 +8,9 @@
    switch in the header sets <html data-theme="dark">; nothing else changes.
 
    Light: the Figma redesign's custom properties.
-   Dark:  the palette of the 3D explainer video (speakable-3d/js/kit.js) —
-          near-black canvas #07080b, cream ink #f5f2ec, coral #ee7a55 that is
-          allowed to glow, mint and amber for on/off target, hairlines as
-          white at 11%, raised surfaces as dark glass. */
+   Dark:  the colours of the 3D explainer video (near-black canvas, cream ink,
+          coral, mint and amber for on/off target), used as FLAT fills. The
+          video's gradients, glass and bloom are deliberately not carried over. */
 :root {
   color-scheme: light;
 
@@ -42,29 +41,27 @@
 
   --shadow-soft: 0 1px 2px rgba(43, 38, 34, 0.04), 0 8px 24px -12px rgba(43, 38, 34, 0.12);
   --shadow-lift: 0 14px 32px -16px rgba(31, 30, 27, 0.22);
-  /* Accent glow. Off in light, where the palette is matte. */
-  --glow: none;
-  --glow-text: none;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Contrast pass (Oct 2026). The first dark palette flattened the video's
-     translucent glass onto near-black, which left cards, hairlines and
-     secondary text only a few shades off the canvas. The video does not look
-     like that on screen: its cards are a visibly lighter grey glass over a
-     violet-to-crimson backdrop, with bright rims and saturated coral. These
-     values are taken from rendered frames rather than from the source alphas. */
-  --c-cream: 10 9 16;        /* canvas, and the inset wells inside cards */
-  --c-surface: 30 30 38;     /* quiet raised surface */
-  --c-card: 42 42 50;        /* glass card body */
-  --c-sand: 68 68 80;        /* hairlines, tracks, pill borders */
+  /* Flat dark theme (Oct 2026, third pass). Solid fills only: no gradients, no
+     glass, no glow. The first pass was too dim; the second fixed contrast but
+     did it with a violet-to-crimson wash, top-lit glass and bloom, which read
+     as machine-made. Separation now comes from value alone: each surface is a
+     clear step lighter than the one beneath it, and the coral is saturated
+     enough to carry without lighting effects. Neutrals are neutral on purpose
+     (no violet cast). */
+  --c-cream: 12 12 14;       /* canvas, and the inset wells inside cards */
+  --c-surface: 28 28 32;     /* quiet raised surface */
+  --c-card: 38 38 43;        /* card body */
+  --c-sand: 64 64 72;        /* hairlines, tracks, pill borders */
   --c-ink: 250 248 244;
-  --c-muted: 192 189 184;    /* eyebrows, captions: 9:1 on the canvas */
+  --c-muted: 192 189 184;    /* eyebrows, captions */
   --c-faint: 134 131 128;
-  --c-onbrand: 255 255 255;  /* on the deep coral button fill (see .accent-solid) */
-  --c-onchip: 42 16 8;       /* #2a1008, the video's label colour on coral chips */
+  --c-onbrand: 255 255 255;  /* on the deep coral button fill (see below) */
+  --c-onchip: 42 16 8;       /* deep brown label on the bright coral chips */
   --ink-alpha: 1.4;          /* lifts every text-ink/NN step; see tailwind.config */
 
   /* The ramp runs the other way: 50-300 are coral sunk into the dark canvas
@@ -75,7 +72,7 @@
   --c-brand-200: 132 62 44;
   --c-brand-300: 180 86 60;
   --c-brand-400: 228 102 64;
-  --c-brand-500: 246 125 90;   /* coral as it renders in the video, with bloom */
+  --c-brand-500: 246 125 90;
   --c-brand-600: 250 148 116;
   --c-brand-700: 253 176 150;
   --c-brand-800: 254 202 184;
@@ -85,11 +82,10 @@
   --c-warn: 244 192 100;
   --c-warn-soft: 78 58 22;
 
-  /* A lit top edge plus a deep drop, the way the video's glass cards sit. */
-  --shadow-soft: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 12px 32px -14px rgb(0 0 0 / 0.8);
-  --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 22px 48px -18px rgb(0 0 0 / 0.9);
-  --glow: 0 0 18px rgb(246 110 70 / 0.6), 0 0 3px rgb(255 160 130 / 0.7);
-  --glow-text: 0 0 34px rgb(246 110 70 / 0.5);
+  /* Plain drop shadows. On a near-black canvas they barely register, which is
+     fine: the borders and the value steps do the separating. */
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 14px 32px -16px rgb(0 0 0 / 0.8);
 }
 
 @layer base {
@@ -415,140 +411,92 @@ html {
   to { opacity: 1; transform: scaleY(1); }
 }
 
-/* ---- Dark theme: the parts a palette swap cannot express ------------------ */
+/* ---- Dark theme: the parts a palette swap cannot express ------------------
+   Everything here is a flat fill. No gradients, backdrop blur or glow. */
 
-/* Backdrop. The video's cards float over a violet-to-crimson wash, and that
-   colour behind the glass is most of why they read as separate objects. It is
-   a fixed layer on body::before rather than a body background so it stays put
-   while the page scrolls on every browser (iOS ignores
-   background-attachment: fixed). The app root is transparent, so this shows
-   through everywhere content does not sit on a card. */
-:root[data-theme='dark'] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(62rem 40rem at 8% -8rem, rgb(72 44 168 / 0.5), transparent 62%),
-    radial-gradient(58rem 44rem at 96% 104%, rgb(186 30 62 / 0.46), transparent 64%),
-    radial-gradient(46rem 30rem at 60% 42%, rgb(246 110 70 / 0.1), transparent 66%);
-}
-
-/* Glass. A visibly lighter grey body, top-lit, with a bright rim: the three
-   card classes plus .glass for bordered blocks that are not cards in light
-   (the playback selector, the media object). .glass is a no-op in light. */
-:root[data-theme='dark'] .card,
-:root[data-theme='dark'] .stat-card,
+/* Bordered blocks that are quiet surfaces in light (.panel, and .raised on the
+   playback selector and media object) step up to the card value in dark, so
+   they separate from the canvas as clearly as the cards do. */
 :root[data-theme='dark'] .panel,
-:root[data-theme='dark'] .glass {
-  background-color: rgb(var(--c-card) / 0.84);
-  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.02) 62%);
-  border-color: rgb(255 255 255 / 0.2);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.26),
-    inset 0 0 0 1px rgb(255 255 255 / 0.03),
-    0 26px 60px -28px rgb(0 0 0 / 0.95);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+:root[data-theme='dark'] .raised {
+  background-color: rgb(var(--c-card));
 }
 
 /* The camera stage is dark in both themes (it sits behind white labels). In
-   dark it drops to near-black so it reads as a screen set into the card. */
+   dark it drops below the card so it reads as a screen set into it. */
 .stage {
   background-color: rgb(31 30 27 / 0.95);
 }
 :root[data-theme='dark'] .stage {
-  background-color: rgb(4 4 8);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  background-color: rgb(6 6 8);
 }
 
-/* Solid coral actions. In dark these take a deeper, more saturated coral than
-   the text/numeral coral, top-lit like the video's pill: white label text needs
-   the darker fill to stay readable, and the lighter coral is kept for things
-   that glow on the canvas. Matches every solid coral fill that carries white
-   text without each one opting in; .accent-solid is for the ones that hold an
-   icon instead. */
+/* Solid coral actions. In dark these take a deeper coral than the text/numeral
+   coral: white label text needs the darker fill to stay readable. Matches every
+   solid coral fill that carries white text without each one opting in;
+   .accent-solid is for the ones that hold an icon instead. */
 :root[data-theme='dark'] .btn-primary,
 :root[data-theme='dark'] .accent-solid,
 :root[data-theme='dark'] .bg-brand-500.text-onbrand,
 :root[data-theme='dark'] .bg-brand-500.text-white {
-  background-image: linear-gradient(180deg, rgb(246 114 66), rgb(222 82 34));
-  border-color: rgb(255 150 110 / 0.55);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.32),
-    0 0 22px rgb(240 96 50 / 0.5),
-    0 10px 26px -12px rgb(240 96 50 / 0.7);
-  text-shadow: 0 1px 1px rgb(120 30 0 / 0.35);
+  background-color: rgb(224 86 42);
+  border-color: rgb(224 86 42);
+  box-shadow: none;
 }
 :root[data-theme='dark'] .btn-primary:hover,
 :root[data-theme='dark'] .accent-solid:hover,
 :root[data-theme='dark'] .bg-brand-500.text-onbrand:hover,
 :root[data-theme='dark'] .bg-brand-500.text-white:hover {
-  filter: brightness(1.1);
-}
-
-/* Glow: big coral numerals, bar fills and anything tagged .glow-accent.
-   Scoped to dark so it can never cancel an element's own shadow in light. */
-:root[data-theme='dark'] .glow-accent {
-  box-shadow: var(--glow);
-}
-.stat-xl.text-brand-500 {
-  text-shadow: var(--glow-text);
+  background-color: rgb(236 102 58);
+  border-color: rgb(236 102 58);
 }
 
 /* Filler words in the transcript. Light keeps the design's quiet underline
-   tint; dark uses the video's solid glowing chip with a deep-brown label.
-   Horizontal padding is untouched so the paragraph does not reflow when the
-   theme changes. */
+   tint; dark uses a solid coral chip with a deep-brown label. Horizontal
+   padding is untouched so the paragraph does not reflow when the theme changes. */
 :root[data-theme='dark'] .filler-mark {
   background-color: rgb(var(--c-brand-500));
   border-bottom-color: transparent;
   border-radius: 0.34em;
   color: rgb(var(--c-onchip));
   font-weight: 600;
-  box-shadow: 0 0 12px rgb(246 110 70 / 0.5);
 }
 
 /* Waveform. Bars ahead of the playhead are the deep coral; bars already played
-   turn light and bloom, so the waveform doubles as a progress read-out, as it
-   does in the video. Light mode keeps one colour (the Figma has no played
-   state), so [data-played] is only styled here. */
+   are the light coral, so the waveform doubles as a progress read-out. Two flat
+   colours. Light mode keeps one colour (the Figma has no played state), so
+   [data-played] is only styled here. */
 :root[data-theme='dark'] .wave-bar {
-  background-color: rgb(226 88 40);
-  box-shadow: 0 0 9px rgb(226 88 40 / 0.5);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: rgb(224 86 42);
+  transition: background-color 0.2s ease;
 }
 :root[data-theme='dark'] .wave-bar[data-played='true'] {
-  background-color: rgb(255 190 168);
-  box-shadow: 0 0 16px rgb(255 124 92 / 1), 0 0 4px rgb(255 226 214 / 0.95);
+  background-color: rgb(255 186 164);
 }
-/* The waveform sits on the glass itself, as in the video. In light this area is
-   the cream canvas inside a surface card; in dark a canvas-coloured fill would
-   be a black slab in the middle of the card. */
+/* The waveform sits on the card itself. In light this area is the cream canvas
+   inside a surface card; in dark a canvas-coloured fill would be a black slab
+   in the middle of the card. */
 :root[data-theme='dark'] .media-well {
   background-color: transparent;
 }
 
-/* Scrub bar: a thicker track and a visible lit thumb. Light has no thumb, per
-   the Figma; on a dark track the playhead needs one to be findable. */
+/* Scrub bar: a thicker track and a visible thumb. Light has no thumb, per the
+   Figma; on a dark track the playhead needs one to be findable. */
 :root[data-theme='dark'] .scrub {
   height: 3px;
   border-radius: 999px;
 }
 :root[data-theme='dark'] .scrub::-webkit-slider-thumb {
-  height: 0.8rem;
-  width: 0.8rem;
+  height: 0.75rem;
+  width: 0.75rem;
   border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0 12px rgb(255 150 120 / 0.95), 0 0 2px rgb(255 255 255 / 0.9);
+  background: rgb(var(--c-ink));
 }
 :root[data-theme='dark'] .scrub::-moz-range-thumb {
-  height: 0.8rem;
-  width: 0.8rem;
+  height: 0.75rem;
+  width: 0.75rem;
   border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0 12px rgb(255 150 120 / 0.95), 0 0 2px rgb(255 255 255 / 0.9);
+  background: rgb(var(--c-ink));
 }
 
 /* The few Tailwind reds (discard, delete hover) are pastel fills that would

@@ -2,9 +2,12 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Circle } from 'lucide-react';
 import { cn } from '../../lib/cn.js';
 
-// Kokonut UI's "shape landing hero", re-homed for SpeakCoach: JSX instead of TSX,
-// cream/warm-glass instead of near-black, coral/rose/amber tints instead of the
-// original indigo/violet/cyan (single warm accent — no cool colors anywhere).
+// Kokonut UI's "shape landing hero", re-homed for Speakable: JSX instead of TSX,
+// and FLAT. The original is built from gradients (gradient capsules with a
+// radial sheen, a blurred colour wash, gradient headline text, a fade overlay),
+// which is the look that reads as machine-made. Here the capsules are a single
+// flat coral tint with a hairline, and the headline accent is solid coral.
+// No gradients, no blur, no rose: one accent, as everywhere else in the app.
 // framer-motion ignores the global CSS reduced-motion rule (it animates inline
 // styles from JS), so this file must check useReducedMotion() itself.
 
@@ -14,7 +17,7 @@ function ElegantShape({
   width = 400,
   height = 100,
   rotate = 0,
-  gradient = 'from-brand-300/[0.18]',
+  tint = 'bg-brand-300/[0.12]',
 }) {
   const reduceMotion = useReducedMotion();
 
@@ -38,13 +41,8 @@ function ElegantShape({
       >
         <div
           className={cn(
-            'absolute inset-0 rounded-full',
-            'bg-gradient-to-r to-transparent',
-            gradient,
-            'backdrop-blur-[2px] border-2 border-white/[0.65]',
-            'shadow-[0_8px_32px_0_rgba(43,38,34,0.08)]',
-            'after:absolute after:inset-0 after:rounded-full',
-            'after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.5),transparent_70%)]'
+            'absolute inset-0 rounded-full border border-brand-300/25',
+            tint
           )}
         />
       </motion.div>
@@ -73,15 +71,13 @@ function HeroGeometric({
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] w-full flex items-center justify-center overflow-hidden bg-cream">
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-500/[0.05] via-transparent to-brand-300/[0.05] blur-3xl" />
-
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
         <ElegantShape
           delay={0.3}
           width={600}
           height={140}
           rotate={12}
-          gradient="from-brand-400/[0.16]"
+          tint="bg-brand-400/[0.10]"
           className="left-[-10%] md:left-[-5%] top-[15%] md:top-[20%]"
         />
         <ElegantShape
@@ -89,7 +85,7 @@ function HeroGeometric({
           width={500}
           height={120}
           rotate={-15}
-          gradient="from-rose-400/[0.14]"
+          tint="bg-brand-300/[0.12]"
           className="right-[-5%] md:right-[0%] top-[70%] md:top-[75%]"
         />
         <ElegantShape
@@ -97,7 +93,7 @@ function HeroGeometric({
           width={300}
           height={80}
           rotate={-8}
-          gradient="from-brand-300/[0.14]"
+          tint="bg-brand-300/[0.10]"
           className="left-[5%] md:left-[10%] bottom-[5%] md:bottom-[10%]"
         />
         <ElegantShape
@@ -105,7 +101,7 @@ function HeroGeometric({
           width={200}
           height={60}
           rotate={20}
-          gradient="from-brand-300/[0.18]"
+          tint="bg-brand-400/[0.10]"
           className="right-[15%] md:right-[20%] top-[10%] md:top-[15%]"
         />
         <ElegantShape
@@ -113,7 +109,7 @@ function HeroGeometric({
           width={150}
           height={40}
           rotate={-25}
-          gradient="from-rose-300/[0.16]"
+          tint="bg-brand-300/[0.12]"
           className="left-[20%] md:left-[25%] top-[5%] md:top-[10%]"
         />
       </div>
@@ -135,9 +131,7 @@ function HeroGeometric({
             <h1 className="font-display text-[3.5rem] sm:text-[4.25rem] md:text-8xl leading-[1.04] tracking-tight">
               <span className="text-ink">{title1}</span>
               <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-brand-400 to-brand-300">
-                {title2}
-              </span>
+              <span className="text-brand-500">{title2}</span>
             </h1>
           </motion.div>
 
@@ -148,8 +142,6 @@ function HeroGeometric({
           )}
         </div>
       </div>
-
-      <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-cream/80 pointer-events-none" />
     </div>
   );
 }

@@ -20,10 +20,8 @@ export default function AudioVisualizer({ getAnalyser, isActive }) {
       return;
     }
 
-    // Gradient computed once, reused each frame
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, themeColor('brand-500', 0.95));
-    gradient.addColorStop(1, themeColor('brand-300', 0.5));
+    // One flat coral, read once per effect run (theme is in the deps).
+    const barColor = themeColor('brand-500', 0.9);
 
     const draw = () => {
       const analyser = getAnalyser();
@@ -40,7 +38,7 @@ export default function AudioVisualizer({ getAnalyser, isActive }) {
       const step = Math.floor(data.length / BAR_COUNT);
       const barW = Math.floor(canvas.width / BAR_COUNT) - 1;
 
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = barColor;
       for (let i = 0; i < BAR_COUNT; i++) {
         const v = data[i * step] / 255;
         const h = Math.max(3, v * canvas.height);

@@ -25,7 +25,7 @@ export default function RankedBars({ rows, divided = false }) {
           <span className="truncate text-[1.0625rem] text-ink">{label}</span>
           <div className="h-2.5 rounded border border-sand bg-sand/70">
             <span
-              className="glow-accent block h-full rounded-[0.2rem] bg-brand-500 transition-all duration-500"
+              className="block h-full rounded-[0.2rem] bg-brand-500 transition-all duration-500"
               style={{ width: `${(count / max) * 100}%` }}
             />
           </div>

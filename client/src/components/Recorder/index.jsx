@@ -339,7 +339,7 @@ export default function Recorder({ onComplete, onRecordingStart }) {
               <span
                 ref={glowRef}
                 aria-hidden
-                className="absolute -inset-2 rounded-full bg-brand-400/40 blur-xl transition-opacity duration-400"
+                className="absolute -inset-2 rounded-full bg-brand-400/40 transition-opacity duration-400"
                 style={{ opacity: isRecording ? 0.3 : 0 }}
               />
               {recState === 'idle' && (
@@ -525,7 +525,7 @@ function IdeaGenerator() {
   }
 
   return (
-    <div className="mb-6 animate-rise rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 to-sand p-5 text-center">
+    <div className="mb-6 animate-rise rounded-3xl border border-brand-100 bg-brand-50 p-5 text-center">
       {/* aria-live is off mid-roll so a screen reader announces the result once
           instead of every one of the 13 frames. */}
       <div aria-live={rolling ? 'off' : 'polite'} aria-atomic="true">

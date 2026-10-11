@@ -127,7 +127,7 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
   const pct = len > 0 ? (time / len) * 100 : 0;
 
   return (
-    <div className="glass overflow-hidden rounded-2xl border border-sand bg-surface">
+    <div className="raised overflow-hidden rounded-2xl border border-sand bg-surface">
       <audio ref={mediaRef} src={src} preload="metadata" className="hidden" />
 
       {/* .audio-visual */}
@@ -140,7 +140,7 @@ export default function WaveformPlayer({ src, mediaRef, duration = 0 }) {
               <span
                 key={i}
                 className="wave-bar"
-                // Dark mode lights the bars the playhead has passed (index.css).
+                // Dark mode recolours the bars the playhead has passed (index.css).
                 data-played={(i + 0.5) / peaks.length <= pct / 100}
                 style={{ height: `${p * 100}%` }}
               />

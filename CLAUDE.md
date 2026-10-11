@@ -101,13 +101,14 @@ all three modes). The selector is hidden for audio-only takes.
 
 ### Design tokens (keep everything on these)
 - Colors: `cream` bg, `sand` surfaces/dividers, `ink` text (opacity steps /80 /65 /55 /45 /35), single coral `brand` accent — no cool grays (`slate`) anywhere.
-- **Light + dark theme (Oct 2026).** Every Tailwind colour is a CSS variable (`--c-*`, "R G B" triplets in `index.css`; `tailwind.config.js` maps them with `<alpha-value>`), and the header switch (`ui/theme-switch.jsx`, state in `lib/theme.js`) sets `<html data-theme="dark">`. Light values are the Figma palette; dark values are the 3D explainer video's (`speakable-3d/js/kit.js`: canvas `#07080b`, cream ink, glowing coral `#ee7a55`, mint/amber, glass cards). Rules that keep both themes correct:
+- **Light + dark theme (Oct 2026).** Every Tailwind colour is a CSS variable (`--c-*`, "R G B" triplets in `index.css`; `tailwind.config.js` maps them with `<alpha-value>`), and the header switch (`ui/theme-switch.jsx`, state in `lib/theme.js`) sets `<html data-theme="dark">`. Light values are the Figma palette; dark takes its colours from the 3D explainer video (near-black canvas, cream ink, coral, mint/amber) but as flat fills. Rules that keep both themes correct:
+  - **FLAT, in both themes. No gradients, no glass/backdrop-blur surfaces, no glow or bloom, no blurred colour halos.** The user asked for this explicitly because those effects read as AI-generated; a dark pass that used a violet-to-crimson wash, top-lit glass and glowing coral was rejected for it. Depth comes from value steps and 1px borders only. The home hero's capsules are a flat tint, its headline accent is solid coral. The one `linear-gradient` left (the scrub bar in `waveform-player.jsx`) is a hard-stop progress fill, two flat colours, not a visual gradient. The header's `backdrop-blur` and the paused-video overlay blur are functional and stay.
   - **Never write a hex/rgba or `bg-white`/`text-white` for UI colour.** Use the tokens: `bg-card` (raised surface), `bg-surface`, `text-onbrand` (text on a coral fill), and `rgb(var(--c-brand-500))` / `themeColor()` where CSS classes can't reach (SVG `style`, canvas). No `dark:` variants: a class written once is right in both themes.
   - `ink` flips to cream in dark, so **`bg-ink` is not "a dark box"**. Things that must stay dark in both themes (the camera stage) use `.stage`.
   - The dark `brand` ramp is inverted on purpose: 50-300 sink into the canvas (tints, borders), 600-800 get lighter (hover, text).
-  - Dark-only treatments live at the bottom of `index.css`, each a no-op in light: the violet-to-crimson backdrop (`body::before`, fixed; the App root is deliberately transparent so it shows), glass (`.card`/`.panel`/`.stat-card`, plus `.glass` for bordered blocks that are not cards), `.glow-accent`, solid coral fills (`.btn-primary`, `.accent-solid`, and any `bg-brand-500` carrying `text-onbrand`/`text-white` get a deeper top-lit coral so white labels stay readable), `.filler-mark` chips, the waveform's played/unplayed split (`.wave-bar[data-played]`) and the scrub thumb.
-  - **Contrast in dark:** cards must sit visibly above the canvas (`card` 42 42 50 on `cream` 10 9 16), and `--ink-alpha: 1.4` multiplies every `text-ink/NN` step, because the same opacity reads far dimmer on dark than on cream. Check new dark UI against the video frames, not the source alphas in `kit.js` (flattening those onto black is what made the first pass muddy).
-  - Text on coral: `text-onbrand` on solid buttons (white in both themes), `text-onchip` on chips and calendar heat cells (white in light, the video's deep brown `#2a1008` in dark).
+  - Dark-only rules live at the bottom of `index.css`, each a no-op in light: `.panel`/`.raised` step up to the card value, solid coral fills (`.btn-primary`, `.accent-solid`, and any `bg-brand-500` carrying `text-onbrand`/`text-white`) take a deeper coral so white labels stay readable, `.filler-mark` chips, the waveform's played/unplayed split (`.wave-bar[data-played]`), `.media-well`, and the scrub thumb.
+  - **Contrast in dark:** each surface is a clear value step above the one beneath (`cream` 12 12 14 < `surface` 28 28 32 < `card` 38 38 43, lines `sand` 64 64 72), and `--ink-alpha: 1.4` multiplies every `text-ink/NN` step, because the same opacity reads far dimmer on dark than on cream.
+  - Text on coral: `text-onbrand` on solid buttons (white in both themes), `text-onchip` on chips and calendar heat cells (white in light, deep brown `#2a1008` in dark).
   - `index.html` applies the saved theme inline before first paint (no flash). Default is light; the choice is per-device (`localStorage['speakable-theme']`), not synced.
   - `ShareButton`'s exported score card is deliberately always the light card.
 - Type: **Fraunces** (`font-display`) for display/headings, **Inter** body.
@@ -132,8 +133,8 @@ src/
                       layout (the original 21st.dev "lamp" glow was removed — it read
                       unprofessional). Labels on desktop, icons on mobile; width
                       matches the result cards. Controlled (active/onChange).
-    ui/shape-landing-hero  Kokonut UI hero adapted to the warm palette (framer-motion,
-                      floating glass shapes); Home renders inside it, full-bleed
+    ui/shape-landing-hero  Kokonut UI hero, flattened (framer-motion; floating capsules
+                      are a flat coral tint, no gradients); Home renders inside it, full-bleed
                       (App drops the max-w main wrapper for the home state only)
     ui/interactive-hover-button  the app's primary CTA (replaces .btn-primary at
                       call sites): white pill + coral seed dot that floods on
