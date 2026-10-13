@@ -3,6 +3,7 @@
 // then a plain breakdown list. Every figure is computed from this take.
 
 import RankedBars from '../../ui/ranked-bars.jsx';
+import LiveCaptionNote from '../../ui/live-caption-note.jsx';
 
 // Bar runs 0 to 10% of words, double the 5% target, so a normal reading lands
 // around mid-bar and stays legible. Scaled against 100% every real result would
@@ -29,6 +30,8 @@ export default function FillerWordsTab({ results }) {
 
   return (
     <div className="animate-rise">
+      <LiveCaptionNote results={results} className="mb-6" />
+
       {/* .filler-lead — total on the left behind a divider, goal + scale on the
           right. Two columns on desktop, stacked with a rule between on phones. */}
       <section className="panel mb-8 grid items-center gap-6 md:grid-cols-[0.7fr_1.3fr] md:gap-12">

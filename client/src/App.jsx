@@ -71,6 +71,11 @@ export default function App() {
       let transcript = '';
       let wordList = [];
       let audioDuration = 0;
+      // Which recognizer produced the words. 'live' means Whisper failed and the
+      // browser's live captions were used instead; those strip most fillers and
+      // commonly write "um" as "I'm", so the report has to say so rather than
+      // present a low filler count as if it were measured.
+      let transcriptSource = 'whisper';
       try {
         const result = await transcribeLocally(blob, {
           onProgress: (e) => {
@@ -91,6 +96,7 @@ export default function App() {
         if (words && words.length) {
           wordList = words;
           transcript = words.map((w) => w.word).join(' ');
+          transcriptSource = 'live';
         } else if (source === 'upload') {
           const reason = err?.message ? ` (reason: ${err.message})` : '';
           throw new Error(
@@ -142,6 +148,7 @@ export default function App() {
         words: wordList,
         // Transcript view + all filler numbers read this; pacing/vocab read `words`.
         displayWords,
+        transcriptSource,
         fillerWordCounts,
         avgWpm,
         wpmData,

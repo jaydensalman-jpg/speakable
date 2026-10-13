@@ -125,10 +125,15 @@ export function collapseRepeatedFillers(words) {
     if (
       label &&
       isHesitation(label) &&
-      prevLabel === label &&
+      prevLabel &&
+      isHesitation(prevLabel) &&
       (w.start ?? 0) - (prev.end ?? prev.start ?? 0) <= REPEAT_MAX_GAP_S
     ) {
       // Same sustained hesitation — extend the previous one instead of adding.
+      // This holds across labels too: Whisper often writes one drawn-out
+      // "uhhm" as "uh um", and that is one hesitation, not two. When the two
+      // differ, "um" is kept as the label, since the run ended on the nasal.
+      if (prevLabel !== label && label === 'um') prev.word = w.word;
       prev.end = w.end ?? prev.end;
       continue;
     }

@@ -9,9 +9,10 @@
 // Model size is the main lever on filler capture. Whisper is trained to emit
 // clean, readable text and normalizes disfluencies away, and the smaller the
 // variant the more aggressively it does that — tiny.en drops the most "um"/"uh",
-// small.en keeps the most. (The usual fix, priming the decoder with a prompt
-// full of fillers, is not available: transformers.js 2.17's `prompt_ids` only
-// carries language/task, not text conditioning.)
+// small.en keeps the most. Model size alone is not enough, though: even
+// small.en drops clear "um"s when fluent text is more probable (measured: 0 of
+// 4 kept in a sentence that also had real "I'm"s), so the decoder is also
+// nudged toward hesitation tokens. See installFillerBias below.
 //
 // Desktop runs small.en (~238 MB quantized: 88 MB encoder + 150 MB decoder) for
 // the best hesitation capture, accepting a bigger one-time download and roughly
@@ -32,13 +33,76 @@ const NON_SPEECH =
 
 let transcriberPromise = null;
 
+// Hesitation tokens the decoder is nudged toward (see installFillerBias).
+const FILLER_FORMS = [' um', ' Um', ' uh', ' Uh', ' umm', ' Umm', ' uhm', ' Uhm', ' uhh', ' Uhh'];
+// Size of the nudge, in logits. Tuned Oct 2026 on synthesized clips with known
+// content, on BOTH models (small.en and tiny.en):
+//   - a clip with four clear fillers among real "I'm"s: 0 of 4 kept at 0 and
+//     at 2, 3 of 4 at 3.5-4, 4 of 4 from 4.5 up
+//   - clean speech, speech full of real "I'm"/"I am"/"umbrella"/"umpire", and
+//     speech with long pauses, room noise and breath sounds: 0 fillers invented
+//     at 4.5, at 6 and at 7.5
+//   - at 10 it breaks down completely (clean speech becomes "uh uh uh ...")
+// So 4.5 is the lowest value that recovers everything, with the tested-safe
+// range extending 3 logits above it. Do not raise it without re-running both
+// halves of that test; see CLAUDE.md for how the clips are made.
+const FILLER_BIAS = 4.5;
+
+// Whisper was trained on cleaned-up transcripts, so its decoder carries a
+// strong prior AGAINST writing hesitations: where the audio says "um", fluent
+// text is simply more probable to it, so it skips the sound or writes the
+// nearest fluent word ("I'm", or folds "and, um," into a name). That prior, not
+// the audio, is what loses fillers.
+//
+// This adds a small constant to the logits of the hesitation tokens at every
+// decoding step, which cancels part of that prior and nothing else. The audio
+// still decides: the bonus only changes the outcome where "um" was already a
+// close runner-up, i.e. where the sound is there. It cannot create a filler
+// from clean speech, where those tokens sit far below the winner.
+function installFillerBias(transcriber) {
+  const { model, tokenizer } = transcriber;
+  const ids = new Set();
+  for (const form of FILLER_FORMS) {
+    const enc = tokenizer.encode(form, null, { add_special_tokens: false });
+    // Whole-token forms ONLY. A spelling the tokenizer splits (" uhm" is
+    // " u" + "hm") must not contribute its first piece: " u" and " U" start
+    // thousands of ordinary words, and nudging them would corrupt those.
+    if (enc.length === 1) ids.add(enc[0]);
+  }
+  const build = model._get_logits_processor.bind(model);
+  model._get_logits_processor = (...args) => {
+    const list = build(...args);
+    // Runs after Whisper's own processors, so a step they have forced (a
+    // timestamp, say) stays forced: -Infinity plus a bonus is still -Infinity.
+    list.push((inputIds, logits) => {
+      if (!FILLER_BIAS) return;
+      // Never help a run along. Once two hesitations sit back to back the
+      // bonus switches off, so the decoder cannot be coaxed into a loop of
+      // them; a real sustained "ummm" still gets written on its own merits.
+      const n = inputIds.length;
+      if (n >= 2 && ids.has(inputIds[n - 1]) && ids.has(inputIds[n - 2])) return;
+      for (const id of ids) logits.data[id] += FILLER_BIAS;
+    });
+    return list;
+  };
+  return [...ids];
+}
+
 // Lazily load the library + ASR pipeline (cached). onProgress gets download events.
 function getTranscriber(onProgress) {
   if (!transcriberPromise) {
     transcriberPromise = import('@xenova/transformers')
-      .then(({ pipeline, env }) => {
+      .then(async ({ pipeline, env }) => {
         env.allowLocalModels = false; // fetch model from the HF hub, cache in-browser
-        return pipeline('automatic-speech-recognition', MODEL_ID, { progress_callback: onProgress });
+        const transcriber = await pipeline('automatic-speech-recognition', MODEL_ID, { progress_callback: onProgress });
+        try {
+          installFillerBias(transcriber);
+        } catch (err) {
+          // The hook reaches into library internals. If a future version moves
+          // them, transcription must still work, just without the correction.
+          console.warn('Filler bias not installed:', err);
+        }
+        return transcriber;
       })
       .catch((err) => {
         transcriberPromise = null; // allow retry on failure
@@ -170,25 +234,54 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
   });
 
   const chunks = output?.chunks ?? [];
-  const words = chunks
-    .map((c) => {
-      const raw = (c.text || '').trim();
-      if (!raw || /[♪#*]/.test(raw)) return null; // music / formatting marks
-      // Whisper wraps non-speech in brackets ("[BLANK_AUDIO]", "(silence)"), but
-      // it ALSO brackets vocalizations — "(um)", "[uh]", "(mm)". Discarding every
-      // bracketed token (what this did until Sept 2026) silently deleted real
-      // fillers before they could ever be counted. Unwrap first, then drop only
-      // genuine non-speech annotations.
-      const inner = raw.replace(/^[\s[(<{]+|[\s\])>}]+$/g, '').trim();
-      const annotation = inner.toLowerCase().replace(/[^a-z ]/g, ' ').trim();
-      if (NON_SPEECH.test(annotation)) return null;
-      const word = inner.toLowerCase().replace(/[^a-z']/g, '');
-      if (!word) return null;
-      const start = c.timestamp?.[0] ?? 0;
-      const end = c.timestamp?.[1] ?? start + 0.3;
-      return { word, start, end };
-    })
-    .filter(Boolean);
+  const words = [];
+  const keep = (c) => {
+    const word = (c.text || '').toLowerCase().replace(/[^a-z']/g, '');
+    if (!word) return;
+    const start = c.timestamp?.[0] ?? 0;
+    const end = c.timestamp?.[1] ?? start + 0.3;
+    words.push({ word, start, end });
+  };
+  // Whisper marks non-speech in brackets ("[BLANK_AUDIO]", "(silence)",
+  // "(clears throat)"), and those are dropped. Two things it must NOT do:
+  //   - drop a bracketed vocalization. Whisper also writes "(um)" / "[uh]", and
+  //     discarding every bracketed token (the behaviour until Sept 2026)
+  //     silently deleted real fillers. Only a bracket whose contents match
+  //     NON_SPEECH goes.
+  //   - drop a plain spoken word that happens to be on that list. Until Oct
+  //     2026 the list was applied to every word, so saying "a calm pause" lost
+  //     "pause", and "silence", "music", "noise", "breathing" went the same
+  //     way. A word is only an annotation if it arrived inside brackets.
+  // A bracket can span several word chunks ("(clears" + "throat)"), so chunks
+  // are grouped from the opening bracket to the closing one and judged together.
+  let group = null;
+  const flush = () => {
+    const annotation = group
+      .map((c) => c.text || '')
+      .join(' ')
+      .toLowerCase()
+      .replace(/[^a-z ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!NON_SPEECH.test(annotation)) group.forEach(keep);
+    group = null;
+  };
+  for (const c of chunks) {
+    const raw = (c.text || '').trim();
+    if (!raw || /[♪#*]/.test(raw)) continue; // music / formatting marks
+    const opens = /^[[(<{]/.test(raw);
+    const closes = /[\])>}][.,!?]*$/.test(raw);
+    if (group || opens) {
+      (group ||= []).push(c);
+      // Real annotations are one to three words. A bracket still open after
+      // four chunks is a stray character, not an annotation, so stop grouping
+      // rather than let it swallow the sentence.
+      if (closes || group.length >= 4) flush();
+      continue;
+    }
+    keep(c);
+  }
+  if (group) flush(); // never closed: treat as ordinary words
 
   const transcript = words.map((w) => w.word).join(' ');
 
@@ -200,6 +293,7 @@ export async function transcribeLocally(blob, { onProgress, onStatus } = {}) {
   try {
     window.__speakableDebug = {
       model: MODEL_ID,
+      fillerBias: FILLER_BIAS,
       rawChunks: chunks.map((c) => ({ text: c.text, at: c.timestamp?.[0] })),
       keptWords: words.length,
       droppedChunks: chunks.length - words.length,

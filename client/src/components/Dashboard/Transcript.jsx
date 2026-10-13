@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { markFillerWords, detectFillerWords } from '../../utils/fillerWords.js';
+import LiveCaptionNote from '../ui/live-caption-note.jsx';
 
 // Reusable transcript block, shown inside Watch & Listen beneath the players so
 // you read along while the audio plays. Every word is exactly what Whisper
@@ -52,6 +53,8 @@ export default function Transcript({ results, mediaRef }) {
           </div>
         )}
       </div>
+
+      <LiveCaptionNote results={results} className="mb-5 max-w-[47rem]" />
 
       <div className="max-w-[47rem] text-[17px] leading-[1.75] text-ink/85 sm:text-[18px]">
         {hasWordData ? (
