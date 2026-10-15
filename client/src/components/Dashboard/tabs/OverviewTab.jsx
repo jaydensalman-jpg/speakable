@@ -15,39 +15,6 @@ import ScoreRing from '../../ui/ScoreRing.jsx';
 // list is what keeps an old report's Overview consistent with the new score.
 const ORDER = ['eyeContact', 'pace', 'fillers', 'vocabulary'];
 
-// Plain explanation of where overallScore came from. Every figure is read
-// straight off `breakdown`, so this can never assert anything the metrics
-// don't already show. "Best" is the strongest ON-TARGET metric, not simply the
-// highest score: a high score that is still off target did not hold anything up.
-function scoreRationale(feedback, scoredIds) {
-  const b = feedback.breakdown;
-  if (!b || !b.length) return null;
-  // A report saved before the scoring changed averaged metrics we no longer
-  // show (flow, articulation). Naming only the visible four would misdescribe
-  // where its number came from, so those reports get no sentence at all.
-  if (b.some((m) => !scoredIds.includes(m.id))) return null;
-
-  const asc = [...b].sort((a, z) => a.score - z.score);
-  const weak = asc.filter((m) => !m.inRange).slice(0, 2);
-  const best = [...b].filter((m) => m.inRange).sort((a, z) => z.score - a.score)[0];
-  const ref = (m) => `${m.label.toLowerCase()} (${m.score}/10)`;
-
-  const parts = [`Average of the ${b.length} areas measured.`];
-
-  if (!weak.length) {
-    parts.push('Everything measured landed on target.');
-  } else {
-    const dragged = weak.map(ref).join(' and ');
-    const lead = dragged.charAt(0).toUpperCase() + dragged.slice(1);
-    parts.push(best ? `${lead} pulled it down, ${ref(best)} held it up.` : `${lead} pulled it down.`);
-  }
-
-  const cap = feedback.meta?.cap;
-  if (cap && cap < 10) parts.push(`Capped at ${cap} because the take was short.`);
-
-  return parts.join(' ');
-}
-
 // One short headline, built from which areas actually missed target. Uses the
 // metric LABELS rather than assessment.focus: those carry their numbers inline
 // ("word variety (14% unique)"), which makes the sentence long and repeats
@@ -107,8 +74,6 @@ export default function OverviewTab({ results }) {
     return { value: m.valueDisplay, unit: null, caption: null };
   };
 
-  const rationale = scoreRationale(feedback, ORDER);
-
   return (
     <div className="animate-rise">
       {/* Overall score + what to work on */}
@@ -119,21 +84,17 @@ export default function OverviewTab({ results }) {
           /* Phone keeps the score beside the headline (auto 1fr, centred), as the
              design does — stacking it pushed everything below the fold. */
           <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-6 md:grid-cols-[13rem_1fr] md:items-end md:gap-12">
-            <p className="stat-xl text-[5rem] leading-[0.85] text-brand-500 md:text-[6rem]">
+            <p className="stat-xl text-[6rem] leading-[0.85] text-brand-500 md:text-[7.5rem]">
               {feedback.overallScore}
               <span className="font-sans text-[1.0625rem] font-normal tracking-normal text-ink/55">/10</span>
             </p>
             <div className="min-w-0">
-              <h2 className="text-balance font-display text-[1.8rem] leading-[1.08] tracking-[-0.025em] text-ink md:text-[2.5rem]">
+              {/* The headline stands alone and carries the space. The "On target"
+                  list and the averaging sentence that used to sit under it only
+                  repeated what the four columns below already show. */}
+              <h2 className="text-balance font-display text-[2.125rem] leading-[1.04] tracking-[-0.025em] text-ink md:text-[3.25rem]">
                 {headline(feedback)}
               </h2>
-              {feedback.assessment?.strong?.length > 0 && (
-                <p className="caption mt-3">
-                  <span className="font-semibold text-good">On target</span>{' '}
-                  {feedback.assessment.strong.join(', ').toLowerCase()}
-                </p>
-              )}
-              {rationale && <p className="caption mt-1.5">{rationale}</p>}
             </div>
           </div>
         ) : (
